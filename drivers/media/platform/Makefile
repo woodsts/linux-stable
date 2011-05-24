@@ -8,6 +8,7 @@ obj-$(CONFIG_VIDEO_VINO) += indycam.o
 obj-$(CONFIG_VIDEO_VINO) += vino.o
 
 obj-$(CONFIG_VIDEO_TIMBERDALE)	+= timblogiw.o
+obj-$(CONFIG_VIDEO_AT91SAM9X5) += at91sam9x5-video.o
 obj-$(CONFIG_VIDEO_M32R_AR_M64278) += arv.o
 
 obj-$(CONFIG_VIDEO_VIA_CAMERA) += via-camera.o

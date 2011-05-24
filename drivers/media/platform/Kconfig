@@ -63,6 +63,14 @@ config VIDEO_TIMBERDALE
 	---help---
 	  Add support for the Video In peripherial of the timberdale FPGA.
 
+config VIDEO_AT91SAM9X5
+	tristate "Support for AT91SAM9X5 Video"
+	depends on ARCH_AT91
+	depends on VIDEO_V4L2
+	select VIDEOBUF2_DMA_CONTIG
+	help
+	  Support for the "High End Overlay" found in Atmel's AT91SAM9X5 SoCs.
+
 config VIDEO_VINO
 	tristate "SGI Vino Video For Linux"
 	depends on I2C && SGI_IP22 && VIDEO_V4L2
