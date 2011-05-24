@@ -1202,6 +1202,14 @@ source "drivers/media/video/s5p-tv/Kconfig"
 endif # V4L_PLATFORM_DRIVERS
 endif # VIDEO_CAPTURE_DRIVERS
 
+config VIDEO_AT91SAM9X5
+	tristate "Support for AT91SAM9X5 Video"
+	depends on ARCH_AT91
+	depends on VIDEO_V4L2
+	select VIDEOBUF2_DMA_CONTIG
+	help
+	  support for the "High End Overlay" found in Atmel's AT91SAM9X5 SoCs.
+
 menuconfig V4L_MEM2MEM_DRIVERS
 	bool "Memory-to-memory multimedia devices"
 	depends on VIDEO_V4L2
