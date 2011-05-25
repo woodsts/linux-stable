@@ -23,10 +23,12 @@
 #include <linux/platform_data/at91_adc.h>
 
 #include <linux/fb.h>
-#include <video/atmel_lcdc.h>
+#include <video/atmel_lcdfb.h>
 
 #include <mach/at91_adc.h>
 #include <mach/board.h>
+#include <mach/gpio.h>
+#include <mach/atmel_lcdc.h>
 #include <mach/at91sam9g45.h>
 #include <mach/at91sam9g45_matrix.h>
 #include <mach/at91_matrix.h>
