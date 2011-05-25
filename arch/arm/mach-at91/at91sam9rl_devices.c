@@ -15,7 +15,7 @@
 #include <linux/i2c-gpio.h>
 
 #include <linux/fb.h>
-#include <video/atmel_lcdc.h>
+#include <video/atmel_lcdfb.h>
 
 #include <mach/at91sam9rl.h>
 #include <mach/at91sam9rl_matrix.h>

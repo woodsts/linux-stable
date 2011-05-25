@@ -19,7 +19,7 @@
 #include <linux/i2c-gpio.h>
 
 #include <linux/fb.h>
-#include <video/atmel_lcdc.h>
+#include <video/atmel_lcdfb.h>
 
 #include <mach/at91sam9261.h>
 #include <mach/at91sam9261_matrix.h>
