@@ -376,6 +376,8 @@ static void __init ek_board_configure_pins(void)
 static void __init ek_board_init(void)
 {
 	u32 cm_config;
+	int i;
+	bool config_isi_enabled = false;
 
 	cm_board_init(&cm_config);
 	ek_board_configure_pins();
@@ -389,11 +391,8 @@ static void __init ek_board_init(void)
 	/* Ethernet */
 	at91_add_device_eth(0, &ek_macb0_data);
 	at91_add_device_eth(1, &ek_macb1_data);
-	/* MMC */
+	/* MMC0 */
 	at91_add_device_mci(0, &mci0_data);
-	/* Conflict between SPI0 and MCI1 pins */
-	if (!(cm_config & CM_CONFIG_SPI0_ENABLE))
-		at91_add_device_mci(1, &mci1_data);
 	/* I2C */
 	if (cm_config & CM_CONFIG_I2C0_ENABLE)
 		i2c_register_board_info(0,
@@ -405,18 +404,35 @@ static void __init ek_board_init(void)
 	if (cpu_is_at91sam9g25()) {
 		/* ISI */
 		/* NOTE: PCK0 provides ISI_MCK to the ISI module.
-		   ISI's PWD pin conflict with MCI1_CK due the hardware design.
+		 * ISI's PWD pin (PA13) conflicts with MCI1_CK, and SPI0_SPCK
+		 * due to hardware design.
+		 * Do not add ISI device if SPI0 is enabled.
 		 */
-		platform_add_devices(soc_camera_devices,
+		 if (!(cm_config & CM_CONFIG_SPI0_ENABLE)) {
+			platform_add_devices(soc_camera_devices,
 					ARRAY_SIZE(soc_camera_devices));
-		isi_set_clk();
-		at91_add_device_isi(&isi_data);
+			isi_set_clk();
+			at91_add_device_isi(&isi_data);
+			for (i = 0; i < ARRAY_SIZE(soc_camera_devices); i++) {
+				if (soc_camera_devices[i]->name != NULL) {
+					config_isi_enabled = true;
+					break;
+				}
+			}
+		 }
 	} else if (!cpu_is_at91sam9x25()) {
 		/* LCD Controller */
 		at91_add_device_lcdc(&ek_lcdc_data);
 		/* Touch Screen */
 		at91_add_device_tsadcc(&ek_tsadcc_data);
 	}
+
+	/* MMC1 */
+	/* Conflict between SPI0, MCI1 and ISI pins.
+	 * add MCI1 only if SPI0 and ISI are both disabled.
+	 */
+	if (!(cm_config & CM_CONFIG_SPI0_ENABLE) && !config_isi_enabled)
+		at91_add_device_mci(1, &mci1_data);
 
 #if 0
 	if (cpu_is_at91sam9x25() || cpu_is_at91sam9x35())
@@ -443,6 +459,14 @@ static void __init ek_board_init(void)
 		printk(KERN_CRIT "AT91: EK rev A\n");
 	else
 		printk(KERN_CRIT "AT91: EK rev B and higher\n");
+
+	/* print conflict information */
+	if (cm_config & CM_CONFIG_SPI0_ENABLE)
+		printk(KERN_CRIT
+			"AT91: SPI0 conflicts with MCI1 and ISI, disable MCI1 and ISI\n");
+	else if (config_isi_enabled)
+		printk(KERN_CRIT
+			"AT91: ISI conficts with MCI1, disable MCI1\n");
 }
 
 MACHINE_START(AT91SAM9X5EK, "Atmel AT91SAM9X5-EK")
