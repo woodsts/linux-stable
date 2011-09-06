@@ -1201,6 +1201,9 @@ static void atmci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	case MMC_BUS_WIDTH_4:
 		slot->sdc_reg |= ATMCI_SDCBUS_4BIT;
 		break;
+	case MMC_BUS_WIDTH_8:
+		slot->sdc_reg |= ATMCI_SDCBUS_8BIT;
+		break;
 	}
 
 	if (ios->clock) {
