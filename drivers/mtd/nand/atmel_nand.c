@@ -77,7 +77,7 @@ module_param(on_flash_bbt, int, 0);
 	__raw_readb((addr) + ATMEL_PMECC_ECCx + ((sector) * 0x40) + (n))
 
 #define pmecc_readl_rem(addr, sector, n) \
-	__raw_readl((addr) + ATMEL_PMECC_REMx + ((sector) * 0x40) + (n))
+	__raw_readl((addr) + ATMEL_PMECC_REMx + ((sector) * 0x40) + ((n) * 4))
 
 #define pmerrloc_readl(addr, reg) \
 	__raw_readl((addr) + ATMEL_PMERRLOC_##reg)
