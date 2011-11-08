@@ -455,6 +455,9 @@ static void __init ek_board_init(void)
 	/* SSC (for WM8731) */
 	at91_add_device_ssc(AT91SAM9X5_ID_SSC, ATMEL_SSC_TX | ATMEL_SSC_RX);
 
+	/* SMD */
+	at91_add_device_smd();
+
 	if (ek_is_revA())
 		printk(KERN_CRIT "AT91: EK rev A\n");
 	else

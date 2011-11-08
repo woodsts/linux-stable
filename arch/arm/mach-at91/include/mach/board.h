@@ -211,6 +211,9 @@ extern void __init at91_add_device_can(int id, struct at91_can_data *data);
 extern void __init at91_add_device_can(struct at91_can_data *data);
 #endif
 
+ /* SMD */
+extern void __init at91_add_device_smd(void);
+
  /* LEDs */
 extern void __init at91_init_leds(u8 cpu_led, u8 timer_led);
 extern void __init at91_gpio_leds(struct gpio_led *leds, int nr);

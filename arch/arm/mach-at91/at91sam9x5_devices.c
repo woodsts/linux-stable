@@ -1469,6 +1469,60 @@ void __init at91_add_device_ssc(unsigned id, unsigned pins)
 void __init at91_add_device_ssc(unsigned id, unsigned pins) {}
 #endif
 
+/* --------------------------------------------------------------------
+ *  SMD
+ * -------------------------------------------------------------------- */
+
+static u64 smd_dmamask = DMA_BIT_MASK(32);
+static struct at_dma_slave smd_dmadata;
+
+static struct resource smd_resources[] = {
+	[0] = {
+		.start	= AT91SAM9X5_SMD_BASE,
+		.end	= AT91SAM9X5_SMD_BASE + SZ_512 - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	[1] = {
+		.start	= AT91SAM9X5_ID_SMD,
+		.end	= AT91SAM9X5_ID_SMD,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device at91sam9x5_smd_device = {
+	.name	= "atmel_smd",
+	.id	= -1,
+	.dev	= {
+		.dma_mask = &smd_dmamask,
+		.coherent_dma_mask = DMA_BIT_MASK(32),
+		.platform_data = &smd_dmadata,
+	},
+	.resource	= smd_resources,
+	.num_resources	= ARRAY_SIZE(smd_resources),
+};
+
+void __init at91_add_device_smd(void)
+{
+#if defined(CONFIG_AT_HDMAC) || defined(CONFIG_AT_HDMAC_MODULE)
+	struct at_dma_slave *atslave;
+
+	atslave = kzalloc(sizeof(struct at_dma_slave), GFP_KERNEL);
+
+	/* DMA slave channel configuration */
+	atslave->reg_width = AT_DMA_SLAVE_WIDTH_32BIT;
+	atslave->cfg = ATC_FIFOCFG_HALFFIFO
+			| ATC_SRC_H2SEL_HW
+			| ATC_DST_H2SEL_HW;
+	atslave->ctrla = ATC_SCSIZE_4 | ATC_DCSIZE_4;
+	atslave->cfg |= ATC_SRC_PER(AT_DMA_ID_SMD_RX)
+			| ATC_DST_PER(AT_DMA_ID_SMD_TX);
+	atslave->dma_dev = &at_hdmac1_device.dev;
+
+	smd_dmadata = *atslave;
+#endif
+
+	platform_device_register(&at91sam9x5_smd_device);
+}
 
 /* --------------------------------------------------------------------
  *  UART
