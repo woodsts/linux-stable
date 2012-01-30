@@ -12,6 +12,7 @@ The SPI master node requires the following properties:
 - #size-cells     - should be zero.
 - compatible      - name of SPI bus controller following generic names
     		recommended practice.
+- cs-gpios	  - (optional) gpios chip select.
 No other properties are required in the SPI bus node.  It is assumed
 that a driver for an SPI bus device will understand that it is an SPI bus.
 However, the binding does not attempt to define the specific method for
@@ -20,6 +21,8 @@ flexible and non-standardized, it is left out of this binding with the
 assumption that board specific platform code will be used to manage
 chip selects.  Individual drivers can define additional properties to
 support describing the chip select layout.
+
+If cs-gpios is used the number of chip select will automatically increased.
 
 SPI slave nodes must be children of the SPI master node and can
 contain the following properties.
@@ -33,6 +36,9 @@ contain the following properties.
     		shifted clock phase (CPHA) mode
 - spi-cs-high     - (optional) Empty property indicating device requires
     		chip select active high
+
+If a gpio chipselect is used for the SPI slave the gpio number will be passed
+via the controller_data
 
 SPI example for an MPC5200 SPI bus:
 	spi@f00 {
