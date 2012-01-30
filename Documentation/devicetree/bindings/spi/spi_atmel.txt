@@ -1,0 +1,23 @@
+Atmel SPI device
+
+Required properties:
+- compatible : should be "atmel,at91rm9200-spi".
+- reg: Address and length of the register set for the device
+- interrupts: Should contain macb interrupt
+- cs-gpio: Should contain the GPIOs used for chipselect.
+- dma-mask: device coherent dma mask.
+
+spi0: spi@f0000000 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	compatible = "atmel,at91rm9200-spi";
+	reg = <0xf0000000 0x100>;
+	interrupts = <13 4>;
+	cs-gpios = <&pioA 14 0
+		    &pioA 7 0 /* conflicts with TXD2 */
+		    &pioA 1 0 /* conflicts with RXD0 */
+		    &pioB 3 0 /* conflicts with ERXDV */
+		   >;
+	dma-mask = <0xffffffff>;
+	status = "disabled";
+};
