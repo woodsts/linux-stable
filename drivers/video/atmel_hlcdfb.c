@@ -9,6 +9,7 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <linux/backlight.h>
@@ -363,11 +364,11 @@ static void atmelfb_limit_screeninfo(struct fb_var_screeninfo *var)
 	var->lower_margin = min_t(u32, var->lower_margin,
 			LCDC_LCDCFG2_VBPW >> LCDC_LCDCFG2_VBPW_OFFSET);
 	var->right_margin = min_t(u32, var->right_margin,
-			(LCDC_LCDCFG3_HBPW >> LCDC_LCDCFG3_HBPW_OFFSET) + 1);
+			(LCDC2_LCDCFG3_HBPW >> LCDC_LCDCFG3_HBPW_OFFSET) + 1);
 	var->hsync_len = min_t(u32, var->hsync_len,
 			(LCDC_LCDCFG1_HSPW >> LCDC_LCDCFG1_HSPW_OFFSET) + 1);
 	var->left_margin = min_t(u32, var->left_margin,
-			(LCDC_LCDCFG3_HFPW >> LCDC_LCDCFG3_HFPW_OFFSET) + 1);
+			(LCDC2_LCDCFG3_HFPW >> LCDC_LCDCFG3_HFPW_OFFSET) + 1);
 
 }
 
