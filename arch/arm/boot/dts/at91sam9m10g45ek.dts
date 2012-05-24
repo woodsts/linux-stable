@@ -46,6 +46,25 @@
 				phy-mode = "rmii";
 				status = "okay";
 			};
+
+			mmc0: mmc@fff80000 {
+				status = "okay";
+				slot@0 {
+					reg = <0>;
+					bus-width = <4>;
+					cd-gpios = <&pioD 10 0>;
+				};
+			};
+
+			mmc1: mmc@fffd0000 {
+				status = "okay";
+				slot@0 {
+					reg = <0>;
+					bus-width = <4>;
+					cd-gpios = <&pioD 11 0>;
+					wp-gpios = <&pioD 29 0>;
+				};
+			};
 		};
 
 		nand0: nand@40000000 {
