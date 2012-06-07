@@ -774,9 +774,8 @@ static void atmci_dma_complete(void *arg)
 
 	dev_vdbg(&host->pdev->dev, "DMA complete\n");
 
-	if (host->caps.has_dma)
-		/* Disable DMA hardware handshaking on MCI */
-		atmci_writel(host, ATMCI_DMA, atmci_readl(host, ATMCI_DMA) & ~ATMCI_DMAEN);
+	/* Disable DMA hardware handshaking on MCI */
+	atmci_writel(host, ATMCI_DMA, atmci_readl(host, ATMCI_DMA) & ~ATMCI_DMAEN);
 
 	atmci_dma_cleanup(host);
 
