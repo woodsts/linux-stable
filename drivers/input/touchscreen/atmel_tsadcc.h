@@ -134,8 +134,9 @@
 #define	  ATMEL_TSADCC_PRESSR_Z1	(0x3ff <<  0)	/* Data of Z1 Measurement */
 #define	  ATMEL_TSADCC_PRESSR_Z2	(0x3ff << 16)	/* Data of Z2 Measurement */
 
-/* 9x5 ADC registers which conflict with previous definition */
-#ifdef CONFIG_ARCH_AT91SAM9X5
+/* 9x5, sama5d3 ADC registers which conflict with previous definition */
+#if defined(CONFIG_SOC_AT91SAM9X5) || defined(CONFIG_SOC_SAMA5D3)
+
 #undef	 ATMEL_TSADCC_TRGR
 #undef	 ATMEL_TSADCC_SR
 #define ATMEL_TSADCC_SR		ATMEL_TSADCC_ISR
@@ -161,6 +162,25 @@
 #define	  ATMEL_TSADCC_PENCNT	ATMEL_TSADCC_PEN
 #undef	  ATMEL_TSADCC_CONVERSION_END
 #define	  ATMEL_TSADCC_CONVERSION_END	(ATMEL_TSADCC_XRDY | ATMEL_TSADCC_YRDY | ATMEL_TSADCC_PRDY)
+
+#endif
+
+/* sama5d3 ADC registers which conflict with 9x5 definition */
+#if defined(CONFIG_SOC_SAMA5D3)
+
+#undef	ATMEL_TSADCC_XPOS
+#undef	ATMEL_TSADCC_XSCALE
+#undef	ATMEL_TSADCC_YPOS
+#undef	ATMEL_TSADCC_YSCALE
+#undef	ATMEL_TSADCC_PRESSR_Z1
+#undef	ATMEL_TSADCC_PRESSR_Z2
+
+#define	  ATMEL_TSADCC_XPOS		(0x0fff <<  0)	/* X Position */
+#define	  ATMEL_TSADCC_XSCALE		(0x0fff << 16)	/* Scale of X Position */
+#define	  ATMEL_TSADCC_YPOS		(0x0fff <<  0)	/* Y Position */
+#define	  ATMEL_TSADCC_YSCALE		(0x0fff << 16)	/* Scale of Y Position */
+#define	  ATMEL_TSADCC_PRESSR_Z1	(0x0fff <<  0)	/* Data of Z1 Measurement */
+#define	  ATMEL_TSADCC_PRESSR_Z2	(0x0fff << 16)	/* Data of Z2 Measurement */
 
 #endif
 
