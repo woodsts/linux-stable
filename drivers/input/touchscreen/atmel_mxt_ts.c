@@ -2315,7 +2315,7 @@ static int mxt_initialize_t100_input_device(struct mxt_data *data)
 				     0, 255, 0, 0);
 
 	/* For multi touch */
-	error = input_mt_init_slots(input_dev, data->num_touchids);
+	error = input_mt_init_slots(input_dev, data->num_touchids, 0);
 	if (error) {
 		dev_err(dev, "Error %d initialising slots\n", error);
 		goto err_free_mem;
@@ -3076,7 +3076,7 @@ static int mxt_initialize_t9_input_device(struct mxt_data *data)
 
 	/* For multi touch */
 	num_mt_slots = data->num_touchids + data->num_stylusids;
-	error = input_mt_init_slots(input_dev, num_mt_slots);
+	error = input_mt_init_slots(input_dev, num_mt_slots, 0);
 	if (error) {
 		dev_err(dev, "Error %d initialising slots\n", error);
 		goto err_free_mem;
