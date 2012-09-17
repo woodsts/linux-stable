@@ -36,7 +36,9 @@
 #define AT91SAM9N12_ID_UDP	23	/* USB Device High Speed */
 #define AT91SAM9N12_ID_LCDC	25	/* LCD Controller */
 #define AT91SAM9N12_ID_ISI	25	/* Image Sensor Interface */
+#define AT91SAM9N12_ID_SHA	27	/* SHA */
 #define AT91SAM9N12_ID_SSC	28	/* Synchronous Serial Controller */
+#define AT91SAM9N12_ID_AES	29	/* AES */
 #define AT91SAM9N12_ID_TRNG	30	/* TRNG */
 #define AT91SAM9N12_ID_IRQ0	31	/* Advanced Interrupt Controller */
 
