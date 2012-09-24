@@ -952,6 +952,7 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 	/* set ECC page size and oob layout */
 	switch (mtd->writesize) {
 	case 2048:
+	case 4096:
 		host->pmecc_degree = PMECC_GF_DIMENSION_13;
 		host->pmecc_cw_len = (1 << host->pmecc_degree) - 1;
 		host->pmecc_sector_number = mtd->writesize / sector_size;
@@ -977,7 +978,6 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 		break;
 	case 512:
 	case 1024:
-	case 4096:
 		/* TODO */
 		dev_warn(host->dev,
 			"Unsupported page size for PMECC, use Software ECC\n");
