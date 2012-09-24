@@ -127,7 +127,7 @@ static struct nand_ecclayout atmel_pmecc_oobinfo;
 
 static int cpu_has_dma(void)
 {
-	return cpu_is_at91sam9rl() || cpu_is_at91sam9g45();
+	return cpu_is_at91sam9rl() || cpu_is_at91sam9g45() || cpu_is_at91sam9x5();
 }
 
 /*
