@@ -210,10 +210,25 @@ struct clk mck = {
 
 static void pmc_periph_mode(struct clk *clk, int is_on)
 {
-	if (is_on)
-		at91_pmc_write(AT91_PMC_PCER, clk->pmc_mask);
-	else
-		at91_pmc_write(AT91_PMC_PCDR, clk->pmc_mask);
+	u32 regval = 0;
+
+	/*
+	 * With sama5d3 chips, you have more than 32 peripherals so only one
+	 * register is not enough to manage their clocks. A peripheral
+	 * control register has been introduced to solve this issue.
+	 */
+	if (cpu_is_sama5d3()) {
+		regval |= AT91_PMC_PCR_CMD; /* write command */
+		regval |= clk->pid & AT91_PMC_PCR_PID; /* peripheral selection */
+		if (is_on)
+			regval |= AT91_PMC_PCR_EN; /* enable clock */
+		at91_pmc_write(AT91_PMC_PCR, regval);
+	} else {
+		if (is_on)
+			at91_pmc_write(AT91_PMC_PCER, clk->pmc_mask);
+		else
+			at91_pmc_write(AT91_PMC_PCDR, clk->pmc_mask);
+	}
 }
 
 static struct clk __init *at91_css_to_clk(unsigned long css)
@@ -874,13 +889,21 @@ static int __init at91_clock_reset(void)
 	unsigned long pcdr = 0;
 	unsigned long scdr = 0;
 	struct clk *clk;
+	u32 regval;
 
 	list_for_each_entry(clk, &clocks, node) {
 		if (clk->users > 0)
 			continue;
 
-		if (clk->mode == pmc_periph_mode)
-			pcdr |= clk->pmc_mask;
+		regval = 0;
+		if (clk->mode == pmc_periph_mode) {
+			if (cpu_is_sama5d3()) {
+				regval |= AT91_PMC_PCR_CMD; /* write command */
+				regval |= clk->pid & AT91_PMC_PCR_PID; /* peripheral selection */
+				at91_pmc_write(AT91_PMC_PCR, regval);
+			} else
+				pcdr |= clk->pmc_mask;
+		}
 
 		if (clk->mode == pmc_sys_mode)
 			scdr |= clk->pmc_mask;
@@ -888,7 +911,8 @@ static int __init at91_clock_reset(void)
 		pr_debug("Clocks: disable unused %s\n", clk->name);
 	}
 
-	at91_pmc_write(AT91_PMC_PCDR, pcdr);
+	if (!cpu_is_sama5d3())
+		at91_pmc_write(AT91_PMC_PCDR, pcdr);
 	at91_pmc_write(AT91_PMC_SCDR, scdr);
 
 	return 0;
