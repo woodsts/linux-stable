@@ -1402,7 +1402,7 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 	if (pdev->dev.of_node) {
 		res = atmel_of_init_port(host, pdev->dev.of_node);
 		if (res)
-			goto err_nand_ioremap;
+			goto err_ecc_ioremap;
 	} else {
 		memcpy(&host->board, pdev->dev.platform_data,
 		       sizeof(struct atmel_nand_data));
@@ -1558,6 +1558,8 @@ err_scan_tail:
 		pmecc_writel(host->ecc, CTRL, PMECC_CTRL_DISABLE);
 		pmecc_data_free(host);
 	}
+
+err_ecc_ioremap:
 	if (host->ecc)
 		iounmap(host->ecc);
 	if (host->pmerrloc_base)
