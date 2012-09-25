@@ -106,6 +106,12 @@
 			i2c1: i2c@f0018000 {
 				status = "okay";
 
+				24c256@50 {
+					compatible = "24c256";
+					reg = <0x50>;
+					pagesize = <64>;
+				};
+
 				qt1070: keyboard@1b {
 					compatible = "qt1070";
 					reg = <0x1b>;
