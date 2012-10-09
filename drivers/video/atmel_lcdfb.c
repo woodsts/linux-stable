@@ -86,6 +86,7 @@ static void atmel_lcdfb_update_dma(struct fb_info *info,
 	atmel_lcdfb_update_dma2d(sinfo, var);
 }
 
+#if defined(CONFIG_BACKLIGHT_ATMEL_LCDC)
 /* some bl->props field just changed */
 static int atmel_bl_update_status(struct backlight_device *bl)
 {
@@ -123,11 +124,6 @@ static int atmel_bl_get_brightness(struct backlight_device *bl)
 	return lcdc_readl(sinfo, ATMEL_LCDC_CONTRAST_VAL);
 }
 
-static const struct backlight_ops atmel_lcdc_bl_ops = {
-	.update_status = atmel_bl_update_status,
-	.get_brightness = atmel_bl_get_brightness,
-};
-
 static void atmel_lcdfb_init_contrast(struct atmel_lcdfb_info *sinfo)
 {
 	/* contrast pwm can be 'inverted' */
@@ -138,6 +134,24 @@ static void atmel_lcdfb_init_contrast(struct atmel_lcdfb_info *sinfo)
 	lcdc_writel(sinfo, ATMEL_LCDC_CONTRAST_CTR, contrast_ctr);
 	lcdc_writel(sinfo, ATMEL_LCDC_CONTRAST_VAL, ATMEL_LCDC_CVAL_DEFAULT);
 }
+#else
+static int atmel_bl_update_status(struct backlight_device *bl)
+{
+	return 0;
+}
+
+static int atmel_bl_get_brightness(struct backlight_device *bl)
+{
+	return ATMEL_LCDC_CVAL_DEFAULT;
+}
+
+static void atmel_lcdfb_init_contrast(struct atmel_lcdfb_info *sinfo) {}
+#endif
+
+static const struct backlight_ops atmel_lcdc_bl_ops = {
+	.update_status = atmel_bl_update_status,
+	.get_brightness = atmel_bl_get_brightness,
+};
 
 void atmel_lcdfb_start(struct atmel_lcdfb_info *sinfo)
 {
