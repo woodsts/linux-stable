@@ -228,6 +228,7 @@ static void pmc_periph_mode(struct clk *clk, int is_on)
 	if (cpu_is_sama5d3()) {
 		regval |= AT91_PMC_PCR_CMD; /* write command */
 		regval |= clk->pid & AT91_PMC_PCR_PID; /* peripheral selection */
+		regval |= AT91_PMC_PCR_DIV(clk->div);
 		if (is_on)
 			regval |= AT91_PMC_PCR_EN; /* enable clock */
 		at91_pmc_write(AT91_PMC_PCR, regval);
@@ -553,6 +554,8 @@ int __init clk_register(struct clk *clk)
 	if (clk_is_peripheral(clk)) {
 		if (!clk->parent)
 			clk->parent = &mck;
+		if (cpu_is_sama5d3())
+			clk->rate_hz = DIV_ROUND_UP(clk->parent->rate_hz, 1 << clk->div);
 		clk->mode = pmc_periph_mode;
 	}
 	else if (clk_is_sys(clk)) {
@@ -914,6 +917,7 @@ static int __init at91_clock_reset(void)
 			if (cpu_is_sama5d3()) {
 				regval |= AT91_PMC_PCR_CMD; /* write command */
 				regval |= clk->pid & AT91_PMC_PCR_PID; /* peripheral selection */
+				regval |= AT91_PMC_PCR_DIV(clk->div);
 				at91_pmc_write(AT91_PMC_PCR, regval);
 			} else
 				pcdr |= clk->pmc_mask;
