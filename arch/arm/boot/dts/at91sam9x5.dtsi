@@ -274,6 +274,21 @@
 				#size-cells = <0>;
 				dma = <&dma1 0x10002200>;
 			};
+
+			lcd@f8038000 {
+				compatible = "atmel,at91sam9x5-lcd";
+				reg = <0xf8038000 0xff
+				       0xf8038400 0x3ff>;
+				interrupts = <25 4 3>;
+				status = "disabled";
+			};
+
+			lcdovl1@f8038100 {
+				compatible = "atmel,at91sam9x5-lcd";
+				reg = <0xf8038100 0xff
+				       0xf8038800 0x3ff>;
+				status = "disabled";
+			};
 		};
 
 		nand0: nand@40000000 {
