@@ -348,8 +348,7 @@ static irqreturn_t at91sam9x5_video_irq(int irq, void *data)
 	heoimr = at91sam9x5_video_read32(priv, REG_HEOIMR);
 	handled = at91sam9x5_video_handle_irqstat(priv);
 
-	debug("%x, HEOCHSR = %08x\n", handled,
-			at91sam9x5_video_read32(priv, REG_HEOCHSR));
+	debug("HEOIMR = 0x%08x, HEOCHSR = 0x%08x\n", heoimr, handled);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
@@ -476,7 +475,7 @@ static void at91sam9x5_video_show_buf(struct at91sam9x5_video_priv *priv,
 	priv->next.plane_size[2] = priv->plane_size[2];
 }
 
-static int experimental;
+static bool experimental;
 module_param(experimental, bool, 0644);
 MODULE_PARM_DESC(experimental, "enable experimental features");
 
@@ -1156,8 +1155,8 @@ static int at91sam9x5_video_register(struct at91sam9x5_video_priv *priv,
 	int ret = -ENOMEM;
 	struct platform_device *pdev = priv->pdev;
 	struct resource *res;
-	const struct at91sam9x5_video_pdata *pdata =
-		dev_get_platdata(&pdev->dev);
+	/*const struct at91sam9x5_video_pdata *pdata =
+		dev_get_platdata(&pdev->dev);*/
 	struct vb2_queue *q = &priv->queue;
 	unsigned long flags;
 
@@ -1172,10 +1171,13 @@ static int at91sam9x5_video_register(struct at91sam9x5_video_priv *priv,
 	/* XXX: this doesn't belong here, does it? */
 	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
 
+	/* Not used for now */
+#if 0
 	if (!pdata) {
 		dev_err(&pdev->dev, "failed to get platform data\n");
 		goto err_get_pdata;
 	}
+#endif
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
@@ -1273,10 +1275,14 @@ err_queue_init:
 		iounmap(priv->regbase);
 
 		priv->fbinfo = NULL;
+	} else {
+		dev_info(&pdev->dev,
+				"video device registered @ 0x%08x, irq = %d\n",
+				(unsigned int)priv->regbase, priv->irq);
 	}
  err_ioremap:
  err_get_regbase:
- err_get_pdata:
+/* err_get_pdata:*/
 
 	return ret;
 }
@@ -1370,7 +1376,7 @@ err_alloc_priv:
 	return 0;
 }
 
-int __devexit at91sam9x5_video_remove(struct platform_device *pdev)
+static int __devexit at91sam9x5_video_remove(struct platform_device *pdev)
 {
 	struct at91sam9x5_video_priv *priv = platform_get_drvdata(pdev);
 
@@ -1387,7 +1393,7 @@ static struct platform_driver at91sam9x5_video_driver = {
 		.owner = THIS_MODULE,
 	},
 	.probe = at91sam9x5_video_probe,
-	.remove = at91sam9x5_video_remove,
+	.remove = __devexit_p(at91sam9x5_video_remove),
 };
 
 static struct platform_device *at91sam9x5_video_device;
