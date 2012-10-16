@@ -30,6 +30,7 @@
 #include <linux/of_device.h>
 #include <linux/of_i2c.h>
 #include <linux/platform_device.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/slab.h>
 #include <linux/platform_data/dma-atmel.h>
 
@@ -707,6 +708,7 @@ static int __devinit at91_twi_probe(struct platform_device *pdev)
 	struct resource *mem;
 	int rc;
 	u32 phy_addr;
+	struct pinctrl *pinctrl;
 
 	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
 	if (!dev)
@@ -718,6 +720,12 @@ static int __devinit at91_twi_probe(struct platform_device *pdev)
 	if (!mem)
 		return -ENODEV;
 	phy_addr = mem->start;
+
+	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
+	if (IS_ERR(pinctrl)) {
+		dev_err(&pdev->dev, "Failed to request pinctrl\n");
+		return PTR_ERR(pinctrl);
+	}
 
 	dev->pdata = at91_twi_get_driver_data(pdev);
 	if (!dev->pdata)
