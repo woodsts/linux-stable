@@ -157,8 +157,7 @@
 #define LCDC_LCDISR_BASE		(0x1 << 8)
 #define LCDC_LCDISR_OVR1		(0x1 << 9)
 #define LCDC_LCDISR_OVR2		(0x1 << 10)
-#define LCDC_LCDISR_HEO			(0x1 << 10)
-#define LCDC2_LCDISR_HEO		(0x1 << 11)
+#define LCDC_LCDISR_HEO			(0x1 << 11)
 #define LCDC_LCDISR_HCR			(0x1 << 12)
 #define LCDC_LCDISR_PP			(0x1 << 13)
 

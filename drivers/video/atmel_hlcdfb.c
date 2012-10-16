@@ -370,6 +370,16 @@ static int atmel_hlcdfb_setup_core_ovl(struct fb_info *info)
 }
 static void atmelfb_limit_screeninfo(struct fb_var_screeninfo *var)
 {
+	u32 hbpw, hfpw;
+
+	if (cpu_is_at91sam9x5()) {
+		hbpw = LCDC_LCDCFG3_HBPW;
+		hfpw = LCDC_LCDCFG3_HFPW;
+	} else {
+		hbpw = LCDC2_LCDCFG3_HBPW;
+		hfpw = LCDC2_LCDCFG3_HFPW;
+	}
+
 	/* Saturate vertical and horizontal timings at maximum values */
 	var->vsync_len = min_t(u32, var->vsync_len,
 			(LCDC_LCDCFG1_VSPW >> LCDC_LCDCFG1_VSPW_OFFSET) + 1);
@@ -378,11 +388,11 @@ static void atmelfb_limit_screeninfo(struct fb_var_screeninfo *var)
 	var->lower_margin = min_t(u32, var->lower_margin,
 			LCDC_LCDCFG2_VBPW >> LCDC_LCDCFG2_VBPW_OFFSET);
 	var->right_margin = min_t(u32, var->right_margin,
-			(LCDC2_LCDCFG3_HBPW >> LCDC_LCDCFG3_HBPW_OFFSET) + 1);
+			(hbpw >> LCDC_LCDCFG3_HBPW_OFFSET) + 1);
 	var->hsync_len = min_t(u32, var->hsync_len,
 			(LCDC_LCDCFG1_HSPW >> LCDC_LCDCFG1_HSPW_OFFSET) + 1);
 	var->left_margin = min_t(u32, var->left_margin,
-			(LCDC2_LCDCFG3_HFPW >> LCDC_LCDCFG3_HFPW_OFFSET) + 1);
+			(hfpw >> LCDC_LCDCFG3_HFPW_OFFSET) + 1);
 
 }
 
