@@ -930,8 +930,8 @@ static int __devinit at91_pinctrl_parse_functions(struct device_node *np,
 }
 
 static struct of_device_id at91_pinctrl_of_match[] __devinitdata = {
-	{ .compatible = "atmel,at91rm9200-pinctrl", .data = &at91rm9200_ops },
 	{ .compatible = "atmel,at91sam9x5-pinctrl", .data = &at91sam9x5_ops },
+	{ .compatible = "atmel,at91rm9200-pinctrl", .data = &at91rm9200_ops },
 	{ /* sentinel */ }
 };
 
@@ -1441,8 +1441,8 @@ static void __devinit at91_gpio_probe_fixup(void)
 }
 
 static struct of_device_id at91_gpio_of_match[] __devinitdata = {
+	{ .compatible = "atmel,at91sam9x5-gpio", .data = &at91sam9x5_ops },
 	{ .compatible = "atmel,at91rm9200-gpio", .data = &at91rm9200_ops },
-	{ .compatible = "atmel,at91sam9x5-gpio", .data = &at91sam9x5_ops, },
 	{ /* sentinel */ }
 };
 
