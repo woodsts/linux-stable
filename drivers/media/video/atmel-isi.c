@@ -20,6 +20,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/slab.h>
 
 #include <media/atmel-isi.h>
@@ -939,6 +940,7 @@ static int __devinit atmel_isi_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct soc_camera_host *soc_host;
 	struct isi_platform_data *pdata;
+	struct pinctrl *pinctrl;
 
 	pdata = dev->platform_data;
 	if (!pdata || !pdata->data_width_flags || !pdata->mck_hz) {
@@ -950,6 +952,12 @@ static int __devinit atmel_isi_probe(struct platform_device *pdev)
 	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!regs)
 		return -ENXIO;
+
+	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
+	if (IS_ERR(pinctrl)) {
+		dev_err(&pdev->dev, "Failed to request pinctrl\n");
+		return PTR_ERR(pinctrl);
+	}
 
 	pclk = clk_get(&pdev->dev, "isi_clk");
 	if (IS_ERR(pclk))
