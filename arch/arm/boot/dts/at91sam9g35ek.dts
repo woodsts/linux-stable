@@ -35,6 +35,10 @@
 			lcdovl1@f8038100 {
 				status = "okay";
 			};
+
+			lcdheo1@f8038280 {
+				status = "okay";
+			};
 		};
 	};
 };

@@ -289,6 +289,13 @@
 				       0xf8038800 0x3ff>;
 				status = "disabled";
 			};
+
+			lcdheo1@f8038280 {
+				compatible = "atmel,at91sam9x5-heo";
+				reg = <0xf8038280 0xbf>;
+				interrupts = <25 4 3>;
+				status = "disabled";
+			};
 		};
 
 		nand0: nand@40000000 {
