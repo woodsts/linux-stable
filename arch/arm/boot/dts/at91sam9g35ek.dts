@@ -20,16 +20,19 @@
 				status = "okay";
 			};
 
-			lcd@f8038000 {
+			lcd_bus@f8038000 {
 				status = "okay";
-			};
+				lcd@f8038000 {
+					status = "okay";
+				};
 
-			lcdovl1@f8038100 {
-				status = "okay";
-			};
+				lcdovl1@f8038100 {
+					status = "okay";
+				};
 
-			lcdheo1@f8038280 {
-				status = "okay";
+				lcdheo1@f8038280 {
+					status = "okay";
+				};
 			};
 		};
 	};

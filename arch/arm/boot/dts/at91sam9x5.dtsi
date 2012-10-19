@@ -527,28 +527,36 @@
 				pinctrl-names = "default";
 			};
 
-			lcd@f8038000 {
-				compatible = "atmel,at91sam9x5-lcd";
-				reg = <0xf8038000 0xff
-				       0xf8038400 0x3ff>;
-				interrupts = <25 4 3>;
+			lcd_bus@f8038000 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "atmel,at91sam9x5-lcd-bus", "simple-bus";
+				ranges = <0xf8038000 0xf8038000 0x4000>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_lcd>;
 				status = "disabled";
-			};
 
-			lcdovl1@f8038100 {
-				compatible = "atmel,at91sam9x5-lcd";
-				reg = <0xf8038100 0xff
-				       0xf8038800 0x3ff>;
-				status = "disabled";
-			};
+				lcd@f8038000 {
+					compatible = "atmel,at91sam9x5-lcd";
+					reg = <0xf8038000 0xff
+					       0xf8038400 0x3ff>;
+					interrupts = <25 4 3>;
+					status = "disabled";
+				};
 
-			lcdheo1@f8038280 {
-				compatible = "atmel,at91sam9x5-heo";
-				reg = <0xf8038280 0xbf>;
-				interrupts = <25 4 3>;
-				status = "disabled";
+				lcdovl1@f8038100 {
+					compatible = "atmel,at91sam9x5-lcd";
+					reg = <0xf8038100 0xff
+					       0xf8038800 0x3ff>;
+					status = "disabled";
+				};
+
+				lcdheo1@f8038280 {
+					compatible = "atmel,at91sam9x5-heo";
+					reg = <0xf8038280 0xbf>;
+					interrupts = <25 4 3>;
+					status = "disabled";
+				};
 			};
 
 			spi0: spi@f0000000 {
