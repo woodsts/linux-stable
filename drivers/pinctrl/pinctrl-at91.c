@@ -1213,7 +1213,7 @@ static void gpio_irq_mask(struct irq_data *d)
 	unsigned	mask = 1 << d->hwirq;
 
 	if (pio)
-		writel_relaxed(mask, pio + PIO_IDR);
+		__raw_writel(mask, pio + PIO_IDR);
 }
 
 static void gpio_irq_unmask(struct irq_data *d)
@@ -1223,7 +1223,7 @@ static void gpio_irq_unmask(struct irq_data *d)
 	unsigned	mask = 1 << d->hwirq;
 
 	if (pio)
-		writel_relaxed(mask, pio + PIO_IER);
+		__raw_writel(mask, pio + PIO_IER);
 }
 
 static int gpio_irq_type(struct irq_data *d, unsigned type)
@@ -1321,7 +1321,7 @@ static void gpio_irq_handler(unsigned irq, struct irq_desc *desc)
 		 * When there none are pending, we're finished unless we need
 		 * to process multiple banks (like ID_PIOCDE on sam9263).
 		 */
-		isr = readl_relaxed(pio + PIO_ISR) & readl_relaxed(pio + PIO_IMR);
+		isr = __raw_readl(pio + PIO_ISR) & __raw_readl(pio + PIO_IMR);
 		if (!isr) {
 			if (!at91_gpio->next)
 				break;
