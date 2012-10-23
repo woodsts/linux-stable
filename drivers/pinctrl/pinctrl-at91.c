@@ -759,7 +759,7 @@ static int at91_pinconf_set(struct pinctrl_dev *pctldev,
 	if (info->ops->set_deglitch)
 		info->ops->set_deglitch(pio, mask, config & DEGLITCH);
 	if (info->ops->set_debounce)
-		info->ops->set_debounce(pio, mask, DEBOUNCE,
+		info->ops->set_debounce(pio, mask, config & DEBOUNCE,
 				(config & DEBOUNCE_VAL) >> DEBOUNCE_VAL_SHIFT);
 	if (info->ops->set_pulldown)
 		info->ops->set_pulldown(pio, mask, config & PULL_DOWN);
