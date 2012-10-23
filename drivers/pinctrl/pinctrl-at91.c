@@ -455,8 +455,6 @@ static bool at91_mux_pio3_get_pulldown(void __iomem *pio, unsigned pin)
 
 static void at91_mux_pio3_set_pulldown(void __iomem *pio, unsigned mask, bool is_on)
 {
-	/* Disable pull-up anyway */
-	__raw_writel(mask, pio + PIO_PUDR);
 	__raw_writel(mask, pio + (is_on ? PIO_PPDER : PIO_PPDDR));
 }
 
@@ -752,6 +750,9 @@ static int at91_pinconf_set(struct pinctrl_dev *pctldev,
 	dev_dbg(info->dev, "%s:%d, pin_id=%d, config=0x%lx", __func__, __LINE__, pin_id, config);
 	pio = pin_to_controller(info, pin_to_bank(pin_id));
 	mask = pin_to_mask(pin_id % MAX_NB_GPIO_PER_BANK);
+
+	if (config & PULL_UP && config & PULL_DOWN)
+		return -EINVAL;
 
 	at91_mux_set_pullup(pio, mask, config & PULL_UP);
 	at91_mux_set_multidrive(pio, mask, config & MULTI_DRIVE);
