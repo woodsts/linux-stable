@@ -31,6 +31,7 @@
 			atmel,pmecc-cap = <2>;
 			atmel,pmecc-sector-size = <512>;
 			nand-on-flash-bbt;
+			pinctrl-0 = <&pinctrl_nand_rdy_enable &pinctrl_nand_oe_we_ale_cle &pinctrl_nand_bus_on_d16_8bit>;
 			status = "okay";
 
 			at91bootstrap@0 {
