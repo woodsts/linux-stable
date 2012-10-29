@@ -317,7 +317,7 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 	dev_dbg(info->device, "  * LCDC_LCDCFG4 = %08lx\n", value);
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG4, value);
 
-	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG0, LCDC_BASECFG0_BLEN_AHB_INCR4 | LCDC_BASECFG0_DLBO);
+	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG0, LCDC_BASECFG0_BLEN_AHB_INCR16 | LCDC_BASECFG0_DLBO);
 	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG1, atmel_hlcdfb_get_rgbmode(info));
 	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG2, 0);
 	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG3, 0);	/* Default color */
@@ -357,7 +357,7 @@ static int atmel_hlcdfb_setup_core_ovl(struct fb_info *info)
 	}
 
 	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG0,
-			LCDC_OVRCFG0_BLEN_AHB_INCR4 | LCDC_OVRCFG0_DLBO);
+			LCDC_OVRCFG0_BLEN_AHB_INCR16 | LCDC_OVRCFG0_DLBO);
 	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG1,
 			atmel_hlcdfb_get_rgbmode(info));
 	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG2, xpos |
