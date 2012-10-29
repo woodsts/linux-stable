@@ -84,14 +84,14 @@ static void atmel_hlcdfb_update_dma_ovl(struct fb_info *info,
 
 	desc->address = dma_addr;
 	/* Disable DMA transfer interrupt & descriptor loaded interrupt. */
-	desc->control = LCDC_OVRCTRL1_ADDIEN | LCDC_OVRCTRL1_DSCRIEN
-			| LCDC_OVRCTRL1_DMAIEN | LCDC_OVRCTRL1_DFETCH;
+	desc->control = LCDC_OVRCTRL_ADDIEN | LCDC_OVRCTRL_DSCRIEN
+			| LCDC_OVRCTRL_DMAIEN | LCDC_OVRCTRL_DFETCH;
 	desc->next = sinfo->dma_desc_phys;
 
-	lcdc_writel(sinfo, ATMEL_LCDC_OVRADDR1, dma_addr);
-	lcdc_writel(sinfo, ATMEL_LCDC_OVRCTRL1, desc->control);
-	lcdc_writel(sinfo, ATMEL_LCDC_OVRNEXT1, sinfo->dma_desc_phys);
-	lcdc_writel(sinfo, ATMEL_LCDC_OVRCHER1, LCDC_OVRCHER1_CHEN | LCDC_OVRCHER1_UPDATEEN);
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRADDR, dma_addr);
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCTRL, desc->control);
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRNEXT, sinfo->dma_desc_phys);
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCHER, LCDC_OVRCHER_CHEN | LCDC_OVRCHER_UPDATEEN);
 }
 
 #if defined(CONFIG_BACKLIGHT_ATMEL_LCDC)
@@ -345,26 +345,26 @@ static int atmel_hlcdfb_setup_core_ovl(struct fb_info *info)
 		ypos = info->var.nonstd & 0x3ff;
 		xres = info->var.xres ? info->var.xres - 1 : 0;
 		yres = info->var.yres ? info->var.yres - 1 : 0;
-		cfg9 =  LCDC_OVR1CFG9_DMA | LCDC_OVR1CFG9_OVR |
-			LCDC_OVR1CFG9_ITER | LCDC_OVR1CFG9_ITER2BL |
-			LCDC_OVR1CFG9_REP;
+		cfg9 =  LCDC_OVRCFG9_DMA | LCDC_OVRCFG9_OVR |
+			LCDC_OVRCFG9_ITER | LCDC_OVRCFG9_ITER2BL |
+			LCDC_OVRCFG9_REP;
 		if (info->var.transp.offset)
-			cfg9 |= LCDC_OVR1CFG9_LAEN;
+			cfg9 |= LCDC_OVRCFG9_LAEN;
 		else
-			cfg9 |= LCDC_OVR1CFG9_GAEN | LCDC_OVR1CFG9_GA;
+			cfg9 |= LCDC_OVRCFG9_GAEN | LCDC_OVRCFG9_GA;
 	} else {
 		xpos = ypos = yres = xres = cfg9 = 0;
 	}
 
-	lcdc_writel(sinfo, ATMEL_LCDC_OVR1CFG0,
-			LCDC_OVR1CFG0_BLEN_AHB_INCR4 | LCDC_OVR1CFG0_DLBO);
-	lcdc_writel(sinfo, ATMEL_LCDC_OVR1CFG1,
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG0,
+			LCDC_OVRCFG0_BLEN_AHB_INCR4 | LCDC_OVRCFG0_DLBO);
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG1,
 			atmel_hlcdfb_get_rgbmode(info));
-	lcdc_writel(sinfo, ATMEL_LCDC_OVR1CFG2, xpos |
-			(ypos << LCDC_OVR1CFG2_YOFFSET_OFFSET));
-	lcdc_writel(sinfo, ATMEL_LCDC_OVR1CFG3, xres |
-			(yres << LCDC_OVR1CFG3_YSIZE_OFFSET));
-	lcdc_writel(sinfo, ATMEL_LCDC_OVR1CFG9, cfg9);
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG2, xpos |
+			(ypos << LCDC_OVRCFG2_YOFFSET_OFFSET));
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG3, xres |
+			(yres << LCDC_OVRCFG3_YSIZE_OFFSET));
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG9, cfg9);
 
 	return 0;
 }
@@ -492,7 +492,8 @@ static struct atmel_lcdfb_devdata dev_data_ovl = {
 
 static const struct platform_device_id atmelfb_dev_table[] = {
 	{ "atmel_hlcdfb_base", (kernel_ulong_t)&dev_data_base },
-	{ "atmel_hlcdfb_ovl", (kernel_ulong_t)&dev_data_ovl },
+	{ "atmel_hlcdfb_ovl1", (kernel_ulong_t)&dev_data_ovl },
+	{ "atmel_hlcdfb_ovl2", (kernel_ulong_t)&dev_data_ovl },
 }
 MODULE_DEVICE_TABLE(platform, atmelfb_dev_table);
 
