@@ -46,6 +46,7 @@
 
 #include <asm/mach/serial_at91.h>
 #include <mach/board.h>
+#include <linux/platform_data/dma-atmel.h>
 
 #ifdef CONFIG_ARM
 #include <mach/cpu.h>
