@@ -18,11 +18,9 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/errno.h>
-#include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
-#include <linux/miscdevice.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/platform_device.h>
@@ -31,7 +29,6 @@
 #include <linux/jiffies.h>
 #include <linux/timer.h>
 #include <linux/bitops.h>
-#include <linux/uaccess.h>
 #include <linux/of.h>
 
 #include "at91sam9_wdt.h"
@@ -102,35 +99,6 @@ static void at91_ping(unsigned long data)
 		mod_timer(&at91wdt_private.timer, jiffies + WDT_TIMEOUT);
 	} else
 		pr_crit("I will reset your machine !\n");
-}
-
-/*
- * Watchdog device is opened, and watchdog starts running.
- */
-static int at91_wdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(0, &at91wdt_private.open))
-		return -EBUSY;
-
-	at91wdt_private.next_heartbeat = jiffies + heartbeat * HZ;
-	mod_timer(&at91wdt_private.timer, jiffies + WDT_TIMEOUT);
-
-	return nonseekable_open(inode, file);
-}
-
-/*
- * Close the watchdog device.
- */
-static int at91_wdt_close(struct inode *inode, struct file *file)
-{
-	clear_bit(0, &at91wdt_private.open);
-
-	/* stop internal ping */
-	if (!at91wdt_private.expect_close)
-		del_timer(&at91wdt_private.timer);
-
-	at91wdt_private.expect_close = 0;
-	return 0;
 }
 
 /*
@@ -209,53 +177,7 @@ static long at91_wdt_ioctl(struct file *file,
 	return -ENOTTY;
 }
 
-/*
- * Pat the watchdog whenever device is written to.
- */
-static ssize_t at91_wdt_write(struct file *file, const char *data, size_t len,
-								loff_t *ppos)
-{
-	if (!len)
-		return 0;
-
-	/* Scan for magic character */
-	if (!nowayout) {
-		size_t i;
-
-		at91wdt_private.expect_close = 0;
-
-		for (i = 0; i < len; i++) {
-			char c;
-			if (get_user(c, data + i))
-				return -EFAULT;
-			if (c == 'V') {
-				at91wdt_private.expect_close = 42;
-				break;
-			}
-		}
-	}
-
-	at91wdt_private.next_heartbeat = jiffies + heartbeat * HZ;
-
-	return len;
-}
-
 /* ......................................................................... */
-
-static const struct file_operations at91wdt_fops = {
-	.owner			= THIS_MODULE,
-	.llseek			= no_llseek,
-	.unlocked_ioctl	= at91_wdt_ioctl,
-	.open			= at91_wdt_open,
-	.release		= at91_wdt_close,
-	.write			= at91_wdt_write,
-};
-
-static struct miscdevice at91wdt_miscdev = {
-	.minor		= WATCHDOG_MINOR,
-	.name		= "watchdog",
-	.fops		= &at91wdt_fops,
-};
 
 static struct watchdog_device at91wdt_wdd __initdata = {
 	.timeout = WDT_HEARTBEAT,
@@ -267,10 +189,6 @@ static int __init at91wdt_probe(struct platform_device *pdev)
 {
 	struct resource	*r;
 	int res;
-
-	if (at91wdt_miscdev.parent)
-		return -EBUSY;
-	at91wdt_miscdev.parent = &pdev->dev;
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!r)
@@ -288,10 +206,6 @@ static int __init at91wdt_probe(struct platform_device *pdev)
 	if (res)
 		return res;
 
-	res = misc_register(&at91wdt_miscdev);
-	if (res)
-		return res;
-
 	at91wdt_private.next_heartbeat = jiffies + at91wdt_wdd.timeout * HZ;
 	setup_timer(&at91wdt_private.timer, at91_ping, 0);
 	mod_timer(&at91wdt_private.timer, jiffies + WDT_TIMEOUT);
@@ -305,10 +219,6 @@ static int __init at91wdt_probe(struct platform_device *pdev)
 static int __exit at91wdt_remove(struct platform_device *pdev)
 {
 	int res;
-
-	res = misc_deregister(&at91wdt_miscdev);
-	if (!res)
-		at91wdt_miscdev.parent = NULL;
 
 	return res;
 }
@@ -347,4 +257,3 @@ module_exit(at91sam_wdt_exit);
 MODULE_AUTHOR("Renaud CERRATO <r.cerrato@til-technologies.fr>");
 MODULE_DESCRIPTION("Watchdog driver for Atmel AT91SAM9x processors");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS_MISCDEV(WATCHDOG_MINOR);
