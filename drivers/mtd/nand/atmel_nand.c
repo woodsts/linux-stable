@@ -85,6 +85,14 @@ static struct nand_ecclayout atmel_oobinfo_small = {
 	},
 };
 
+struct atmel_nfc {
+	bool			nfc_write_sram;
+	void __iomem		*base_cmd_regs;
+	void __iomem		*hsmc_regs;
+	void __iomem		*sram_bank0;
+	void __iomem		*sram_bank1;
+};
+
 struct atmel_nand_host {
 	struct nand_chip	nand_chip;
 	struct mtd_info		mtd;
@@ -96,6 +104,9 @@ struct atmel_nand_host {
 
 	struct completion	comp;
 	struct dma_chan		*dma_chan;
+
+	bool			has_nfc;
+	struct atmel_nfc	nfc;
 
 	bool			has_pmecc;
 	u8			pmecc_corr_cap;
@@ -123,6 +134,8 @@ struct atmel_nand_host {
 	int			*pmecc_dmu;
 	int			*pmecc_delta;
 };
+
+#include "atmel_nand_nfc.c"
 
 static struct nand_ecclayout atmel_pmecc_oobinfo;
 
@@ -1270,6 +1283,7 @@ static int __devinit atmel_of_init_port(struct atmel_nand_host *host,
 	board->det_pin = of_get_gpio(np, 2);
 
 	host->has_pmecc = of_property_read_bool(np, "atmel,has-pmecc");
+	host->has_nfc = of_property_read_bool(np, "atmel,has-nfc");
 
 	if (!(board->ecc_mode == NAND_ECC_HW) || !host->has_pmecc)
 		return 0;	/* Not using PMECC */
@@ -1443,6 +1457,12 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 		dev_err(host->dev, "Failed to request pinctrl\n");
 		res = PTR_ERR(pinctrl);
 		goto err_nand_ioremap;
+	}
+
+	if (host->has_nfc) {
+		res = atmel_nfc_init(pdev, mtd);
+		if (res)
+			goto err_nand_ioremap;
 	}
 
 	if (gpio_is_valid(host->board.rdy_pin)) {
