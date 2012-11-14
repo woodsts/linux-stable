@@ -148,4 +148,9 @@
 /* Time out value for reading PMECC status register */
 #define PMECC_MAX_TIMEOUT_MS			100
 
+enum pmecc_op {
+	PMECC_READ,
+	PMECC_WRITE,
+};
+
 #endif

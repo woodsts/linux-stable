@@ -13,6 +13,8 @@
 #include "atmel_nand_nfc.h"
 #include <linux/delay.h>
 
+static void pmecc_enable(struct atmel_nand_host *host, enum pmecc_op op);
+
 static u32 nfc_status;
 static inline void nfc_read_status(struct atmel_nand_host *host)
 {
@@ -206,21 +208,11 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 			/* Enable Data transfer to sram */
 			dataen = NFCADDR_CMD_DATAEN;
 
-			if (chip->ecc.mode == NAND_ECC_HW && host->has_pmecc) {
-				/* Need enable PMECC now, since NFC will
-				 * transfer data in bus after sending nfc
-				 * read command.
-				 */
-				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_RST);
-				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_DISABLE);
-				pmecc_writel(host->ecc, CFG,
-					(pmecc_readl_relaxed(host->ecc, CFG)
-					& ~PMECC_CFG_WRITE_OP)
-					| PMECC_CFG_AUTO_ENABLE);
-
-				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_ENABLE);
-				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_DATA);
-			}
+			/* Need enable PMECC now, since NFC will transfer
+			 * data in bus after sending nfc read command.
+			 */
+			if (chip->ecc.mode == NAND_ECC_HW && host->has_pmecc)
+				pmecc_enable(host, PMECC_READ);
 		}
 
 		cmd2 = NAND_CMD_READSTART << 10;
