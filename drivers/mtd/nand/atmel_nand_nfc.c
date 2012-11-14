@@ -166,6 +166,7 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	unsigned int addr1234 = 0;
 	unsigned int cycle0 = 0;
 	bool do_addr = true;
+	host->nfc.data_in_sram = NULL;
 
 	dev_dbg(host->dev, "%s: cmd = 0x%02x, col = 0x%08x, page = 0x%08x\n",
 	     __func__, command, column, page_addr);
@@ -201,6 +202,26 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 			command = NAND_CMD_READ0; /* only READ0 is valid */
 			cmd1 = command << 2;
 		}
+		if (host->use_nfc_sram) {
+			/* Enable Data transfer to sram */
+			dataen = NFCADDR_CMD_DATAEN;
+
+			if (chip->ecc.mode == NAND_ECC_HW && host->has_pmecc) {
+				/* Need enable PMECC now, since NFC will
+				 * transfer data in bus after sending nfc
+				 * read command.
+				 */
+				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_RST);
+				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_DISABLE);
+				pmecc_writel(host->ecc, CFG,
+					(pmecc_readl_relaxed(host->ecc, CFG)
+					& ~PMECC_CFG_WRITE_OP)
+					| PMECC_CFG_AUTO_ENABLE);
+
+				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_ENABLE);
+				pmecc_writel(host->ecc, CTRL, PMECC_CTRL_DATA);
+			}
+		}
 
 		cmd2 = NAND_CMD_READSTART << 10;
 		vcmd2 = NFCADDR_CMD_VCMD2;
@@ -220,6 +241,9 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	nfc_addr_cmd = cmd1 | cmd2 | vcmd2 | acycle | csid | dataen | nfcwr;
 	nfc_send_command(host, nfc_addr_cmd, addr1234, cycle0);
 
+	if (dataen == NFCADDR_CMD_DATAEN)
+		nfc_wait_status(host, ATMEL_HSMC_NFC_XFR_DONE);
+
 	/*
 	 * Program and erase have their own busy handlers status, sequential
 	 * in, and deplete1 need no delay.
@@ -233,10 +257,9 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_STATUS:
 	case NAND_CMD_DEPLETE1:
 	case NAND_CMD_RNDOUT:
-		return;
-
 	case NAND_CMD_SEQIN:
 		return;
+
 	case NAND_CMD_STATUS_ERROR:
 	case NAND_CMD_STATUS_ERROR0:
 	case NAND_CMD_STATUS_ERROR1:
@@ -247,9 +270,56 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 		return;
 
 	case NAND_CMD_READ0:
+		if (dataen == NFCADDR_CMD_DATAEN) {
+			host->nfc.data_in_sram = host->nfc.sram_bank0;
+			return;
+		}
 		/* fall through */
 	default:
 		nfc_wait_status(host, ATMEL_HSMC_NFC_RB_EDGE);
 	}
 }
 
+static int atmel_nfc_sram_init(struct mtd_info *mtd)
+{
+	struct nand_chip *chip = mtd->priv;
+	struct atmel_nand_host *host = chip->priv;
+	int res = 0;
+
+	/* Initialize the NFC CFG register */
+	unsigned int cfg_nfc = 0;
+
+	/* set page size and oob layout */
+	switch (mtd->writesize) {
+	case 512:
+		cfg_nfc = ATMEL_HSMC_PAGESIZE_512;
+		break;
+	case 1024:
+		cfg_nfc = ATMEL_HSMC_PAGESIZE_1024;
+		break;
+	case 2048:
+		cfg_nfc = ATMEL_HSMC_PAGESIZE_2048;
+		break;
+	case 4096:
+		cfg_nfc = ATMEL_HSMC_PAGESIZE_4096;
+		break;
+	case 8192:
+		cfg_nfc = ATMEL_HSMC_PAGESIZE_8192;
+		break;
+	default:
+		printk(KERN_ERR "Unsupported page size for NFC.\n");
+		res = -ENXIO;
+		return res;
+	}
+
+	cfg_nfc |= ((mtd->oobsize / 4) - 1) << 24;
+	cfg_nfc |= ATMEL_HSMC_RSPARE |
+			ATMEL_HSMC_NFC_DTOCYC | ATMEL_HSMC_NFC_DTOMUL;
+	nfc_writel(host->nfc.hsmc_regs, CFG, cfg_nfc);
+
+	host->nfc.nfc_write_sram = false;
+
+	dev_info(host->dev, "Using NFC Sram\n");
+
+	return 0;
+}
