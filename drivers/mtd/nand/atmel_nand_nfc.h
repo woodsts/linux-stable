@@ -53,6 +53,9 @@
 #define		ATMEL_HSMC_NFC_ASE		(1 << 23)
 #define		ATMEL_HSMC_NFC_RB_EDGE		(1 << 24)
 
+#define ATMEL_HSMC_NFC_IER		0x0c	/* NFC Interrupt Enable Register */
+#define ATMEL_HSMC_NFC_IDR		0x10	/* NFC Interrupt Disable Register */
+#define ATMEL_HSMC_NFC_IMR		0x14	/* NFC Interrupt Mask Register */
 #define ATMEL_HSMC_NFC_CYCLE0		0x18	/* NFC Address Cycle Zero Register */
 #define		ATMEL_HSMC_NFC_ADDR_CYCLE0	(0xff)
 
