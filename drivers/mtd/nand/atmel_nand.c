@@ -40,6 +40,7 @@
 #include <linux/dmaengine.h>
 #include <linux/gpio.h>
 #include <linux/io.h>
+#include <linux/interrupt.h>
 #include <linux/platform_data/atmel.h>
 #include <linux/pinctrl/consumer.h>
 
@@ -106,6 +107,9 @@ struct atmel_nand_host {
 	struct atmel_nand_data	board;
 	struct device		*dev;
 	void __iomem		*ecc;
+
+	int			irq;
+	spinlock_t		lock;
 
 	struct completion	comp;
 	struct dma_chan		*dma_chan;
@@ -1436,6 +1440,20 @@ static int __init atmel_hw_nand_init_params(struct platform_device *pdev,
 	return 0;
 }
 
+/* SMC interrupt service routine */
+static irqreturn_t hsmc_interrupt(int irq, void *dev_id)
+{
+	struct atmel_nand_host *host = dev_id;
+	u32 status, mask, pending;
+	irqreturn_t ret = IRQ_NONE;
+	printk(KERN_ERR "interrupt comes.\n");
+
+	spin_lock(&host->lock);
+	spin_unlock(&host->lock);
+	
+	return IRQ_HANDLED;
+}
+
 /*
  * Probe for the NAND device.
  */
@@ -1446,7 +1464,7 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 	struct nand_chip *nand_chip;
 	struct resource *mem;
 	struct mtd_part_parser_data ppdata = {};
-	int res;
+	int res, irq;
 	struct pinctrl *pinctrl;
 
 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
@@ -1505,6 +1523,22 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 		nand_chip->select_chip = nfc_select_chip;
 		nand_chip->dev_ready = nfc_device_ready;
 		nand_chip->cmdfunc = nfc_nand_command;
+
+		/* Initialize the interrupt for NFC */
+		irq = platform_get_irq(pdev, 0);
+		if (irq < 0) {
+			dev_err(host->dev, "Cannot get HSMC irq!\n");
+			goto err_nand_ioremap;
+		}
+
+		res = request_irq(irq, hsmc_interrupt, 0, "hsmc", host);
+		if (res) {
+			dev_err(&pdev->dev, "Unable to request HSMC irq %d\n", irq);
+			goto err_nand_ioremap;
+		}
+
+		host->irq = irq;
+		spin_lock_init(&host->lock);
 	} else {
 		nand_chip->cmd_ctrl = atmel_nand_cmd_ctrl;
 
@@ -1658,6 +1692,8 @@ err_no_card:
 	if (host->dma_chan)
 		dma_release_channel(host->dma_chan);
 err_nand_ioremap:
+	if (host->irq)
+		free_irq(host->irq, host);
 	return res;
 }
 
