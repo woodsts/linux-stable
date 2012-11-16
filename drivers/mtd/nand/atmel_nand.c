@@ -86,7 +86,7 @@ static struct nand_ecclayout atmel_oobinfo_small = {
 };
 
 struct atmel_nfc {
-	bool			nfc_write_sram;
+	bool			will_write_sram;
 	void __iomem		*base_cmd_regs;
 	void __iomem		*hsmc_regs;
 	void __iomem		*sram_bank0;
@@ -839,9 +839,10 @@ static int atmel_nand_pmecc_write_page(struct mtd_info *mtd,
 	int i, j;
 	unsigned long end_time;
 
-	pmecc_enable(host, PMECC_WRITE);
-
-	chip->write_buf(mtd, (u8 *)buf, mtd->writesize);
+	if (!host->use_nfc_sram) {
+		pmecc_enable(host, PMECC_WRITE);
+		chip->write_buf(mtd, (u8 *)buf, mtd->writesize);
+	}
 
 	end_time = jiffies + msecs_to_jiffies(PMECC_MAX_TIMEOUT_MS);
 	while ((pmecc_readl_relaxed(host->ecc, SR) & PMECC_SR_BUSY)) {

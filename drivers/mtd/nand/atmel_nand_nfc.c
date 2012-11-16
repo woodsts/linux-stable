@@ -223,6 +223,8 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_SEQIN:
 	case NAND_CMD_RNDIN:
 		nfcwr = NFCADDR_CMD_NFCWR;
+		if (host->nfc.will_write_sram && command == NAND_CMD_SEQIN)
+			dataen = NFCADDR_CMD_DATAEN;
 		break;
 	default:
 		break;
@@ -272,6 +274,58 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	}
 }
 
+static int nfc_sram_write_page(struct mtd_info *mtd, struct nand_chip *chip,
+			   const uint8_t *buf, int oob_required, int page,
+			   int cached, int raw)
+{
+	int cfg, len;
+	int status = 0;
+	struct atmel_nand_host *host = chip->priv;
+	char *sram = host->nfc.sram_bank0;
+
+	cfg = nfc_readl(host->nfc.hsmc_regs, CFG);
+	len = mtd->writesize;
+
+	if (unlikely(raw)) {
+		len += mtd->oobsize;
+		nfc_writel(host->nfc.hsmc_regs, CFG, cfg | ATMEL_HSMC_WSPARE);
+	} else
+		nfc_writel(host->nfc.hsmc_regs, CFG, cfg & ~ATMEL_HSMC_WSPARE);
+
+	/* Copy page data to sram that will write to nand via NFC */
+	memcpy(sram, buf, len);
+
+	if (chip->ecc.mode == NAND_ECC_HW && host->has_pmecc)
+		/*
+		 * When use NFC sram, need set up PMECC before send
+		 * NAND_CMD_SEQIN command. Since when the nand command
+		 * is sent, nfc will do transfer from sram and nand.
+		 */
+		pmecc_enable(host, PMECC_WRITE);
+
+	host->nfc.will_write_sram = true;
+	chip->cmdfunc(mtd, NAND_CMD_SEQIN, 0x00, page);
+	host->nfc.will_write_sram = false;
+
+	if (likely(!raw))
+		/* Need to write ecc into oob */
+		status = chip->ecc.write_page(mtd, chip, buf, oob_required);
+
+	if (status < 0)
+		return status;
+
+	chip->cmdfunc(mtd, NAND_CMD_PAGEPROG, -1, -1);
+	status = chip->waitfunc(mtd, chip);
+
+	if ((status & NAND_STATUS_FAIL) && (chip->errstat))
+		status = chip->errstat(mtd, chip, FL_WRITING, status, page);
+
+	if (status & NAND_STATUS_FAIL)
+		return -EIO;
+
+	return 0;
+}
+
 static int atmel_nfc_sram_init(struct mtd_info *mtd)
 {
 	struct nand_chip *chip = mtd->priv;
@@ -309,9 +363,14 @@ static int atmel_nfc_sram_init(struct mtd_info *mtd)
 			ATMEL_HSMC_NFC_DTOCYC | ATMEL_HSMC_NFC_DTOMUL;
 	nfc_writel(host->nfc.hsmc_regs, CFG, cfg_nfc);
 
-	host->nfc.nfc_write_sram = false;
+	host->nfc.will_write_sram = false;
 
 	dev_info(host->dev, "Using NFC Sram\n");
+
+	/* Use Write page with NFC SRAM only for PMECC or ECC NONE. */
+	if ((chip->ecc.mode == NAND_ECC_HW && host->has_pmecc) ||
+			chip->ecc.mode == NAND_ECC_NONE)
+		chip->write_page = nfc_sram_write_page;
 
 	return 0;
 }
