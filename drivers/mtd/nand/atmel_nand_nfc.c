@@ -84,6 +84,14 @@ static void nfc_select_chip(struct mtd_info *mtd, int chip)
 		nfc_writel(host->nfc.hsmc_regs, CTRL, ATMEL_HSMC_NFC_ENABLE);
 }
 
+static void* get_bank_sram_base(struct atmel_nand_host *host)
+{
+	if (nfc_readl(host->nfc.hsmc_regs, BANK) & ATMEL_HSMC_NFC_BANK1)
+		return host->nfc.sram_bank1;
+	else
+		return host->nfc.sram_bank0;
+}
+
 static int atmel_nfc_init(struct platform_device *pdev, struct mtd_info *mtd)
 {
 	struct nand_chip *nand_chip = mtd->priv;
@@ -107,6 +115,8 @@ static int atmel_nfc_init(struct platform_device *pdev, struct mtd_info *mtd)
 			"Can not get I/O resource for Nand Flash Controller!\n");
 		return -EIO;
 	}
+
+	nfc->sram_bank1 = nfc->sram_bank0 + 0x1200;
 
 	return 0;
 }
@@ -265,7 +275,7 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 
 	case NAND_CMD_READ0:
 		if (dataen == NFCADDR_CMD_DATAEN) {
-			host->nfc.data_in_sram = host->nfc.sram_bank0;
+			host->nfc.data_in_sram = get_bank_sram_base(host);
 			return;
 		}
 		/* fall through */
@@ -281,7 +291,7 @@ static int nfc_sram_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 	int cfg, len;
 	int status = 0;
 	struct atmel_nand_host *host = chip->priv;
-	char *sram = host->nfc.sram_bank0;
+	char *sram = get_bank_sram_base(host);
 
 	cfg = nfc_readl(host->nfc.hsmc_regs, CFG);
 	len = mtd->writesize;

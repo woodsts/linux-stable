@@ -56,6 +56,10 @@
 #define ATMEL_HSMC_NFC_CYCLE0		0x18	/* NFC Address Cycle Zero Register */
 #define		ATMEL_HSMC_NFC_ADDR_CYCLE0	(0xff)
 
+#define ATMEL_HSMC_NFC_BANK		0x1c	/* NFC Bank Register */
+#define		ATMEL_HSMC_NFC_BANK0	(0 << 0)
+#define		ATMEL_HSMC_NFC_BANK1	(1 << 0)
+
 #define nfc_writel(addr, reg, value) \
 	writel((value), (addr) + ATMEL_HSMC_NFC_##reg)
 
