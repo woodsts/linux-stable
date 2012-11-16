@@ -1450,7 +1450,6 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 	/* Set address of NAND IO lines */
 	nand_chip->IO_ADDR_R = host->io_base;
 	nand_chip->IO_ADDR_W = host->io_base;
-	nand_chip->cmd_ctrl = atmel_nand_cmd_ctrl;
 
 	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
 	if (IS_ERR(pinctrl)) {
@@ -1463,41 +1462,47 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 		res = atmel_nfc_init(pdev, mtd);
 		if (res)
 			goto err_nand_ioremap;
-	}
 
-	if (gpio_is_valid(host->board.rdy_pin)) {
-		res = devm_gpio_request(&pdev->dev,
-				host->board.rdy_pin, "nand_rdy");
-		if (res < 0) {
-			dev_err(&pdev->dev,
-				"can't request rdy gpio %d\n", host->board.rdy_pin);
-			goto err_nand_ioremap;
+		nand_chip->select_chip = nfc_select_chip;
+		nand_chip->dev_ready = nfc_device_ready;
+		nand_chip->cmdfunc = nfc_nand_command;
+	} else {
+		nand_chip->cmd_ctrl = atmel_nand_cmd_ctrl;
+
+		if (gpio_is_valid(host->board.rdy_pin)) {
+			res = devm_gpio_request(&pdev->dev,
+					host->board.rdy_pin, "nand_rdy");
+			if (res < 0) {
+				dev_err(&pdev->dev,
+					"can't request rdy gpio %d\n", host->board.rdy_pin);
+				goto err_nand_ioremap;
+			}
+
+			res = gpio_direction_input(host->board.rdy_pin);
+			if (res < 0) {
+				dev_err(&pdev->dev,
+					"can't request input direction rdy gpio %d\n", host->board.rdy_pin);
+				goto err_nand_ioremap;
+			}
+
+			nand_chip->dev_ready = atmel_nand_device_ready;
 		}
 
-		res = gpio_direction_input(host->board.rdy_pin);
-		if (res < 0) {
-			dev_err(&pdev->dev,
-				"can't request input direction rdy gpio %d\n", host->board.rdy_pin);
-			goto err_nand_ioremap;
-		}
+		if (gpio_is_valid(host->board.enable_pin)) {
+			res = devm_gpio_request(&pdev->dev,
+					host->board.enable_pin, "nand_enable");
+			if (res < 0) {
+				dev_err(&pdev->dev,
+					"can't request enable gpio %d\n", host->board.enable_pin);
+				goto err_nand_ioremap;
+			}
 
-		nand_chip->dev_ready = atmel_nand_device_ready;
-	}
-
-	if (gpio_is_valid(host->board.enable_pin)) {
-		res = devm_gpio_request(&pdev->dev,
-				host->board.enable_pin, "nand_enable");
-		if (res < 0) {
-			dev_err(&pdev->dev,
-				"can't request enable gpio %d\n", host->board.enable_pin);
-			goto err_nand_ioremap;
-		}
-
-		res = gpio_direction_output(host->board.enable_pin, 1);
-		if (res < 0) {
-			dev_err(&pdev->dev,
-				"can't request output direction enable gpio %d\n", host->board.enable_pin);
-			goto err_nand_ioremap;
+			res = gpio_direction_output(host->board.enable_pin, 1);
+			if (res < 0) {
+				dev_err(&pdev->dev,
+					"can't request output direction enable gpio %d\n", host->board.enable_pin);
+				goto err_nand_ioremap;
+			}
 		}
 	}
 
