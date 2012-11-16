@@ -92,6 +92,14 @@ static void* get_bank_sram_base(struct atmel_nand_host *host)
 		return host->nfc.sram_bank0;
 }
 
+static dma_addr_t get_bank_sram_phys(struct atmel_nand_host *host)
+{
+	if (nfc_readl(host->nfc.hsmc_regs, BANK) & ATMEL_HSMC_NFC_BANK1)
+		return host->nfc.sram_bank1_phys;
+	else
+		return host->nfc.sram_bank0_phys;
+}
+
 static int atmel_nfc_init(struct platform_device *pdev, struct mtd_info *mtd)
 {
 	struct nand_chip *nand_chip = mtd->priv;
@@ -118,6 +126,8 @@ static int atmel_nfc_init(struct platform_device *pdev, struct mtd_info *mtd)
 
 	nfc->sram_bank1 = nfc->sram_bank0 + 0x1200;
 
+	nfc->sram_bank0_phys = (dma_addr_t)nfc_sram->start;
+	nfc->sram_bank1_phys = nfc->sram_bank0_phys + 0x1200;
 	return 0;
 }
 
@@ -371,6 +381,7 @@ static int atmel_nfc_sram_init(struct mtd_info *mtd)
 	cfg_nfc |= ((mtd->oobsize / 4) - 1) << 24;
 	cfg_nfc |= ATMEL_HSMC_RSPARE |
 			ATMEL_HSMC_NFC_DTOCYC | ATMEL_HSMC_NFC_DTOMUL;
+
 	nfc_writel(host->nfc.hsmc_regs, CFG, cfg_nfc);
 
 	host->nfc.will_write_sram = false;

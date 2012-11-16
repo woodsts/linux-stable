@@ -45,7 +45,7 @@
 
 #include <mach/cpu.h>
 
-static int use_dma;
+static int use_dma = 1;
 module_param(use_dma, int, 0);
 
 static int on_flash_bbt = 0;
@@ -91,6 +91,8 @@ struct atmel_nfc {
 	void __iomem		*hsmc_regs;
 	void __iomem		*sram_bank0;
 	void __iomem		*sram_bank1;
+	dma_addr_t		sram_bank0_phys;
+	dma_addr_t		sram_bank1_phys;
 
 	/* Point to the sram bank which include readed data via NFC */
 	void __iomem		*data_in_sram;
@@ -280,7 +282,12 @@ static int atmel_nand_dma_op(struct mtd_info *mtd, void *buf, int len,
 	}
 
 	if (is_read) {
-		dma_src_addr = host->io_phys;
+		if (host->nfc.data_in_sram)
+			dma_src_addr = get_bank_sram_phys(host) +
+				(host->nfc.data_in_sram - get_bank_sram_base(host));
+		else
+			dma_src_addr = host->io_phys;
+
 		dma_dst_addr = phys_addr;
 	} else {
 		dma_src_addr = phys_addr;
@@ -306,6 +313,10 @@ static int atmel_nand_dma_op(struct mtd_info *mtd, void *buf, int len,
 
 	dma_async_issue_pending(host->dma_chan);
 	wait_for_completion(&host->comp);
+
+	if (is_read && host->nfc.data_in_sram)
+		/* After read data from SRAM, need to increase the position */
+		host->nfc.data_in_sram += len;
 
 	err = 0;
 
