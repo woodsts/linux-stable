@@ -291,7 +291,11 @@ static int atmel_nand_dma_op(struct mtd_info *mtd, void *buf, int len,
 		dma_dst_addr = phys_addr;
 	} else {
 		dma_src_addr = phys_addr;
-		dma_dst_addr = host->io_phys;
+
+		if (host->use_nfc_sram)
+			dma_dst_addr = get_bank_sram_phys(host);
+		else
+			dma_dst_addr = host->io_phys;
 	}
 
 	tx = dma_dev->device_prep_dma_memcpy(host->dma_chan, dma_dst_addr,

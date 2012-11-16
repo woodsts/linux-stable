@@ -14,6 +14,8 @@
 #include <linux/delay.h>
 
 static void pmecc_enable(struct atmel_nand_host *host, enum pmecc_op op);
+static int atmel_nand_dma_op(struct mtd_info *mtd, void *buf, int len,
+			       int is_read);
 
 static u32 nfc_status;
 static inline void nfc_read_status(struct atmel_nand_host *host)
@@ -313,7 +315,13 @@ static int nfc_sram_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 		nfc_writel(host->nfc.hsmc_regs, CFG, cfg & ~ATMEL_HSMC_WSPARE);
 
 	/* Copy page data to sram that will write to nand via NFC */
-	memcpy(sram, buf, len);
+	if (use_dma) {
+		if (atmel_nand_dma_op(mtd, (void *)buf, len, 0) != 0)
+			/* Fall back to use cpu copy */
+			memcpy(sram, buf, len);
+	} else {
+		memcpy(sram, buf, len);
+	}
 
 	if (chip->ecc.mode == NAND_ECC_HW && host->has_pmecc)
 		/*
