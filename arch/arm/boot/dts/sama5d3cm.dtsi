@@ -1,0 +1,39 @@
+/*
+ * sama5d3cm.dtsi - Device Tree Include file for SAM9A5D3x CPU Module
+ *
+ *  Copyright (C) 2012 Atmel,
+ *                2012 Ludovic Desroches <ludovic.desroches@atmel.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/ {
+	memory {
+		reg = <0x20000000 0x20000000>;
+	};
+
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		main_clock: clock@0 {
+			compatible = "atmel,osc", "fixed-clock";
+			clock-frequency = <12000000>;
+		};
+	};
+
+	ahb {
+		nand0: nand@60000000 {
+			nand-bus-width = <8>;
+			nand-ecc-mode = "hw";
+			atmel,has-pmecc;
+			atmel,pmecc-cap = <2>;
+			atmel,pmecc-sector-size = <512>;
+			atmel,has-nfc;
+			atmel,use-nfc-sram;
+			nand-on-flash-bbt;
+			status = "okay";
+		};
+	};
+};

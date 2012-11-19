@@ -124,7 +124,11 @@
 #define	ATC_DIF(i)		((0x3 & (i)) <<  4)	/* Dst tx done via AHB-Lite Interface i */
 				  /* Specify AHB interfaces */
 #define AT_DMA_MEM_IF		0 /* interface 0 as memory interface */
+#ifdef CONFIG_SOC_SAMA5
+#define AT_DMA_PER_IF		2 /* interface 2 as peripheral interface */
+#else
 #define AT_DMA_PER_IF		1 /* interface 1 as peripheral interface */
+#endif
 
 #define	ATC_SRC_PIP		(0x1 <<  8)	/* Source Picture-in-Picture enabled */
 #define	ATC_DST_PIP		(0x1 << 12)	/* Destination Picture-in-Picture enabled */

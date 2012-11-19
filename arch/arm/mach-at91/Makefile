@@ -11,6 +11,7 @@ obj-$(CONFIG_AT91_PMC_UNIT)	+= clock.o
 obj-$(CONFIG_AT91_SAM9_ALT_RESET) += at91sam9_alt_reset.o
 obj-$(CONFIG_AT91_SAM9G45_RESET) += at91sam9g45_reset.o
 obj-$(CONFIG_SOC_AT91SAM9)	+= at91sam926x_time.o sam9_smc.o
+obj-$(CONFIG_SOC_SAMA5)	+= at91sam926x_time.o
 
 # CPU-specific support
 obj-$(CONFIG_SOC_AT91RM9200)	+= at91rm9200.o at91rm9200_time.o
@@ -21,6 +22,7 @@ obj-$(CONFIG_SOC_AT91SAM9G45)	+= at91sam9g45.o
 obj-$(CONFIG_SOC_AT91SAM9N12)	+= at91sam9n12.o
 obj-$(CONFIG_SOC_AT91SAM9X5)	+= at91sam9x5.o
 obj-$(CONFIG_SOC_AT91SAM9RL)	+= at91sam9rl.o
+obj-$(CONFIG_SOC_SAMA5D3)	+= sama5d3.o
 
 obj-$(CONFIG_ARCH_AT91RM9200)	+= at91rm9200_devices.o
 obj-$(CONFIG_ARCH_AT91SAM9260)	+= at91sam9260_devices.o
