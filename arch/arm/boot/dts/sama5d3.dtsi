@@ -116,6 +116,7 @@
 				compatible = "atmel,at91sam9x5-i2c";
 				reg = <0xf0014000 0x4000>;
 				interrupts = <18 4 6>;
+				/* dma = <&dma0 0x10002278>; */
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_i2c0>;
 				#address-cells = <1>;
@@ -127,6 +128,7 @@
 				compatible = "atmel,at91sam9x5-i2c";
 				reg = <0xf0018000 0x4000>;
 				interrupts = <19 4 6>;
+				dma = <&dma0 0x1000229a>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_i2c1>;
 				#address-cells = <1>;
@@ -348,6 +350,7 @@
 				compatible = "atmel,at91sam9x5-i2c";
 				reg = <0xf801c000 0x4000>;
 				interrupts = <20 4 6>;
+				dma = <&dma1 0x100022bc>;
 				#address-cells = <1>;
 				#size-cells = <0>;
 				status = "disabled";
