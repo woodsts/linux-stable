@@ -176,6 +176,18 @@ static struct atmel_serial_platform_data at91sam9x5_config = {
 	.use_dma = true,  /* use dma */
 };
 
+static struct platform_device_id atmel_serial_devtypes[] = {
+	{
+		.name = "at91sam9260-usart",
+		.driver_data = (unsigned long)&at91sam9260_config,
+	}, {
+		.name = "at91sam9x5-usart",
+		.driver_data = (unsigned long)&at91sam9x5_config,
+	}, {
+		/* sentinel */
+	}
+};
+
 #if defined(CONFIG_OF)
 static const struct of_device_id atmel_serial_dt_ids[] = {
 	{ .compatible = "atmel,at91rm9200-usart" },
@@ -389,7 +401,6 @@ to_atmel_uart_port(struct uart_port *uart)
 	return container_of(uart, struct atmel_uart_port, uart);
 }
 
-#ifdef CONFIG_SERIAL_ATMEL_PDC
 static bool atmel_use_pdc_rx(struct uart_port *port)
 {
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
@@ -403,17 +414,6 @@ static bool atmel_use_pdc_tx(struct uart_port *port)
 
 	return atmel_port->use_pdc_tx;
 }
-#else
-static bool atmel_use_pdc_rx(struct uart_port *port)
-{
-	return false;
-}
-
-static bool atmel_use_pdc_tx(struct uart_port *port)
-{
-	return false;
-}
-#endif
 
 static bool atmel_use_dma_tx(struct uart_port *port)
 {
@@ -2158,6 +2158,7 @@ static struct platform_driver atmel_serial_driver = {
 	.remove		= __devexit_p(atmel_serial_remove),
 	.suspend	= atmel_serial_suspend,
 	.resume		= atmel_serial_resume,
+	.id_table       = atmel_serial_devtypes,
 	.driver		= {
 		.name	= "atmel_usart",
 		.owner	= THIS_MODULE,
