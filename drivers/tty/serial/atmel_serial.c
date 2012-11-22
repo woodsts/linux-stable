@@ -169,11 +169,25 @@ static unsigned long atmel_ports_in_use;
 static struct console atmel_console;
 #endif
 
+static struct atmel_serial_platform_data at91sam9260_config = {
+	.use_dma = false, /* use pdc */
+};
+static struct atmel_serial_platform_data at91sam9x5_config = {
+	.use_dma = true,  /* use dma */
+};
+
 #if defined(CONFIG_OF)
 static const struct of_device_id atmel_serial_dt_ids[] = {
 	{ .compatible = "atmel,at91rm9200-usart" },
-	{ .compatible = "atmel,at91sam9260-usart" },
-	{ /* sentinel */ }
+	{
+		.compatible = "atmel,at91sam9260-usart",
+		.data = &at91sam9260_config,
+	}, {
+		.compatible = "atmel,at91sam9x5-usart",
+		.data = &at91sam9x5_config,
+	}, {
+		/* sentinel */
+	}
 };
 
 MODULE_DEVICE_TABLE(of, atmel_serial_dt_ids);
@@ -354,6 +368,20 @@ atmel_uart_of_init(struct platform_device *pdev)
 	return ERR_PTR(-EINVAL);
 }
 #endif
+
+static inline const struct atmel_serial_platform_data *
+__init atmel_serial_get_driver_data(struct platform_device *pdev)
+{
+	if (pdev->dev.of_node) {
+		const struct of_device_id *match;
+		match = of_match_node(atmel_serial_dt_ids, pdev->dev.of_node);
+		if (match == NULL)
+			return NULL;
+		return match->data;
+	}
+	return (struct atmel_serial_platform_data *)
+			platform_get_device_id(pdev)->driver_data;
+}
 
 static inline struct atmel_uart_port *
 to_atmel_uart_port(struct uart_port *uart)
@@ -1618,19 +1646,30 @@ static struct uart_ops atmel_pops = {
 };
 
 static void __devinit atmel_of_init_port(struct atmel_uart_port *atmel_port,
-					 struct device_node *np)
+			const struct atmel_serial_platform_data *plat_dat,
+			struct device_node *np)
 {
 	u32 rs485_delay[2];
 
 	/* DMA/PDC usage specification */
-	if (of_get_property(np, "atmel,use-dma-rx", NULL))
-		atmel_port->use_dma_rx	= 1;
-	else
+	if (of_get_property(np, "atmel,use-dma-rx", NULL)) {
+		if (plat_dat->use_dma)
+			atmel_port->use_dma_rx	= 1;
+		else
+			atmel_port->use_pdc_rx  = 1;
+	} else {
 		atmel_port->use_dma_rx	= 0;
-	if (of_get_property(np, "atmel,use-dma-tx", NULL))
-		atmel_port->use_dma_tx	= 1;
-	else
+		atmel_port->use_pdc_rx  = 0;
+	}
+	if (of_get_property(np, "atmel,use-dma-tx", NULL)) {
+		if (plat_dat->use_dma)
+			atmel_port->use_dma_tx  = 1;
+		else
+			atmel_port->use_pdc_tx	= 1;
+	} else {
 		atmel_port->use_dma_tx	= 0;
+		atmel_port->use_pdc_tx  = 0;
+	}
 
 	/* rs485 properties */
 	if (of_property_read_u32_array(np, "rs485-rts-delay",
@@ -1657,9 +1696,15 @@ static void __devinit atmel_init_port(struct atmel_uart_port *atmel_port,
 {
 	struct uart_port *port = &atmel_port->uart;
 	struct atmel_uart_data *pdata = port->private_data;
+	const struct atmel_serial_platform_data *plat_dat;
+
+	/* get DMA parameters from controller type */
+	plat_dat = atmel_serial_get_driver_data(pdev);
+	if (!plat_dat)
+		return;
 
 	if (pdev->dev.of_node) {
-		atmel_of_init_port(atmel_port, pdev->dev.of_node);
+		atmel_of_init_port(atmel_port, plat_dat, pdev->dev.of_node);
 		if (atmel_port->use_dma_rx) {
 			/* retrive DMA configuration first */
 			if (atmel_uart_rx_dma_of_init(pdev->dev.of_node,
@@ -1667,7 +1712,8 @@ static void __devinit atmel_init_port(struct atmel_uart_port *atmel_port,
 				dev_err(&pdev->dev, "could not find DMA rx parameters\n");
 				devm_kfree(&pdev->dev, pdata->dma_rx_slave);
 			}
-		}
+		} else
+			devm_kfree(&pdev->dev, pdata->dma_rx_slave);
 		if (atmel_port->use_dma_tx) {
 			/* retrive DMA configuration first */
 			if (atmel_uart_tx_dma_of_init(pdev->dev.of_node,
@@ -1675,10 +1721,16 @@ static void __devinit atmel_init_port(struct atmel_uart_port *atmel_port,
 				dev_err(&pdev->dev, "could not find DMA tx parameters\n");
 				devm_kfree(&pdev->dev, pdata->dma_tx_slave);
 			}
-		}
+		} else
+			devm_kfree(&pdev->dev, pdata->dma_tx_slave);
 	} else {
-		atmel_port->use_dma_rx	= pdata->use_dma_rx;
-		atmel_port->use_dma_tx	= pdata->use_dma_tx;
+		if (plat_dat->use_dma) {
+			atmel_port->use_dma_rx  = pdata->use_dma_rx;
+			atmel_port->use_dma_tx	= pdata->use_dma_tx;
+		} else {
+			atmel_port->use_pdc_rx  = pdata->use_dma_rx;
+			atmel_port->use_pdc_tx  = pdata->use_dma_tx;
+		}
 		atmel_port->rs485	= pdata->rs485;
 	}
 
