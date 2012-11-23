@@ -1,0 +1,15 @@
+* AT91's Real Time Clock (RTC)
+
+Required properties:
+  - compatible: Should be "atmel,at91rm9200-rtc"
+  - reg: Should contain RTC registers location and length
+  - interrupts: Should contain the IRQ line for the RTC
+
+Example:
+
+	rtc@fffffeb0 {
+		compatible = "atmel,at91rm9200-rtc";
+		reg = <0xfffffeb0 0x30>;
+		interrupts = <1 4 7>;
+	};
+
