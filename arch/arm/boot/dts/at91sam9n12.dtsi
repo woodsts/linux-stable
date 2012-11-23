@@ -236,6 +236,40 @@
 				#size-cells = <0>;
 				status = "disabled";
 			};
+
+			spi0: spi@f0000000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xf0000000 0x100>;
+				interrupts = <13 4 3>;
+				cs-gpios = <&pioA 14 0
+					    &pioA 7 0
+					    &pioA 1 0
+					    &pioB 3 0
+					   >;
+				dma-mask = <0xffffffff>;
+				dma_type = <2>;
+				version = <2>;
+				status = "disabled";
+			};
+
+			spi1: spi@f0004000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xf0004000 0x100>;
+				interrupts = <14 4 3>;
+				cs-gpios = <&pioA 8 0
+					    &pioA 0 0
+					    &pioA 31 0
+					    &pioA 30 0
+					   >;
+				dma-mask = <0xffffffff>;
+				dma_type = <2>;
+				version = <2>;
+				status = "disabled";
+			};
 		};
 
 		nand0: nand@40000000 {
