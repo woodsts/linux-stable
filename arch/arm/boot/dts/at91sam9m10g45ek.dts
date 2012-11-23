@@ -73,6 +73,15 @@
 			i2c1: i2c@fff88000 {
 				status = "okay";
 			};
+
+			spi0: spi@fffa4000{
+				status = "okay";
+				mtd_dataflash@0 {
+					compatible = "atmel,at45", "atmel,dataflash";
+					spi-max-frequency = <13000000>;
+					reg = <0>;
+				};
+			};
 		};
 
 		nand0: nand@40000000 {

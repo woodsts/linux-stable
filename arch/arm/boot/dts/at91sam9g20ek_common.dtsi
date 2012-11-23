@@ -60,6 +60,15 @@
 					cd-gpios = <&pioC 9 0>;
 				};
 			};
+
+			spi0: spi@fffc8000 {
+				status = "okay";
+				mtd_dataflash@0 {
+					compatible = "atmel,at45", "atmel,dataflash";
+					spi-max-frequency = <50000000>;
+					reg = <1>;
+				};
+			};
 		};
 
 		nand0: nand@40000000 {
