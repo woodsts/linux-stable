@@ -117,6 +117,7 @@ struct atmel_nand_host {
 	bool			has_nfc;
 	bool			use_nfc_sram;
 	struct atmel_nfc	nfc;
+	struct completion	comp_nfc;
 
 	bool			has_pmecc;
 	u8			pmecc_corr_cap;
@@ -1446,12 +1447,30 @@ static irqreturn_t hsmc_interrupt(int irq, void *dev_id)
 	struct atmel_nand_host *host = dev_id;
 	u32 status, mask, pending;
 	irqreturn_t ret = IRQ_NONE;
-	printk(KERN_ERR "interrupt comes.\n");
 
 	spin_lock(&host->lock);
+
+	status = nfc_readl(host->nfc.hsmc_regs, SR);
+	mask = nfc_readl(host->nfc.hsmc_regs, IMR);
+	pending = status & mask;
+
+	if (pending & ATMEL_HSMC_NFC_XFR_DONE) {
+		complete(&host->comp_nfc);
+		nfc_writel(host->nfc.hsmc_regs, IDR, ATMEL_HSMC_NFC_XFR_DONE);
+		ret = IRQ_HANDLED;
+	} else if (pending & ATMEL_HSMC_NFC_RB_EDGE) {
+		complete(&host->comp_nfc);
+		nfc_writel(host->nfc.hsmc_regs, IDR, ATMEL_HSMC_NFC_RB_EDGE);
+		ret = IRQ_HANDLED;
+	} else if (pending & ATMEL_HSMC_NFC_CMD_DONE) {
+		complete(&host->comp_nfc);
+		nfc_writel(host->nfc.hsmc_regs, IDR, ATMEL_HSMC_NFC_CMD_DONE);
+		ret = IRQ_HANDLED;
+	}
+
 	spin_unlock(&host->lock);
 	
-	return IRQ_HANDLED;
+	return ret;
 }
 
 /*

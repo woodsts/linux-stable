@@ -17,33 +17,19 @@ static void pmecc_enable(struct atmel_nand_host *host, enum pmecc_op op);
 static int atmel_nand_dma_op(struct mtd_info *mtd, void *buf, int len,
 			       int is_read);
 
-static u32 nfc_status;
-static inline void nfc_read_status(struct atmel_nand_host *host)
+static int nfc_wait_interrupt(struct atmel_nand_host *host, u32 flag)
 {
-	nfc_status = nfc_readl(host->nfc.hsmc_regs, SR);
+	unsigned long timeout;
+	init_completion(&host->comp_nfc);
 
-	if (nfc_status & ATMEL_HSMC_NFC_DTOE)
-		dev_err(host->dev, "NFC: Waiting Nand R/B Timeout Error\n");
-	else if (nfc_status & ATMEL_HSMC_NFC_UNDEF)
-		dev_err(host->dev, "NFC: Access Undefined Area Error\n");
-	else if (nfc_status & ATMEL_HSMC_NFC_AWB)
-		dev_err(host->dev, "NFC: Access memory While NFC is busy\n");
-	else if (nfc_status & ATMEL_HSMC_NFC_ASE)
-		dev_err(host->dev, "NFC: Access memory Size Error\n");
-}
+	/* Enable interrupt that need to wait for */
+	nfc_writel(host->nfc.hsmc_regs, IER, flag);
 
-static inline int nfc_wait_status(struct atmel_nand_host *host, u32 flag)
-{
-	unsigned long end_time;
-
-	end_time = jiffies + msecs_to_jiffies(100);
-	while ((nfc_status & flag) == 0) {
-		nfc_read_status(host);
-
-		if (unlikely(time_after(jiffies, end_time))) {
-			dev_err(host->dev, "NFC: Timeout to read correct status.\n");
-			return -1;	/* Time out */
-		}
+	timeout = wait_for_completion_timeout(&host->comp_nfc,
+			msecs_to_jiffies(100));
+	if (timeout == 0) {
+		printk("interrupt time out????\n");
+		return -ETIMEDOUT;
 	}
 
 	return 0;
@@ -56,21 +42,19 @@ static int nfc_send_command(struct atmel_nand_host *host,
 		"nfc_cmd: 0x%08x, addr1234: 0x%08x, cycle0: 0x%02x\n",
 		cmd, addr, cycle0);
 
-	/* Clear status */
-	nfc_status = 0;
 	while (nfc_cmd_readl(NFCADDR_CMD_NFCBUSY, host->nfc.base_cmd_regs)
 			& NFCADDR_CMD_NFCBUSY)
 		;
 	nfc_writel(host->nfc.hsmc_regs, CYCLE0, cycle0);
 	nfc_cmd_addr1234_writel(cmd, addr, host->nfc.base_cmd_regs);
-	return nfc_wait_status(host, ATMEL_HSMC_NFC_CMD_DONE);
+	return nfc_wait_interrupt(host, ATMEL_HSMC_NFC_CMD_DONE);
 }
 
 static int nfc_device_ready(struct mtd_info *mtd)
 {
 	struct nand_chip *nand_chip = mtd->priv;
 	struct atmel_nand_host *host = nand_chip->priv;
-	if (!nfc_wait_status(host, ATMEL_HSMC_NFC_RB_EDGE))
+	if (!nfc_wait_interrupt(host, ATMEL_HSMC_NFC_RB_EDGE))
 		return 1;
 	return 0;
 }
@@ -258,7 +242,8 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	nfc_send_command(host, nfc_addr_cmd, addr1234, cycle0);
 
 	if (dataen == NFCADDR_CMD_DATAEN)
-		nfc_wait_status(host, ATMEL_HSMC_NFC_XFR_DONE);
+		if (nfc_wait_interrupt(host, ATMEL_HSMC_NFC_XFR_DONE))
+			printk("something wrong, No XFR_DONE interrupt comes.\n");
 
 	/*
 	 * Program and erase have their own busy handlers status, sequential
@@ -292,7 +277,7 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 		}
 		/* fall through */
 	default:
-		nfc_wait_status(host, ATMEL_HSMC_NFC_RB_EDGE);
+		nfc_wait_interrupt(host, ATMEL_HSMC_NFC_RB_EDGE);
 	}
 }
 
