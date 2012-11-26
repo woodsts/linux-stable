@@ -19,6 +19,8 @@
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
 #include <mach/board.h>
 #include <mach/cpu.h>
@@ -557,7 +559,6 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 	struct resource *regs = NULL, *clut = NULL;
 	struct resource *map = NULL;
 	int ret;
-	struct pinctrl *pinctrl;
 
 	dev_dbg(dev, "%s BEGIN\n", __func__);
 
@@ -634,13 +635,6 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 	if (!clut) {
 		dev_err(dev, "clut resources unusable\n");
 		ret = -ENXIO;
-		goto stop_clk;
-	}
-
-	pinctrl = devm_pinctrl_get_select_default(dev);
-	if (IS_ERR(pinctrl)) {
-		dev_err(dev, "Failed to request pinctrl\n");
-		ret = PTR_ERR(pinctrl);
 		goto stop_clk;
 	}
 
@@ -840,3 +834,44 @@ int __atmel_lcdfb_remove(struct platform_device *pdev)
 	return 0;
 }
 EXPORT_SYMBOL_GPL(__atmel_lcdfb_remove);
+
+static const struct of_device_id atmel_lcdfb_bus_dt_ids[] = {
+	{ .compatible = "atmel,at91sam9x5-lcd-bus" },
+	{ /* sentinel */ }
+};
+
+static int atmel_lcdfb_bus_probe(struct platform_device *pdev)
+{
+	struct pinctrl *pinctrl;
+	struct device *dev = &pdev->dev;
+
+	pinctrl = devm_pinctrl_get_select_default(dev);
+	if (IS_ERR(pinctrl)) {
+		dev_err(dev, "Failed to request pinctrl\n");
+		return PTR_ERR(pinctrl);
+	}
+
+	return 0;
+}
+
+static struct platform_driver atmel_lcdfb_bus = {
+	.probe		= atmel_lcdfb_bus_probe,
+	.driver		= {
+		.name	= "atmel_lcdfb_bus",
+		.owner	= THIS_MODULE,
+		.of_match_table	= of_match_ptr(atmel_lcdfb_bus_dt_ids),
+	},
+};
+
+static int __init atmel_lcdfb_bus_init(void)
+{
+	return platform_driver_register(&atmel_lcdfb_bus);
+}
+
+static void __exit atmel_lcdfb_bus_exit(void)
+{
+	platform_driver_unregister(&atmel_lcdfb_bus);
+}
+
+module_init(atmel_lcdfb_bus_init);
+module_exit(atmel_lcdfb_bus_exit);
