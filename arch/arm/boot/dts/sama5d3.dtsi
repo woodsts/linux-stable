@@ -94,6 +94,7 @@
 				interrupts = <38 4 4>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_ssc0_tx &pinctrl_ssc0_rx>;
+				dma = <&dma0 0x100022de>;
 				status = "disabled";
 			};
 
@@ -263,6 +264,7 @@
 				interrupts = <39 4 4>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_ssc1_tx &pinctrl_ssc1_rx>;
+				dma = <&dma1 0x10002234>;
 				status = "disabled";
 			};
 
