@@ -33,6 +33,7 @@
 #include <linux/interrupt.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
+#include <linux/pinctrl/consumer.h>
 
 /* Address for each register */
 #define CHIP_ID            0x00
@@ -145,8 +146,15 @@ static int __devinit qt1070_probe(struct i2c_client *client,
 {
 	struct qt1070_data *data;
 	struct input_dev *input;
+	struct pinctrl *pinctrl;
 	int i;
 	int err;
+
+	pinctrl = devm_pinctrl_get_select_default(&client->dev);
+	if (IS_ERR(pinctrl)) {
+		dev_err(&client->dev, "Failed to request pinctrl\n");
+		return PTR_ERR(pinctrl);
+	}
 
 	err = i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE);
 	if (!err) {
