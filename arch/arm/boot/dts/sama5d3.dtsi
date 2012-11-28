@@ -85,6 +85,7 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_spi0>;
 				dma-mask = <0xffffffff>;
+				dma = <&dma0 0x10002212>;
 				status = "disabled";
 			};
 
@@ -263,6 +264,7 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_spi1>;
 				dma-mask = <0xffffffff>;
+				dma = <&dma1 0x100026f0>;
 				status = "disabled";
 			};
 
