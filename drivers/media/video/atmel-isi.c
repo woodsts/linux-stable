@@ -95,7 +95,7 @@ struct atmel_isi {
 	struct clk			*pclk;
 	/* ISI_MCK, feed to camera sensor to generate pixel clock */
 	struct clk			*mck;
-	unsigned int			irq;
+	int				irq;
 
 	struct isi_platform_data	*pdata;
 	u16				width_flags;	/* max 12 bits */
@@ -932,7 +932,7 @@ static int __devexit atmel_isi_remove(struct platform_device *pdev)
 
 static int __devinit atmel_isi_probe(struct platform_device *pdev)
 {
-	unsigned int irq;
+	int irq;
 	struct atmel_isi *isi;
 	struct clk *pclk;
 	struct resource *regs;
