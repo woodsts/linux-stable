@@ -28,6 +28,7 @@
 #include <linux/module.h>
 #include <linux/netdevice.h>
 #include <linux/of.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
 #include <linux/rtnetlink.h>
 #include <linux/skbuff.h>
@@ -1285,6 +1286,7 @@ static int __devinit at91_can_probe(struct platform_device *pdev)
 	struct clk *clk;
 	void __iomem *addr;
 	int err, irq;
+	struct pinctrl *pinctrl;
 
 	devtype_data = at91_can_get_driver_data(pdev);
 	if (!devtype_data) {
@@ -1304,6 +1306,13 @@ static int __devinit at91_can_probe(struct platform_device *pdev)
 	irq = platform_get_irq(pdev, 0);
 	if (!res || irq <= 0) {
 		err = -ENODEV;
+		goto exit_put;
+	}
+
+	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
+	if (IS_ERR(pinctrl)) {
+		dev_err(&pdev->dev, "Failed to request pinctrl\n");
+		err = PTR_ERR(pinctrl);
 		goto exit_put;
 	}
 
