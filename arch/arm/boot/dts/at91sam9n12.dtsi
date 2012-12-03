@@ -270,6 +270,12 @@
 				version = <2>;
 				status = "disabled";
 			};
+
+			watchdog@fffffe40 {
+				compatible = "atmel,at91sam9260-wdt";
+				reg = <0xfffffe40 0x10>;
+				status = "disabled";
+			};
 		};
 
 		nand0: nand@40000000 {
