@@ -28,6 +28,10 @@
 					reg = <0>;
 				};
 			};
+
+			watchdog@fffffe40 {
+				status = "okay";
+			};
 		};
 	};
 };
