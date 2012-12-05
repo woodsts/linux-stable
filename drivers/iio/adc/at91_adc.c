@@ -23,6 +23,7 @@
 #include <linux/wait.h>
 
 #include <linux/platform_data/at91_adc.h>
+#include <linux/pinctrl/consumer.h>
 
 #include <linux/iio/iio.h>
 #include <linux/iio/buffer.h>
@@ -584,6 +585,7 @@ static int __devinit at91_adc_probe(struct platform_device *pdev)
 	struct iio_dev *idev;
 	struct at91_adc_state *st;
 	struct resource *res;
+	struct pinctrl *pinctrl;
 
 	idev = iio_device_alloc(sizeof(struct at91_adc_state));
 	if (idev == NULL) {
@@ -602,6 +604,13 @@ static int __devinit at91_adc_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "No platform data available.\n");
 		ret = -EINVAL;
 		goto error_free_device;
+	}
+
+	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
+	if (IS_ERR(pinctrl)) {
+		dev_err(&pdev->dev, "Failed to request pinctrl\n");
+		ret = PTR_ERR(pinctrl);
+		goto error_ret;
 	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
