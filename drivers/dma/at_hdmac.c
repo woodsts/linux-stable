@@ -24,6 +24,7 @@
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
+#include <linux/jiffies.h>
 
 #include "at_hdmac_regs.h"
 #include "dmaengine.h"
@@ -41,6 +42,8 @@
 #define	ATC_DEFAULT_CTRLB	(ATC_SIF(AT_DMA_MEM_IF) \
 				|ATC_DIF(AT_DMA_MEM_IF))
 
+/* DMA timeout (10ms)*/
+#define DMA_TIMEOUT		10
 /*
  * Initial number of descriptors to allocate for each channel. This could
  * be increased during dma usage.
@@ -268,9 +271,12 @@ static struct at_desc *atc_get_current_descriptors(struct at_dma_chan *atchan,
 static int atc_get_bytes_left(struct dma_chan *chan)
 {
 	struct at_dma_chan      *atchan = to_at_dma_chan(chan);
+	struct at_dma           *atdma = to_at_dma(chan->device);
+	int	chan_id = atchan->chan_common.chan_id;
 	struct at_desc *desc_first = atc_first_active(atchan);
 	struct at_desc *desc_cur;
 	int ret = 0, count = 0;
+	unsigned long timeout = jiffies + msecs_to_jiffies(DMA_TIMEOUT);
 
 	/*
 	 * Initialize necessary values in the first time.
@@ -280,6 +286,7 @@ static int atc_get_bytes_left(struct dma_chan *chan)
 		/* First descriptor embedds the transaction length */
 		atchan->remain_desc = desc_first->len;
 
+start:
 	/* Channel should be paused before get residue */
 	if (!atc_chan_is_paused(atchan))
 		atc_control(chan, DMA_PAUSE, 0);
@@ -311,7 +318,18 @@ static int atc_get_bytes_left(struct dma_chan *chan)
 				<< (desc_first->tx_buswidth);
 		ret = atchan->remain_desc - count;
 	}
-
+	/*
+	 * Check fifo empty in pre-determined time, if not,
+	 * restart a new taskelt to finish remain task.
+	 */
+	if (!(dma_readl(atdma, CHSR) & AT_DMA_EMPT(chan_id))) {
+		if (time_before(jiffies, timeout)) {
+			goto start;
+		} else {
+			dev_vdbg(chan2dev(chan), "fifo is not empty, restart a new tasklet\n");
+			tasklet_schedule(&atchan->tasklet);
+		}
+	}
 out:
 	if (atc_chan_is_paused(atchan))
 		atc_control(chan, DMA_RESUME, 0);
