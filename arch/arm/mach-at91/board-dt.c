@@ -357,6 +357,35 @@ static void __init at91_dt_device_init(void)
 				}
 			}
 		}
+
+		np = of_find_compatible_node(NULL, NULL, "atmel,atmel_mxt_ts");
+		if (np) {
+			if (of_device_is_available(np)) {
+				__u8 manufacturer[4] = "Inlx";
+				__u8 monitor[14] = "AT043TN24";
+				/* set mXT224 and QT1070 IRQ lines as inputs */
+				at91_set_gpio_input(AT91_PIN_PE31, 1);
+				at91_set_gpio_input(AT91_PIN_PE30, 1);
+				/* set LCD configuration */
+				ek_lcdc_data.smem_len = 480 * 272 * 4;
+				memcpy(ek_lcdc_data.default_monspecs->manufacturer, manufacturer, 4);
+				memcpy(ek_lcdc_data.default_monspecs->monitor, monitor, 14);
+				ek_lcdc_data.default_monspecs->hfmin = 14876;
+				ek_lcdc_data.default_monspecs->hfmax = 17142;
+				ek_lcdc_data.default_monspecs->vfmin = 50;
+				ek_lcdc_data.default_monspecs->vfmax = 67;
+				ek_lcdc_data.default_monspecs->modedb->name = "Inlx";
+				ek_lcdc_data.default_monspecs->modedb->xres = 480;
+				ek_lcdc_data.default_monspecs->modedb->yres = 272;
+				ek_lcdc_data.default_monspecs->modedb->pixclock = KHZ2PICOS(9000);
+				ek_lcdc_data.default_monspecs->modedb->left_margin = 2;
+				ek_lcdc_data.default_monspecs->modedb->right_margin = 2;
+				ek_lcdc_data.default_monspecs->modedb->upper_margin = 2;
+				ek_lcdc_data.default_monspecs->modedb->lower_margin = 2;
+				ek_lcdc_data.default_monspecs->modedb->hsync_len = 41;
+				ek_lcdc_data.default_monspecs->modedb->vsync_len = 11;
+			}
+		}
 	}
 
 	of_platform_populate(NULL, of_default_bus_match_table, at91_auxdata_lookup, NULL);
