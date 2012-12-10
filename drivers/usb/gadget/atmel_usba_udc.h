@@ -323,6 +323,7 @@ struct usba_udc {
 	int irq;
 	int vbus_pin;
 	int vbus_pin_inverted;
+	int num_ep;
 	struct clk *pclk;
 	struct clk *hclk;
 
