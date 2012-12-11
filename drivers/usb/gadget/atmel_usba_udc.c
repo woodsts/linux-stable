@@ -23,6 +23,7 @@
 #include <linux/delay.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
+#include <linux/pinctrl/consumer.h>
 
 #include <asm/gpio.h>
 #include <mach/board.h>
@@ -1865,12 +1866,20 @@ static struct usba_ep *atmel_udc_of_init(struct platform_device *pdev,
 	struct device_node *pp;
 	int i, ret;
 	struct usba_ep *eps, *ep;
+	struct pinctrl *pinctrl;
 
 	udc->num_ep = 0;
 
 	udc->vbus_pin = of_get_named_gpio_flags(np, "atmel,vbus-gpio", 0,
 						&flags);
 	udc->vbus_pin_inverted = (flags & OF_GPIO_ACTIVE_LOW) ? 1 : 0;
+	if (udc->vbus_pin) {
+		pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
+		if (IS_ERR(pinctrl)) {
+			dev_warn(&pdev->dev, "no pinctrl for vbus pin\n");
+			udc->vbus_pin = EINVAL;
+		}
+	}
 
 	pp = NULL;
 	while ((pp = of_get_next_child(np, pp)))
