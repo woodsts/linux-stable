@@ -140,6 +140,11 @@
 						atmel,pins =
 							<4 31 0x0 0x5>;	/* PE31 GPIO with pull up deglith */
 					};
+
+					pinctrl_usba_vbus: usba_vbus {
+						atmel,pins =
+							<3 29 0x0 0x4>; /* PD29 GPIO with deglitch */
+					};
 				};
 			};
 
@@ -153,14 +158,16 @@
 		};
 
 		usb0: gadget@00500000 {
-			atmel,vbus-gpio = <&pioD 29 1>;
+			atmel,vbus-gpio = <&pioD 29 0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usba_vbus>;
 			status = "okay";
 		};
 
 		usb1: ohci@00600000 {
 			status = "okay";
 			num-ports = <3>;
-			atmel,vbus-gpio = <&pioD 25 1
+			atmel,vbus-gpio = <&pioD 25 0
 					   &pioD 26 1
 					   &pioD 27 1
 					  >;
