@@ -902,7 +902,6 @@ static void atmel_tx_dma(struct uart_port *port)
 		desc->callback_param = atmel_port;
 		atmel_port->cookie_tx = dmaengine_submit(desc);
 
-		dma_async_issue_pending(chan);
 	} else {
 		if (atmel_port->rs485.flags & SER_RS485_ENABLED) {
 			/* DMA done, stop TX, start RX for RS485 */
