@@ -201,7 +201,8 @@ static int atmel_pcm_open(struct snd_pcm_substream *substream)
 
 static int atmel_pcm_close(struct snd_pcm_substream *substream)
 {
-	snd_dmaengine_pcm_close(substream);
+	if (substream->runtime->private_data)
+		snd_dmaengine_pcm_close(substream);
 
 	return 0;
 }
