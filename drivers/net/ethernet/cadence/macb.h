@@ -548,7 +548,17 @@ struct macb_or_gem_ops {
 };
 
 struct macb {
+	spinlock_t		lock;
 	void __iomem		*regs;
+
+	unsigned int		tx_head;
+	unsigned int		tx_tail;
+	struct macb_dma_desc	*tx_ring;
+	struct macb_tx_skb	*tx_skb;
+	dma_addr_t		tx_ring_dma;
+	struct work_struct	tx_error_task;
+
+	struct napi_struct	napi;
 
 	unsigned int		rx_tail;
 	unsigned int		rx_prepared_head;
@@ -556,29 +566,20 @@ struct macb {
 	struct sk_buff		**rx_skbuff;
 	void			*rx_buffers;
 	size_t			rx_buffer_size;
+	dma_addr_t		rx_ring_dma;
+	dma_addr_t		rx_buffers_dma;
 
-	unsigned int		tx_head, tx_tail;
-	struct macb_dma_desc	*tx_ring;
-	struct macb_tx_skb	*tx_skb;
+	struct macb_or_gem_ops	macbgem_ops;
 
-	spinlock_t		lock;
 	struct platform_device	*pdev;
 	struct clk		*pclk;
 	struct clk		*hclk;
 	struct net_device	*dev;
-	struct napi_struct	napi;
-	struct work_struct	tx_error_task;
 	struct net_device_stats	stats;
 	union {
 		struct macb_stats	macb;
 		struct gem_stats	gem;
 	}			hw_stats;
-
-	dma_addr_t		rx_ring_dma;
-	dma_addr_t		tx_ring_dma;
-	dma_addr_t		rx_buffers_dma;
-
-	struct macb_or_gem_ops	macbgem_ops;
 
 	struct mii_bus		*mii_bus;
 	struct phy_device	*phy_dev;
