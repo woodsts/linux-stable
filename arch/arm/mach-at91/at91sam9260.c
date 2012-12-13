@@ -242,13 +242,13 @@ static struct clk_lookup periph_clocks_lookups[] = {
 };
 
 static struct clk_lookup usart_clocks_lookups[] = {
-	CLKDEV_CON_DEV_ID("usart", "atmel_usart.0", &mck),
-	CLKDEV_CON_DEV_ID("usart", "atmel_usart.1", &usart0_clk),
-	CLKDEV_CON_DEV_ID("usart", "atmel_usart.2", &usart1_clk),
-	CLKDEV_CON_DEV_ID("usart", "atmel_usart.3", &usart2_clk),
-	CLKDEV_CON_DEV_ID("usart", "atmel_usart.4", &usart3_clk),
-	CLKDEV_CON_DEV_ID("usart", "atmel_usart.5", &usart4_clk),
-	CLKDEV_CON_DEV_ID("usart", "atmel_usart.6", &usart5_clk),
+	CLKDEV_CON_DEV_ID("usart", "at91sam9260-usart.0", &mck),
+	CLKDEV_CON_DEV_ID("usart", "at91sam9260-usart.1", &usart0_clk),
+	CLKDEV_CON_DEV_ID("usart", "at91sam9260-usart.2", &usart1_clk),
+	CLKDEV_CON_DEV_ID("usart", "at91sam9260-usart.3", &usart2_clk),
+	CLKDEV_CON_DEV_ID("usart", "at91sam9260-usart.4", &usart3_clk),
+	CLKDEV_CON_DEV_ID("usart", "at91sam9260-usart.5", &usart4_clk),
+	CLKDEV_CON_DEV_ID("usart", "at91sam9260-usart.6", &usart5_clk),
 };
 
 /*
