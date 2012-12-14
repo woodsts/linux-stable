@@ -20,39 +20,6 @@
 
 	ahb {
 		apb {
-			pinctrl@fffff200 {
-				board {
-					pinctrl_mmc0_cd: mmc0_cd {
-						atmel,pins =
-							<3 17 0x0 0x5>; /* PD17 GPIO with pullup deglitch */
-					};
-
-					pinctrl_mmc1_cd: mmc1_cd {
-						atmel,pins =
-							<3 18 0x0 0x5>; /* PD18 GPIO with pullup deglitch */
-					};
-
-					pinctrl_pck0_as_audio_mck: pck0_as_audio_mck {
-						atmel,pins =
-							<3 30 0x2 0x0>;	/* PD30 periph B */
-					};
-
-					pinctrl_qt1070_irq: qt1070_irq {
-						atmel,pins =
-							<4 31 0x0 0x5>;	/* PE31 GPIO with pull up deglith */
-					};
-				};
-			};
-
-			usart1: serial@f0020000 {
-				pinctrl-0 = <&pinctrl_usart1 &pinctrl_usart1_rts_cts>;
-				status = "okay";
-			};
-
-			dbgu: serial@ffffee00 {
-				status = "okay";
-			};
-
 			mmc0: mmc@f0000000 {
 				status = "okay";
 				pinctrl-0 = <&pinctrl_mmc0_clk_cmd_dat0 &pinctrl_mmc0_dat1_3 &pinctrl_mmc0_cd>;
@@ -60,16 +27,6 @@
 					reg = <0>;
 					bus-width = <4>;
 					cd-gpios = <&pioD 17 0>;
-				};
-			};
-
-			mmc1: mmc@f8000000 {
-				status = "okay";
-				pinctrl-0 = <&pinctrl_mmc1_clk_cmd_dat0 &pinctrl_mmc1_dat1_3 &pinctrl_mmc1_cd>;
-				slot@0 {
-					reg = <0>;
-					bus-width = <4>;
-					cd-gpios = <&pioD 18 0>;
 				};
 			};
 
@@ -82,8 +39,7 @@
 				};
 			};
 
-			macb0: ethernet@f0028000 {
-				phy-mode = "rgmii";
+			ssc0: ssc@f0008000 {
 				status = "okay";
 			};
 
@@ -109,16 +65,13 @@
 				};
 			};
 
-			/* Enable LCD or ISI not both */
-			isi: isi@f0034000 {
-				status = "disabled";
-			};
-
-			ssc0: ssc@f0008000 {
+			usart1: serial@f0020000 {
+				pinctrl-0 = <&pinctrl_usart1 &pinctrl_usart1_rts_cts>;
 				status = "okay";
 			};
 
-			tsadcc: tsadcc@f8018000 {
+			macb0: ethernet@f0028000 {
+				phy-mode = "rgmii";
 				status = "okay";
 			};
 
@@ -142,6 +95,58 @@
 				};
 			};
 
+			isi: isi@f0034000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_isi &pinctrl_isi_pck_as_mck &pinctrl_isi_camera>;
+				status = "disabled";
+			};
+
+			mmc1: mmc@f8000000 {
+				status = "okay";
+				pinctrl-0 = <&pinctrl_mmc1_clk_cmd_dat0 &pinctrl_mmc1_dat1_3 &pinctrl_mmc1_cd>;
+				slot@0 {
+					reg = <0>;
+					bus-width = <4>;
+					cd-gpios = <&pioD 18 0>;
+				};
+			};
+
+			tsadcc: tsadcc@f8018000 {
+				status = "okay";
+			};
+
+			adc0: adc@f8018000 {
+				status = "disabled";
+			};
+
+			pinctrl@fffff200 {
+				board {
+					pinctrl_mmc0_cd: mmc0_cd {
+						atmel,pins =
+							<3 17 0x0 0x5>; /* PD17 GPIO with pullup deglitch */
+					};
+
+					pinctrl_mmc1_cd: mmc1_cd {
+						atmel,pins =
+							<3 18 0x0 0x5>; /* PD18 GPIO with pullup deglitch */
+					};
+
+					pinctrl_pck0_as_audio_mck: pck0_as_audio_mck {
+						atmel,pins =
+							<3 30 0x2 0x0>;	/* PD30 periph B */
+					};
+
+					pinctrl_qt1070_irq: qt1070_irq {
+						atmel,pins =
+							<4 31 0x0 0x5>;	/* PE31 GPIO with pull up deglith */
+					};
+				};
+			};
+
+			dbgu: serial@ffffee00 {
+				status = "okay";
+			};
+
 			watchdog@fffffe40 {
 				status = "okay";
 			};
@@ -163,6 +168,21 @@
 
 		usb2: ehci@00700000 {
 			status = "okay";
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		d2 {
+			label = "d2";
+			gpios = <&pioE 25 1>;
+		};
+
+		d3 {
+			label = "d3";
+			gpios = <&pioE 24 0>;
+			linux,default-trigger = "heartbeat";
 		};
 	};
 

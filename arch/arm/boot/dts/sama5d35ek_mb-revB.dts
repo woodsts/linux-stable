@@ -13,6 +13,7 @@
 / {
 	model = "Atmel SAMA5D3-EK";
 	compatible = "atmel,sama5ek", "atmel,sama5d3", "atmel,sama5";
+	atmel,mb-rev = "B";
 
 	chosen {
 		bootargs = "console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/uboot/kernel)ro,-(rootfs) rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs";
@@ -89,7 +90,7 @@
 
 			isi: isi@f0034000 {
 				pinctrl-names = "default";
-				pinctrl-0 = <&pinctrl_isi &pinctrl_isi_pck_as_mck &pinctrl_isi_camera>;
+				pinctrl-0 = <&pinctrl_isi &pinctrl_isi_pck_as_mck_mb_revB &pinctrl_isi_camera_mb_revB>;
 				status = "okay";
 			};
 
