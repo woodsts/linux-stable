@@ -105,6 +105,14 @@
 
 			adc0: adc@f8018000 {
 				status = "okay";
+				pinctrl-0 = <
+					&pinctrl_adc0_adtrg
+					&pinctrl_adc0_ad0
+					&pinctrl_adc0_ad1
+					&pinctrl_adc0_ad2
+					&pinctrl_adc0_ad3
+					&pinctrl_adc0_ad4
+					>;
 			};
 
 			macb1: ethernet@f802c000 {
