@@ -28,7 +28,7 @@ static int nfc_wait_interrupt(struct atmel_nand_host *host, u32 flag)
 	timeout = wait_for_completion_timeout(&host->comp_nfc,
 			msecs_to_jiffies(100));
 	if (timeout == 0) {
-		printk("interrupt time out????\n");
+		dev_dbg(host->dev, "interrupt time out????\n");
 		return -ETIMEDOUT;
 	}
 
