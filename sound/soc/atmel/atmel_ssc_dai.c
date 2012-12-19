@@ -388,18 +388,6 @@ static int atmel_ssc_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	/*
-	 * The SSC only supports up to 16-bit samples in I2S format, due
-	 * to the size of the Frame Mode Register FSLEN field.
-	 */
-	if ((ssc_p->daifmt & SND_SOC_DAIFMT_FORMAT_MASK) == SND_SOC_DAIFMT_I2S
-		&& bits > 16) {
-		printk(KERN_WARNING
-				"atmel_ssc_dai: sample size %d "
-				"is too large for I2S\n", bits);
-		return -EINVAL;
-	}
-
-	/*
 	 * Compute SSC register settings.
 	 */
 	switch (ssc_p->daifmt
