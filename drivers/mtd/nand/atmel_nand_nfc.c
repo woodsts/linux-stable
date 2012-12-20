@@ -28,7 +28,7 @@ static int nfc_wait_interrupt(struct atmel_nand_host *host, u32 flag)
 	timeout = wait_for_completion_timeout(&host->comp_nfc,
 			msecs_to_jiffies(100));
 	if (timeout == 0) {
-		dev_dbg(host->dev, "interrupt time out????\n");
+		dev_err(host->dev, "interrupt time out???? flag is 0x%08x\n", flag);
 		return -ETIMEDOUT;
 	}
 
@@ -259,6 +259,7 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	case NAND_CMD_DEPLETE1:
 	case NAND_CMD_RNDOUT:
 	case NAND_CMD_SEQIN:
+	case NAND_CMD_READID:
 		return;
 
 	case NAND_CMD_STATUS_ERROR:
