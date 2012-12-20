@@ -75,6 +75,7 @@
 #define SPI_FDIV_SIZE				1
 #define SPI_MODFDIS_OFFSET			4
 #define SPI_MODFDIS_SIZE			1
+#define SPI_WDRBT_OFFSET			5
 #define SPI_LLB_OFFSET				7
 #define SPI_LLB_SIZE				1
 #define SPI_PCS_OFFSET				16
@@ -206,6 +207,7 @@ struct atmel_spi_dma {
 struct atmel_spi_pdata {
 	u8			version;
 	bool			has_dma_support;
+	bool			has_wdrbt;
 	struct at_dma_slave	dma_slave;
 };
 
@@ -253,16 +255,19 @@ struct atmel_spi_device {
 static struct atmel_spi_pdata at91rm9200_config = {
 	.version = 1,
 	.has_dma_support = false,
+	.has_wdrbt = false,
 };
 
 static struct atmel_spi_pdata at91sam9260_config = {
 	.version = 2,
 	.has_dma_support = false,
+	.has_wdrbt = false,
 };
 
 static struct atmel_spi_pdata at91sam9x5_config = {
 	.version = 2,
 	.has_dma_support = true,
+	.has_wdrbt = true,
 };
 
 static const struct platform_device_id atmel_spi_devtypes[] = {
@@ -357,8 +362,12 @@ static void cs_activate(struct atmel_spi *as, struct spi_device *spi)
 		 * toggle the CS.
 		 */
 		spi_writel(as, CSR0 + 4 * spi->chip_select, asd->csr);
-		spi_writel(as, MR, SPI_BF(PCS, ~(0x01 << spi->chip_select))
-				| SPI_BIT(MODFDIS) | SPI_BIT(MSTR));
+		if (as->pdata->has_wdrbt)
+			spi_writel(as, MR, SPI_BF(PCS, ~(0x01 << spi->chip_select))
+					| SPI_BIT(MODFDIS) | SPI_BIT(MSTR) | SPI_BIT(WDRBT));
+		else
+			spi_writel(as, MR, SPI_BF(PCS, ~(0x01 << spi->chip_select))
+					| SPI_BIT(MODFDIS) | SPI_BIT(MSTR));
 		mr = spi_readl(as, MR);
 		gpio_set_value(asd->npcs_pin, active);
 	} else {
