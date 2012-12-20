@@ -193,7 +193,7 @@ static int i2c_camera_power_revB(struct device *dev, int on)
 out:
 	devm_gpio_free(dev, AT91_PIN_PE28);
 	devm_gpio_free(dev, AT91_PIN_PE29);
-	return 0;
+	return ret;
 }
 
 static int i2c_camera_power(struct device *dev, int on)
