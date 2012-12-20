@@ -271,6 +271,12 @@ static struct platform_device isi_ov2640 = {
 static struct platform_device *devices[] __initdata = {
 	&isi_ov2640,
 };
+#else
+static struct soc_camera_link iclink_ov2640;
+static int i2c_camera_power_revB(struct device *dev, int on)
+{
+	return -1;
+}
 #endif
 
 struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
