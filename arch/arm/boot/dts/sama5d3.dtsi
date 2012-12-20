@@ -390,6 +390,8 @@
 				compatible = "cdns,at32ap7000-macb", "cdns,macb";
 				reg = <0xf802c000 0x100>;
 				interrupts = <35 4 3>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_macb1_rmii>;
 				status = "disabled";
 			};
 
@@ -696,6 +698,22 @@
 							 1 27 0x2 0x0>;	/* PB27 periph B G125CKO */
 					};
 
+				};
+
+				macb1 {
+					pinctrl_macb1_rmii: macb1_rmii-0 {
+						atmel,pins =
+							<2 0 0x1 0x0	/* PC0 periph A TX0   */
+							 2 1 0x1 0x0	/* PC1 periph A TX1   */
+							 2 2 0x1 0x0	/* PC2 periph A RX0   */
+							 2 3 0x1 0x0	/* PC3 periph A RX1   */
+							 2 4 0x1 0x0	/* PC4 periph A TXEN  */
+							 2 5 0x1 0x0	/* PC5 periph A CRSDV */
+							 2 6 0x1 0x0	/* PC6 periph A RXER  */
+							 2 7 0x1 0x0	/* PC7 periph A REFCK */
+							 2 8 0x1 0x0	/* PC8 periph A MDC   */
+							 2 9 0x1 0x0>;	/* PC9 periph A MDIO  */
+					};
 				};
 
 				mmc0 {
