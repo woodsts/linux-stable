@@ -173,16 +173,9 @@
 	};
 
 	leds {
-		compatible = "gpio-leds";
-
-		d2 {
-			label = "d2";
-			gpios = <&pioE 25 1>;
-		};
-
 		d3 {
 			label = "d3";
-			gpios = <&pioE 24 0>;
+			gpios = <&pioE 24 0>;	/* PE24, conflicts with RTS2 */
 			linux,default-trigger = "heartbeat";
 		};
 	};

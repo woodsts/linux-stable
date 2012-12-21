@@ -36,4 +36,14 @@
 			status = "okay";
 		};
 	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		d2 {
+			label = "d2";
+			gpios = <&pioE 25 1>;	/* PE25, conflicts with RXD2 */
+		};
+
+	};
 };
