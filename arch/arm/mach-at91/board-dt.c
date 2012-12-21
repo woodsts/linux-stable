@@ -158,7 +158,7 @@ static int i2c_camera_power_revB(struct device *dev, int on)
 
 	res = devm_gpio_request(dev, AT91_PIN_PE28, "ov2640_reset");
 	if (res < 0) {
-		printk("can't request ov2640_power pin\n");
+		printk("can't request ov2640_reset pin\n");
 		devm_gpio_free(dev, AT91_PIN_PE29);
 		return -1;
 	}
@@ -210,7 +210,7 @@ static int i2c_camera_power(struct device *dev, int on)
 
 	res = devm_gpio_request(dev, AT91_PIN_PE24, "ov2640_reset");
 	if (res < 0) {
-		printk("can't request ov2640_power pin\n");
+		printk("can't request ov2640_reset pin\n");
 		devm_gpio_free(dev, AT91_PIN_PE29);
 		return -1;
 	}
@@ -245,7 +245,7 @@ static int i2c_camera_power(struct device *dev, int on)
 out:
 	devm_gpio_free(dev, AT91_PIN_PE24);
 	devm_gpio_free(dev, AT91_PIN_PE29);
-	return 0;
+	return ret;
 }
 
 static struct i2c_board_info i2c_camera = {
