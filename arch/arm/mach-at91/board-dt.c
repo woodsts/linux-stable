@@ -329,7 +329,8 @@ static int ksz9021rn_phy_fixup(struct phy_device *phy)
 
 static void __init at91_dt_device_init(void)
 {
-	char cm_rev = 255;
+	char mb_rev = 255;
+	int ret;
 
 	if (of_machine_is_compatible("atmel,sama5ek")) {
 		struct device_node *np;
@@ -339,19 +340,21 @@ static void __init at91_dt_device_init(void)
 
 		np = of_find_node_by_path("/");
 		if (np) {
-			const char *cm_rev_tmp;
-			if (of_property_read_string(np, "atmel,mb-rev", &cm_rev_tmp)) {
-				printk("AT91: no mb-rev property, let assume we are using the latest one\n");
+			const char *mb_rev_tmp;
+			ret = of_property_read_string(np, "atmel,mb-rev", &mb_rev_tmp);
+			if (ret) {
+				printk("AT91: error %d while looking for mb-rev property, "
+				       "let assume we are using the latest one\n", ret);
 			} else {
-				printk("AT91: mb rev: %s\n", cm_rev_tmp);
-				cm_rev = cm_rev_tmp[0];
+				printk("AT91: mb rev: %s\n", mb_rev_tmp);
+				mb_rev = mb_rev_tmp[0];
 			}
 		}
 
 		np = of_find_compatible_node(NULL, NULL, "atmel,at91sam9g45-isi");
 		if (np) {
 			if (of_device_is_available(np)) {
-				switch (cm_rev) {
+				switch (mb_rev) {
 				case 'A':
 				case 'B':
 					at91_config_isi(true, "pck2");
