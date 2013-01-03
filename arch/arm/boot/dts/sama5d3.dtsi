@@ -595,18 +595,9 @@
 							 2 29 0x3 0x0	/* PC29 periph C ISI_PD8 */
 							 2 28 0x3 0x0>;	/* PC28 periph C ISI_PD9 */
 					};
-					pinctrl_isi_pck_as_mck_mb_revB: isi_pck_as_mck_mb_revB-0 {
-						atmel,pins =
-							<2 15 0x2 0x0>;	/* PC15 periph B ISI_MCK */
-					};
 					pinctrl_isi_pck_as_mck: isi_pck_as_mck-0 {
 						atmel,pins =
 							<3 31 0x2 0x0>;	/* PD31 periph B ISI_MCK */
-					};
-					pinctrl_isi_camera_mb_revB: isi_camera_mb_revB-0 {
-						atmel,pins =
-							<4 28 0x0 0x0	/* PE28 gpio ZB_SLPTR */
-							 4 29 0x0 0x0>;	/* PE29 gpio ZB_RSTN */
 					};
 					pinctrl_isi_camera: isi_camera-0 {
 						atmel,pins =
