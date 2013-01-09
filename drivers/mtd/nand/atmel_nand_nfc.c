@@ -13,6 +13,8 @@
 #include "atmel_nand_nfc.h"
 #include <linux/delay.h>
 
+#define NFC_TIME_OUT_MS		100
+
 static void pmecc_enable(struct atmel_nand_host *host, enum pmecc_op op);
 static int atmel_nand_dma_op(struct mtd_info *mtd, void *buf, int len,
 			       int is_read);
@@ -26,7 +28,7 @@ static int nfc_wait_interrupt(struct atmel_nand_host *host, u32 flag)
 	nfc_writel(host->nfc.hsmc_regs, IER, flag);
 
 	timeout = wait_for_completion_timeout(&host->comp_nfc,
-			msecs_to_jiffies(100));
+			msecs_to_jiffies(NFC_TIME_OUT_MS));
 	if (timeout == 0) {
 		dev_err(host->dev, "interrupt time out???? flag is 0x%08x\n", flag);
 		return -ETIMEDOUT;
@@ -38,13 +40,20 @@ static int nfc_wait_interrupt(struct atmel_nand_host *host, u32 flag)
 static int nfc_send_command(struct atmel_nand_host *host,
 	unsigned int cmd, unsigned int addr, unsigned char cycle0)
 {
+	unsigned long timeout;
 	dev_dbg(host->dev,
 		"nfc_cmd: 0x%08x, addr1234: 0x%08x, cycle0: 0x%02x\n",
 		cmd, addr, cycle0);
 
+	timeout = jiffies + msecs_to_jiffies(NFC_TIME_OUT_MS);
 	while (nfc_cmd_readl(NFCADDR_CMD_NFCBUSY, host->nfc.base_cmd_regs)
-			& NFCADDR_CMD_NFCBUSY)
-		;
+			& NFCADDR_CMD_NFCBUSY) {
+		if (time_after(jiffies, timeout)) {
+			dev_err(host->dev,
+				"Time out to wait CMD_NFCBUSY ready!\n");
+			break;
+		}
+	}
 	nfc_writel(host->nfc.hsmc_regs, CYCLE0, cycle0);
 	nfc_cmd_addr1234_writel(cmd, addr, host->nfc.base_cmd_regs);
 	return nfc_wait_interrupt(host, ATMEL_HSMC_NFC_CMD_DONE);
@@ -160,6 +169,7 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 {
 	struct nand_chip *chip = mtd->priv;
 	struct atmel_nand_host *host = chip->priv;
+	unsigned long timeout;
 	unsigned int nfc_addr_cmd = 0;
 
 	unsigned int cmd1 = command << 2;
@@ -186,8 +196,14 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 		udelay(chip->chip_delay);
 
 		nfc_nand_command(mtd, NAND_CMD_STATUS, -1, -1);
-		while (!(chip->read_byte(mtd) & NAND_STATUS_READY))
-			;
+		timeout = jiffies + msecs_to_jiffies(NFC_TIME_OUT_MS);
+		while (!(chip->read_byte(mtd) & NAND_STATUS_READY)) {
+			if (time_after(jiffies, timeout)) {
+				dev_err(host->dev,
+					"Time out to wait status ready!\n");
+				break;
+			}
+		}
 		return;
 	case NAND_CMD_STATUS:
 		do_addr = false;
