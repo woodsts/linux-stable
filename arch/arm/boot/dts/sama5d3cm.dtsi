@@ -1,11 +1,12 @@
 /*
- * sama5d3cm.dtsi - Device Tree Include file for SAM9A5D3x CPU Module
+ * sama5d3cm.dtsi - Device Tree Include file for SAMA5D3x CPU Module
  *
  *  Copyright (C) 2012 Atmel,
  *                2012 Ludovic Desroches <ludovic.desroches@atmel.com>
  *
  * Licensed under GPLv2 or later.
  */
+/include/ "sama5d3.dtsi"
 
 / {
 	memory {
@@ -24,6 +25,12 @@
 	};
 
 	ahb {
+		apb {
+			macb0: ethernet@f0028000 {
+				phy-mode = "rgmii";
+			};
+		};
+
 		nand0: nand@60000000 {
 			nand-bus-width = <8>;
 			nand-ecc-mode = "hw";
@@ -42,8 +49,7 @@
 
 		d2 {
 			label = "d2";
-			gpios = <&pioE 25 1>;	/* PE25, conflicts with RXD2 */
+			gpios = <&pioE 25 1>;	/* PE25, conflicts with A25, RXD2 */
 		};
-
 	};
 };

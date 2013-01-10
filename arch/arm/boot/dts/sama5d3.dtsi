@@ -61,7 +61,7 @@
 				reg = <0xf0000000 0x600>;
 				interrupts = <21 4 0>;
 				pinctrl-names = "default";
-				pinctrl-0 = <&pinctrl_mmc0_clk_cmd_dat0 &pinctrl_mmc0_dat1_3 &pinctrl_mmc_dat4_7>;
+				pinctrl-0 = <&pinctrl_mmc0_clk_cmd_dat0 &pinctrl_mmc0_dat1_3 &pinctrl_mmc0_dat4_7>;
 				status = "disabled";
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -530,27 +530,27 @@
 					};
 					pinctrl_adc0_ad10: adc0_ad10 {
 						atmel,pins =
-							<3 30 0x1 0x0>;	/* PD30 periph A AD10 */
+							<3 30 0x1 0x0>;	/* PD30 periph A AD10, conflicts with PCK0 */
 					};
 					pinctrl_adc0_ad11: adc0_ad11 {
 						atmel,pins =
-							<3 31 0x1 0x0>;	/* PD31 periph A AD11 */
+							<3 31 0x1 0x0>;	/* PD31 periph A AD11, conflicts with PCK1 */
 					};
 				};
 
 				can0 {
 					pinctrl_can0_rx_tx: can0_rx_tx {
 						atmel,pins =
-							<3 14 0x3 0x0	/* PD14 periph C RX */
-							 3 15 0x3 0x0>;	/* PD15 periph C TX */
+							<3 14 0x3 0x0	/* PD14 periph C RX, conflicts with SCK0, SPI0_NPCS1 */
+							 3 15 0x3 0x0>;	/* PD15 periph C TX, conflicts with CTS0, SPI0_NPCS2 */
 					};
 				};
 
 				can1 {
 					pinctrl_can1_rx_tx: can1_rx_tx {
 						atmel,pins =
-							<1 14 0x2 0x0	/* PB14 periph B RX */
-							 1 15 0x2 0x0>;	/* PB15 periph B TX */
+							<1 14 0x2 0x0	/* PB14 periph B RX, conflicts with GCRS */
+							 1 15 0x2 0x0>;	/* PB15 periph B TX, conflicts with GCOL */
 					};
 				};
 
@@ -565,44 +565,39 @@
 				i2c0 {
 					pinctrl_i2c0: i2c0-0 {
 						atmel,pins =
-							<0 30 0x1 0x0	/* PA30 periph A TWD0 pin */
-							 0 31 0x1 0x0>;	/* PA31 periph A TWCK0 pin */
+							<0 30 0x1 0x0	/* PA30 periph A TWD0 pin, conflicts with URXD1, ISI_VSYNC */
+							 0 31 0x1 0x0>;	/* PA31 periph A TWCK0 pin, conflicts with UTXD1, ISI_HSYNC */
 					};
 				};
 
 				i2c1 {
 					pinctrl_i2c1: i2c1-0 {
 						atmel,pins =
-							<2 26 0x2 0x0	/* PC26 periph B TWD1 pin */
-							 2 27 0x2 0x0>;	/* PC27 periph B TWCK1 pin */
+							<2 26 0x2 0x0	/* PC26 periph B TWD1 pin, conflicts with SPI1_NPCS1, ISI_D11 */
+							 2 27 0x2 0x0>;	/* PC27 periph B TWCK1 pin, conflicts with SPI1_NPCS2, ISI_D10 */
 					};
 				};
 
 				isi {
 					pinctrl_isi: isi-0 {
 						atmel,pins =
-							<0 16 0x3 0x0	/* PA16 periph C ISI_D0 */
-							 0 17 0x3 0x0	/* PA17 periph C ISI_D1 */
-							 0 18 0x3 0x0	/* PA18 periph C ISI_D2 */
-							 0 19 0x3 0x0	/* PA19 periph C ISI_D3 */
-							 0 20 0x3 0x0	/* PA20 periph C ISI_D4 */
-							 0 21 0x3 0x0	/* PA21 periph C ISI_D5 */
-							 0 22 0x3 0x0	/* PA22 periph C ISI_D6 */
-							 0 23 0x3 0x0	/* PA23 periph C ISI_D7 */
-							 2 30 0x3 0x0	/* PC30 periph C ISI_PCK */
-							 0 31 0x3 0x0	/* PA31 periph C ISI_HSYNC */
-							 0 30 0x3 0x0	/* PA30 periph C ISI_VSYMC */
-							 2 29 0x3 0x0	/* PC29 periph C ISI_PD8 */
-							 2 28 0x3 0x0>;	/* PC28 periph C ISI_PD9 */
+							<0 16 0x3 0x0	/* PA16 periph C ISI_D0, conflicts with LCDDAT16 */
+							 0 17 0x3 0x0	/* PA17 periph C ISI_D1, conflicts with LCDDAT17 */
+							 0 18 0x3 0x0	/* PA18 periph C ISI_D2, conflicts with LCDDAT18, TWD2 */
+							 0 19 0x3 0x0	/* PA19 periph C ISI_D3, conflicts with LCDDAT19, TWCK2 */
+							 0 20 0x3 0x0	/* PA20 periph C ISI_D4, conflicts with LCDDAT20, PWMH0 */
+							 0 21 0x3 0x0	/* PA21 periph C ISI_D5, conflicts with LCDDAT21, PWML0 */
+							 0 22 0x3 0x0	/* PA22 periph C ISI_D6, conflicts with LCDDAT22, PWMH1 */
+							 0 23 0x3 0x0	/* PA23 periph C ISI_D7, conflicts with LCDDAT23, PWML1 */
+							 2 30 0x3 0x0	/* PC30 periph C ISI_PCK, conflicts with UTXD0 */
+							 0 31 0x3 0x0	/* PA31 periph C ISI_HSYNC, conflicts with TWCK0, UTXD1 */
+							 0 30 0x3 0x0	/* PA30 periph C ISI_VSYNC, conflicts with TWD0, URXD1 */
+							 2 29 0x3 0x0	/* PC29 periph C ISI_PD8, conflicts with URXD0, PWMFI2 */
+							 2 28 0x3 0x0>;	/* PC28 periph C ISI_PD9, conflicts with SPI1_NPCS3, PWMFI0 */
 					};
 					pinctrl_isi_pck_as_mck: isi_pck_as_mck-0 {
 						atmel,pins =
 							<3 31 0x2 0x0>;	/* PD31 periph B ISI_MCK */
-					};
-					pinctrl_isi_camera: isi_camera-0 {
-						atmel,pins =
-							<4 24 0x0 0x0	/* PE24 gpio ZB_SLPTR */
-							 4 29 0x0 0x0>;	/* PE29 gpio ZB_RSTN */
 					};
 				};
 
@@ -645,45 +640,45 @@
 				macb0 {
 					pinctrl_macb0_data_rgmii: macb0_data_rgmii {
 						atmel,pins =
-							<1 0 0x1 0x0	/* PB0 periph A GTX0 */
-							 1 1 0x1 0x0	/* PB1 periph A GTX1 */
-							 1 2 0x1 0x0	/* PB2 periph A GTX2 */
-							 1 3 0x1 0x0	/* PB3 periph A GTX3 */
-							 1 4 0x1 0x0	/* PB4 periph A GRX0 */
-							 1 5 0x1 0x0	/* PB5 periph A GRX1 */
-							 1 6 0x1 0x0	/* PB6 periph A GRX2 */
-							 1 7 0x1 0x0>;	/* PB7 periph A GRX3 */
+							<1 0 0x1 0x0	/* PB0 periph A GTX0, conflicts with PWMH0 */
+							 1 1 0x1 0x0	/* PB1 periph A GTX1, conflicts with PWML0 */
+							 1 2 0x1 0x0	/* PB2 periph A GTX2, conflicts with TK1 */
+							 1 3 0x1 0x0	/* PB3 periph A GTX3, conflicts with TF1 */
+							 1 4 0x1 0x0	/* PB4 periph A GRX0, conflicts with PWMH1 */
+							 1 5 0x1 0x0	/* PB5 periph A GRX1, conflicts with PWML1 */
+							 1 6 0x1 0x0	/* PB6 periph A GRX2, conflicts with TD1 */
+							 1 7 0x1 0x0>;	/* PB7 periph A GRX3, conflicts with RK1 */
 					};
 					pinctrl_macb0_data_gmii: macb0_data_gmii {
 						atmel,pins =
-							<1 19 0x2 0x0	/* PB19 periph B GTX4 */
-							 1 20 0x2 0x0	/* PB20 periph B GTX5 */
-							 1 21 0x2 0x0	/* PB21 periph B GTX6 */
-							 1 22 0x2 0x0	/* PB22 periph B GTX7 */
-							 1 23 0x2 0x0	/* PB23 periph B GRX4 */
-							 1 24 0x2 0x0	/* PB24 periph B GRX5 */
-							 1 25 0x2 0x0	/* PB25 periph B GRX6 */
-							 1 26 0x2 0x0>;	/* PB26 periph B GRX7 */
+							<1 19 0x2 0x0	/* PB19 periph B GTX4, conflicts with MCI1_CDA */
+							 1 20 0x2 0x0	/* PB20 periph B GTX5, conflicts with MCI1_DA0 */
+							 1 21 0x2 0x0	/* PB21 periph B GTX6, conflicts with MCI1_DA1 */
+							 1 22 0x2 0x0	/* PB22 periph B GTX7, conflicts with MCI1_DA2 */
+							 1 23 0x2 0x0	/* PB23 periph B GRX4, conflicts with MCI1_DA3 */
+							 1 24 0x2 0x0	/* PB24 periph B GRX5, conflicts with MCI1_CK */
+							 1 25 0x2 0x0	/* PB25 periph B GRX6, conflicts with SCK1 */
+							 1 26 0x2 0x0>;	/* PB26 periph B GRX7, conflicts with CTS1 */
 					};
 					pinctrl_macb0_signal_rgmii: macb0_signal_rgmii {
 						atmel,pins =
-							<1 8 0x1 0x0	/* PB8 periph A GTXCK */
-							 1 9 0x1 0x0	/* PB9 periph A GTXEN */
-							 1 11 0x1 0x0	/* PB11 periph A GRXCK */
-							 1 13 0x1 0x0	/* PB13 periph A GRXER */
+							<1 8 0x1 0x0	/* PB8 periph A GTXCK, conflicts with PWMH2 */
+							 1 9 0x1 0x0	/* PB9 periph A GTXEN, conflicts with PWML2 */
+							 1 11 0x1 0x0	/* PB11 periph A GRXCK, conflicts with RD1 */
+							 1 13 0x1 0x0	/* PB13 periph A GRXER, conflicts with PWML3 */
 							 1 16 0x1 0x0	/* PB16 periph A GMDC */
 							 1 17 0x1 0x0	/* PB17 periph A GMDIO */
 							 1 18 0x1 0x0>;	/* PB18 periph A G125CK */
 					};
 					pinctrl_macb0_signal_gmii: macb0_signal_gmii {
 						atmel,pins =
-							<1 9 0x1 0x0	/* PB9 periph A GTXEN */
-							 1 10 0x1 0x0	/* PB10 periph A GTXER */
-							 1 11 0x1 0x0	/* PB11 periph A GRXCK */
-							 1 12 0x1 0x0	/* PB12 periph A GRXDV */
-							 1 13 0x1 0x0	/* PB13 periph A GRXER */
-							 1 14 0x1 0x0	/* PB14 periph A GCRS */
-							 1 15 0x1 0x0	/* PB15 periph A GCOL */
+							<1 9 0x1 0x0	/* PB9 periph A GTXEN, conflicts with PWML2 */
+							 1 10 0x1 0x0	/* PB10 periph A GTXER, conflicts with RF1 */
+							 1 11 0x1 0x0	/* PB11 periph A GRXCK, conflicts with RD1 */
+							 1 12 0x1 0x0	/* PB12 periph A GRXDV, conflicts with PWMH3 */
+							 1 13 0x1 0x0	/* PB13 periph A GRXER, conflicts with PWML3 */
+							 1 14 0x1 0x0	/* PB14 periph A GCRS, conflicts with CANRX1 */
+							 1 15 0x1 0x0	/* PB15 periph A GCOL, conflicts with CANTX1 */
 							 1 16 0x1 0x0	/* PB16 periph A GMDC */
 							 1 17 0x1 0x0	/* PB17 periph A GMDIO */
 							 1 27 0x2 0x0>;	/* PB27 periph B G125CKO */
@@ -694,16 +689,16 @@
 				macb1 {
 					pinctrl_macb1_rmii: macb1_rmii-0 {
 						atmel,pins =
-							<2 0 0x1 0x0	/* PC0 periph A TX0   */
-							 2 1 0x1 0x0	/* PC1 periph A TX1   */
-							 2 2 0x1 0x0	/* PC2 periph A RX0   */
-							 2 3 0x1 0x0	/* PC3 periph A RX1   */
-							 2 4 0x1 0x0	/* PC4 periph A TXEN  */
-							 2 5 0x1 0x0	/* PC5 periph A CRSDV */
-							 2 6 0x1 0x0	/* PC6 periph A RXER  */
-							 2 7 0x1 0x0	/* PC7 periph A REFCK */
-							 2 8 0x1 0x0	/* PC8 periph A MDC   */
-							 2 9 0x1 0x0>;	/* PC9 periph A MDIO  */
+							<2 0 0x1 0x0	/* PC0 periph A ETX0, conflicts with TIOA3 */
+							 2 1 0x1 0x0	/* PC1 periph A ETX1, conflicts with TIOB3 */
+							 2 2 0x1 0x0	/* PC2 periph A ERX0, conflicts with TCLK3 */
+							 2 3 0x1 0x0	/* PC3 periph A ERX1, conflicts with TIOA4 */
+							 2 4 0x1 0x0	/* PC4 periph A ETXEN, conflicts with TIOB4 */
+							 2 5 0x1 0x0	/* PC5 periph A ECRSDV,conflicts with TCLK4 */
+							 2 6 0x1 0x0	/* PC6 periph A ERXER, conflicts with TIOA5 */
+							 2 7 0x1 0x0	/* PC7 periph A EREFCK, conflicts with TIOB5 */
+							 2 8 0x1 0x0	/* PC8 periph A EMDC, conflicts with TCLK5 */
+							 2 9 0x1 0x0>;	/* PC9 periph A EMDIO  */
 					};
 				};
 
@@ -722,40 +717,40 @@
 					};
 					pinctrl_mmc0_dat4_7: mmc0_dat4_7 {
 						atmel,pins =
-							<3 5 0x1 0x1	/* PD5 periph A MCI0_DA4 with pullup */
-							 3 6 0x1 0x1	/* PD6 periph A MCI0_DA5 with pullup */
-							 3 7 0x1 0x1	/* PD7 periph A MCI0_DA6 with pullup */
-							 3 8 0x1 0x1>;	/* PD8 periph A MCI0_DA7 with pullup */
+							<3 5 0x1 0x1	/* PD5 periph A MCI0_DA4 with pullup, conflicts with TIOA0, PWMH2 */
+							 3 6 0x1 0x1	/* PD6 periph A MCI0_DA5 with pullup, conflicts with TIOB0, PWML2 */
+							 3 7 0x1 0x1	/* PD7 periph A MCI0_DA6 with pullup, conlicts with TCLK0, PWMH3 */
+							 3 8 0x1 0x1>;	/* PD8 periph A MCI0_DA7 with pullup, conflicts with PWML3 */
 					};
 				};
 
 				mmc1 {
 					pinctrl_mmc1_clk_cmd_dat0: mmc1_clk_cmd_dat0 {
 						atmel,pins =
-							<1 24 0x1 0x0	/* PB24 periph A MCI1_CK */
-							 1 19 0x1 0x1	/* PB19 periph A MCI1_CDA with pullup */
-							 1 20 0x1 0x1>;	/* PB20 periph A MCI1_DA0 with pullup */
+							<1 24 0x1 0x0	/* PB24 periph A MCI1_CK, conflicts with GRX5 */
+							 1 19 0x1 0x1	/* PB19 periph A MCI1_CDA with pullup, conflicts with GTX4 */
+							 1 20 0x1 0x1>;	/* PB20 periph A MCI1_DA0 with pullup, conflicts with GTX5 */
 					};
 					pinctrl_mmc1_dat1_3: mmc1_dat1_3 {
 						atmel,pins =
-							<1 21 0x1 0x1	/* PB21 periph A MCI1_DA1 with pullup */
-							 1 22 0x1 0x1	/* PB22 periph A MCI1_DA2 with pullup */
-							 1 23 0x1 0x1>;	/* PB23 periph A MCI1_DA3 with pullup */
+							<1 21 0x1 0x1	/* PB21 periph A MCI1_DA1 with pullup, conflicts with GTX6 */
+							 1 22 0x1 0x1	/* PB22 periph A MCI1_DA2 with pullup, conflicts with GTX7 */
+							 1 23 0x1 0x1>;	/* PB23 periph A MCI1_DA3 with pullup, conflicts with GRX4 */
 					};
 				};
 
 				mmc2 {
 					pinctrl_mmc2_clk_cmd_dat0: mmc2_clk_cmd_dat0 {
 						atmel,pins =
-							<2 15 0x1 0x0	/* PC15 periph A MCI2_CK */
+							<2 15 0x1 0x0	/* PC15 periph A MCI2_CK, conflicts with PCK2 */
 							 2 10 0x1 0x1	/* PC10 periph A MCI2_CDA with pullup */
 							 2 11 0x1 0x1>;	/* PC11 periph A MCI2_DA0 with pullup */
 					};
 					pinctrl_mmc2_dat1_3: mmc2_dat1_3 {
 						atmel,pins =
-							<2 12 0x1 0x0	/* PC12 periph A MCI2_DA1 with pullup */
-							 2 13 0x1 0x0	/* PC13 periph A MCI2_DA2 with pullup */
-							 2 14 0x1 0x0>;	/* PC14 periph A MCI2_DA3 with pullup */
+							<2 12 0x1 0x0	/* PC12 periph A MCI2_DA1 with pullup, conflicts with TIOA1 */
+							 2 13 0x1 0x0	/* PC13 periph A MCI2_DA2 with pullup, conflicts with TIOB1 */
+							 2 14 0x1 0x0>;	/* PC14 periph A MCI2_DA3 with pullup, conflicts with TCLK1 */
 					};
 				};
 
@@ -856,32 +851,32 @@
 				ssc1 {
 					pinctrl_ssc1_tx: ssc1_tx {
 						atmel,pins =
-							<1 2 0x2 0x0	/* PB2 periph B TK1 */
-							 1 3 0x2 0x0	/* PB3 periph B TF1 */
-							 1 6 0x2 0x0>;	/* PB6 periph B TD1 */
+							<1 2 0x2 0x0	/* PB2 periph B TK1, conflicts with GTX2 */
+							 1 3 0x2 0x0	/* PB3 periph B TF1, conflicts with GTX3 */
+							 1 6 0x2 0x0>;	/* PB6 periph B TD1, conflicts with TD1 */
 					};
 
 					pinctrl_ssc1_rx: ssc1_rx {
 						atmel,pins =
-							<1 7 0x2 0x0	/* PC7 periph B RK1 */
-							 1 10 0x2 0x0	/* PC10 periph B RF1 */
-							 1 11 0x2 0x0>;	/* PC11 periph B RD1 */
+							<1 7 0x2 0x0	/* PB7 periph B RK1, conflicts with EREFCK */
+							 1 10 0x2 0x0	/* PB10 periph B RF1, conflicts with GTXER */
+							 1 11 0x2 0x0>;	/* PB11 periph B RD1, conflicts with GRXCK */
 					};
 				};
 
 				uart0 {
 					pinctrl_uart0: uart0-0 {
 						atmel,pins =
-							<3 29 0x1 0x0	/* PC29 periph A */
-							 3 30 0x1 0x1>;	/* PC30 periph A with pullup */
+							<2 29 0x1 0x0	/* PC29 periph A, conflicts with PWMFI2, ISI_D8 */
+							 2 30 0x1 0x1>;	/* PC30 periph A with pullup, conflicts with ISI_PCK */
 					};
 				};
 
 				uart1 {
 					pinctrl_uart1: uart1-0 {
 						atmel,pins =
-							<0 30 0x2 0x0	/* PA30 periph B */
-							 0 31 0x2 0x1>;	/* PA31 periph B with pullup */
+							<0 30 0x2 0x0	/* PA30 periph B, conflicts with TWD0, ISI_VSYNC */
+							 0 31 0x2 0x1>;	/* PA31 periph B with pullup, conflicts with TWCK0, ISI_HSYNC */
 					};
 				};
 
@@ -894,8 +889,8 @@
 
 					pinctrl_usart0_rts_cts: usart0_rts_cts-0 {
 						atmel,pins =
-							<3 15 0x1 0x0	/* PD15 periph A */
-							 3 16 0x1 0x0>;	/* PD16 periph A */
+							<3 15 0x1 0x0	/* PD15 periph A, conflicts with SPI0_NPCS2, CANTX0 */
+							 3 16 0x1 0x0>;	/* PD16 periph A, conflicts with SPI0_NPCS3, PWMFI3 */
 					};
 				};
 
@@ -908,36 +903,36 @@
 
 					pinctrl_usart1_rts_cts: usart1_rts_cts-0 {
 						atmel,pins =
-							<1 26 0x1 0x0	/* PB26 periph A */
-							 1 27 0x1 0x0>;	/* PB27 periph A */
+							<1 26 0x1 0x0	/* PB26 periph A, conflicts with GRX7 */
+							 1 27 0x1 0x0>;	/* PB27 periph A, conflicts with G125CKO */
 					};
 				};
 
 				usart2 {
 					pinctrl_usart2: usart2-0 {
 						atmel,pins =
-							<4 25 0x2 0x0	/* PE25 periph B */
-							 4 26 0x2 0x1>;	/* PE26 periph B with pullup */
+							<4 25 0x2 0x0	/* PE25 periph B, conflicts with A25 */
+							 4 26 0x2 0x1>;	/* PE26 periph B with pullup, conflicts NCS0 */
 					};
 
 					pinctrl_usart2_rts_cts: usart2_rts_cts-0 {
 						atmel,pins =
-							<4 23 0x2 0x0	/* PE23 periph B */
-							 4 24 0x2 0x0>;	/* PE24 periph B */
+							<4 23 0x2 0x0	/* PE23 periph B, conflicts with A23 */
+							 4 24 0x2 0x0>;	/* PE24 periph B, conflicts with A24 */
 					};
 				};
 
 				usart3 {
 					pinctrl_usart3: usart3-0 {
 						atmel,pins =
-							<4 18 0x2 0x0	/* PE18 periph B */
-							 4 19 0x2 0x1>;	/* PE19 periph B with pullup */
+							<4 18 0x2 0x0	/* PE18 periph B, conflicts with A18 */
+							 4 19 0x2 0x1>;	/* PE19 periph B with pullup, conflicts with A19 */
 					};
 
 					pinctrl_usart3_rts_cts: usart3_rts_cts-0 {
 						atmel,pins =
-							<4 16 0x2 0x0	/* PE16 periph B */
-							 4 17 0x2 0x0>;	/* PE17 periph B */
+							<4 16 0x2 0x0	/* PE16 periph B, conflicts with A16 */
+							 4 17 0x2 0x0>;	/* PE17 periph B, conflicts with A17 */
 					};
 				};
 			};

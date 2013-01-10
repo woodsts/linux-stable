@@ -1,0 +1,62 @@
+/*
+ * sama5d3dm.dtsi - Device Tree file for SAMA5 display module
+ *
+ *  Copyright (C) 2012 Atmel,
+ *                2012 Ludovic Desroches <ludovic.desroches@atmel.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/ {
+	ahb {
+		apb {
+			i2c1: i2c@f0018000 {
+				qt1070: keyboard@1b {
+					compatible = "qt1070";
+					reg = <0x1b>;
+					interrupt-parent = <&pioE>;
+					interrupts = <31 0x0>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_qt1070_irq>;
+				};
+			};
+
+			lcd_bus@f0030000 {
+				status = "okay";
+
+				lcd@f0030000 {
+					status = "okay";
+				};
+
+				lcdovl1@f0030140 {
+					status = "okay";
+				};
+
+				lcdovl2@f0030240 {
+					status = "okay";
+				};
+
+				lcdheo1@f0030340 {
+					status = "okay";
+				};
+			};
+
+			adc0: adc@f8018000 {
+				status = "disabled";
+			};
+
+			tsadcc: tsadcc@f8018000 {
+				status = "okay";
+			};
+
+			pinctrl@fffff200 {
+				board {
+					pinctrl_qt1070_irq: qt1070_irq {
+						atmel,pins =
+							<4 31 0x0 0x5>; /* PE31 GPIO with pull up deglith */
+					};
+				};
+			};
+		};
+	};
+};
