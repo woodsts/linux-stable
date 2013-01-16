@@ -297,13 +297,13 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 	dev_dbg(info->device, "  * LCDC_LCDCFG1 = %08lx\n", value);
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG1, value);
 
-	value = (info->var.lower_margin) << LCDC_LCDCFG2_VBPW_OFFSET;
-	value |= (info->var.upper_margin - 1) << LCDC_LCDCFG2_VFPW_OFFSET;
+	value = (info->var.upper_margin) << LCDC_LCDCFG2_VBPW_OFFSET;
+	value |= (info->var.lower_margin - 1) << LCDC_LCDCFG2_VFPW_OFFSET;
 	dev_dbg(info->device, "  * LCDC_LCDCFG2 = %08lx\n", value);
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG2, value);
 
-	value = (info->var.right_margin - 1) << LCDC_LCDCFG3_HBPW_OFFSET;
-	value |= (info->var.left_margin - 1) << LCDC_LCDCFG3_HFPW_OFFSET;
+	value = (info->var.left_margin - 1) << LCDC_LCDCFG3_HBPW_OFFSET;
+	value |= (info->var.right_margin - 1) << LCDC_LCDCFG3_HFPW_OFFSET;
 	dev_dbg(info->device, "  * LCDC_LCDCFG3 = %08lx\n", value);
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG3, value);
 
