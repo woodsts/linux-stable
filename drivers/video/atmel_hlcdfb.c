@@ -261,7 +261,7 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 
 	if (value < 1) {
 		dev_notice(info->device, "using system clock as pixel clock\n");
-		value = LCDC_LCDCFG0_CLKPOL | LCDC_LCDCFG0_CLKPWMSEL | LCDC_LCDCFG0_CGDISBASE;
+		value = LCDC_LCDCFG0_CLKPWMSEL | LCDC_LCDCFG0_CGDISBASE;
 		lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG0, value);
 	} else {
 		info->var.pixclock = KHZ2PICOS(clk_value_khz / value);
@@ -271,7 +271,6 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 		dev_dbg(info->device, "  * programming CLKDIV = 0x%08lx\n",
 					value);
 		value = (value << LCDC_LCDCFG0_CLKDIV_OFFSET)
-			| LCDC_LCDCFG0_CLKPOL
 			| LCDC_LCDCFG0_CGDISBASE;
 		lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG0, value);
 	}
