@@ -1558,6 +1558,7 @@ static struct atmel_spi_pdata * __devinit atmel_spi_get_driver_data(
 			platform_get_device_id(pdev)->driver_data;
 }
 
+#if defined(CONFIG_OF)
 static int at91_spi_dma_of_init(struct device_node *np,
 			struct at_dma_slave *atslave)
 {
@@ -1608,6 +1609,7 @@ err0:
 	pr_debug("%s exited with status %d\n", __func__, ret);
 	return ret;
 }
+#endif
 
 /*-------------------------------------------------------------------------*/
 
@@ -1698,9 +1700,13 @@ static int __devinit atmel_spi_probe(struct platform_device *pdev)
 	as->use_pdc = false;
 
 	if (as->pdata->has_dma_support) {
-		if ((!at91_spi_dma_of_init(pdev->dev.of_node,
-					&as->pdata->dma_slave))
-			&& (atmel_spi_configure_dma(as) == 0))
+#if defined(CONFIG_OF)
+		if (!at91_spi_dma_of_init(pdev->dev.of_node,
+					&as->pdata->dma_slave)
+			&& !atmel_spi_configure_dma(as))
+#else
+		if (!atmel_spi_configure_dma(as))
+#endif
 			as->use_dma = true;
 	} else
 		as->use_pdc = true;
