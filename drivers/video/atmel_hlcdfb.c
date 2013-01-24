@@ -423,8 +423,12 @@ static irqreturn_t atmel_hlcdfb_interrupt(int irq, void *dev_id)
 
 static int atmel_hlcdfb_suspend(struct platform_device *pdev, pm_message_t mesg)
 {
+	const struct platform_device_id *id = platform_get_device_id(pdev);
 	struct fb_info *info = platform_get_drvdata(pdev);
 	struct atmel_lcdfb_info *sinfo = info->par;
+
+	if (strcmp(id->name, "atmel_hlcdfb_base"))
+		return 0;
 
 	/*
 	 * We don't want to handle interrupts while the clock is
@@ -444,8 +448,12 @@ static int atmel_hlcdfb_suspend(struct platform_device *pdev, pm_message_t mesg)
 
 static int atmel_hlcdfb_resume(struct platform_device *pdev)
 {
+	const struct platform_device_id *id = platform_get_device_id(pdev);
 	struct fb_info *info = platform_get_drvdata(pdev);
 	struct atmel_lcdfb_info *sinfo = info->par;
+
+	if (strcmp(id->name, "atmel_hlcdfb_base"))
+		return 0;
 
 	atmel_lcdfb_start_clock(sinfo);
 	atmel_hlcdfb_start(sinfo);
