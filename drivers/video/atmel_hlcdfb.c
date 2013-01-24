@@ -163,20 +163,16 @@ void atmel_hlcdfb_start(struct atmel_lcdfb_info *sinfo)
 {
 	u32 value;
 
-	value = lcdc_readl(sinfo, ATMEL_LCDC_LCDEN);
-	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, value | LCDC_LCDEN_CLKEN);
+	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, LCDC_LCDEN_CLKEN);
 	while (!(lcdc_readl(sinfo, ATMEL_LCDC_LCDSR) & LCDC_LCDSR_CLKSTS))
 		msleep(1);
-	value = lcdc_readl(sinfo, ATMEL_LCDC_LCDEN);
-	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, value | LCDC_LCDEN_SYNCEN);
+	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, LCDC_LCDEN_SYNCEN);
 	while (!(lcdc_readl(sinfo, ATMEL_LCDC_LCDSR) & LCDC_LCDSR_LCDSTS))
 		msleep(1);
-	value = lcdc_readl(sinfo, ATMEL_LCDC_LCDEN);
-	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, value | LCDC_LCDEN_DISPEN);
+	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, LCDC_LCDEN_DISPEN);
 	while (!(lcdc_readl(sinfo, ATMEL_LCDC_LCDSR) & LCDC_LCDSR_DISPSTS))
 		msleep(1);
-	value = lcdc_readl(sinfo, ATMEL_LCDC_LCDEN);
-	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, value | LCDC_LCDEN_PWMEN);
+	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, LCDC_LCDEN_PWMEN);
 	while (!(lcdc_readl(sinfo, ATMEL_LCDC_LCDSR) & LCDC_LCDSR_PWMSTS))
 		msleep(1);
 }
