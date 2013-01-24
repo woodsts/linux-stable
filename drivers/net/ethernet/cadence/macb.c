@@ -546,8 +546,7 @@ static void gem_rx_refill(struct macb *bp)
 		ctrl = desc->ctrl;
 		bp->rx_prepared_head++;
 
-		if ((addr & MACB_BIT(RX_USED)))
-			continue;
+		netdev_vdbg(bp->dev, "preparing for entry %d\n", entry);
 
 		if (bp->rx_skbuff[entry] == NULL) {
 			/* allocate sk_buff for this free entry in ring */
@@ -571,6 +570,9 @@ static void gem_rx_refill(struct macb *bp)
 			/* properly align Ethernet header */
 			skb_reserve(skb, NET_IP_ALIGN);
 		}
+
+		/* give back the descriptor to HW */
+		desc->addr &= ~MACB_BIT(RX_USED);
 	}
 
 	/* Make descriptor updates visible to hardware */
@@ -624,7 +626,6 @@ static int gem_rx(struct macb *bp, int budget)
 		if (!(addr & MACB_BIT(RX_USED)))
 			break;
 
-		desc->addr &= ~MACB_BIT(RX_USED);
 		bp->rx_tail++;
 		count++;
 
