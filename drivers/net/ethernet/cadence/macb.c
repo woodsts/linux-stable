@@ -949,16 +949,6 @@ static int macb_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	len = skb->len;
 	spin_lock_irqsave(&bp->lock, flags);
 
-	/* This is a hard error, log it. */
-	if (CIRC_SPACE(bp->tx_head, bp->tx_tail, TX_RING_SIZE) < 1) {
-		netif_stop_queue(dev);
-		spin_unlock_irqrestore(&bp->lock, flags);
-		netdev_err(bp->dev, "BUG! Tx Ring full when queue awake!\n");
-		netdev_dbg(bp->dev, "tx_head = %u, tx_tail = %u\n",
-			   bp->tx_head, bp->tx_tail);
-		return NETDEV_TX_BUSY;
-	}
-
 	entry = macb_tx_ring_wrap(bp->tx_head);
 	bp->tx_head++;
 	netdev_vdbg(bp->dev, "Allocated ring entry %u\n", entry);
