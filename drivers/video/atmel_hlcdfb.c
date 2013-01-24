@@ -436,7 +436,7 @@ static int atmel_hlcdfb_suspend(struct platform_device *pdev, pm_message_t mesg)
 	if (sinfo->atmel_lcdfb_power_control)
 		sinfo->atmel_lcdfb_power_control(0);
 
-	atmel_hlcdfb_stop(sinfo, 0);
+	atmel_hlcdfb_stop(sinfo, ATMEL_LCDC_STOP_NOWAIT);
 	atmel_lcdfb_stop_clock(sinfo);
 
 	return 0;
