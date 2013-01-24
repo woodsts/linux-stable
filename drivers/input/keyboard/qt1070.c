@@ -216,6 +216,13 @@ static int __devinit qt1070_probe(struct i2c_client *client,
 		goto err_free_mem;
 	}
 
+	err = device_init_wakeup(&client->dev, true);
+	if (err)
+		dev_err(&client->dev, "fail to init device as wakeup source\n");
+	err = enable_irq_wake(client->irq);
+	if (err)
+		dev_err(&client->dev, "fail to enable irq wake\n");
+
 	/* Register the input device */
 	err = input_register_device(data->input);
 	if (err) {
