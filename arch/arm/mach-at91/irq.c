@@ -100,7 +100,7 @@ void at91_irq_suspend(void)
 			at91_aic_write(AT91_AIC5_SSR,
 				       bit & AT91_AIC5_INTSEL_MSK);
 			at91_aic_write(AT91_AIC5_IDCR, 1);
-			i = bit;
+			i = bit + 1;
 		}
 		/* enable wakeup irqs */
 		i = 0;
@@ -108,7 +108,7 @@ void at91_irq_suspend(void)
 			at91_aic_write(AT91_AIC5_SSR,
 				       bit & AT91_AIC5_INTSEL_MSK);
 			at91_aic_write(AT91_AIC5_IECR, 1);
-			i = bit;
+			i = bit + 1;
 		}
 	} else {
 		at91_aic_write(AT91_AIC_IDCR, *backups);
@@ -126,7 +126,7 @@ void at91_irq_resume(void)
 			at91_aic_write(AT91_AIC5_SSR,
 				       bit & AT91_AIC5_INTSEL_MSK);
 			at91_aic_write(AT91_AIC5_IDCR, 1);
-			i = bit;
+			i = bit + 1;
 		}
 		/* enable irqs disabled for suspend */
 		i = 0;
@@ -134,7 +134,7 @@ void at91_irq_resume(void)
 			at91_aic_write(AT91_AIC5_SSR,
 				       bit & AT91_AIC5_INTSEL_MSK);
 			at91_aic_write(AT91_AIC5_IECR, 1);
-			i = bit;
+			i = bit + 1;
 		}
 	} else {
 		at91_aic_write(AT91_AIC_IDCR, *wakeups);
