@@ -849,12 +849,6 @@ static irqreturn_t macb_interrupt(int irq, void *dev_id)
 	spin_lock(&bp->lock);
 
 	while (status) {
-		/* close possible race with dev_close */
-		if (unlikely(!netif_running(dev))) {
-			macb_writel(bp, IDR, -1);
-			break;
-		}
-
 		netdev_vdbg(bp->dev, "isr = 0x%08lx\n", (unsigned long)status);
 
 		if (status & MACB_RX_INT_FLAGS) {
@@ -1169,10 +1163,7 @@ static void macb_init_rings(struct macb *bp)
 
 static void macb_reset_hw(struct macb *bp)
 {
-	/*
-	 * Disable RX and TX (XXX: Should we halt the transmission
-	 * more gracefully?)
-	 */
+	/* Disable RX and TX forcefully */
 	macb_writel(bp, NCR, 0);
 
 	/* Clear the stats registers (XXX: Update stats first?) */
@@ -1468,18 +1459,28 @@ static int macb_open(struct net_device *dev)
 static int macb_close(struct net_device *dev)
 {
 	struct macb *bp = netdev_priv(dev);
-	unsigned long flags;
 
 	netif_stop_queue(dev);
 	napi_disable(&bp->napi);
 
+	/*
+	 * Disable interrupts. Since processing is stopped, we don't
+	 * have to worry about them being reenabled, and we can't
+	 * race with anything. So no need to take the lock for the
+	 * remainder of this function.
+	 */
+	macb_writel(bp, IDR, -1);
+	macb_readl(bp, ISR);
+
+	/* Shut down RX, then TX gracefully */
+	macb_writel(bp, NCR, macb_readl(bp, NCR) & ~MACB_BIT(RE));
+	macb_halt_tx(bp);
+
 	if (bp->phy_dev)
 		phy_stop(bp->phy_dev);
 
-	spin_lock_irqsave(&bp->lock, flags);
 	macb_reset_hw(bp);
 	netif_carrier_off(dev);
-	spin_unlock_irqrestore(&bp->lock, flags);
 
 	macb_free_consistent(bp);
 
