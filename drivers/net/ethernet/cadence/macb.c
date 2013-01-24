@@ -999,6 +999,38 @@ static void macb_init_rx_buffer_size(struct macb *bp, size_t size)
 		   bp->dev->mtu, bp->rx_buffer_size);
 }
 
+static void macb_free_tx_buffers(struct macb *bp)
+{
+	unsigned int	tail;
+
+	if (!bp->tx_skb)
+		return;
+
+	for (tail = bp->tx_tail; tail != bp->tx_head; tail++) {
+		unsigned int		entry = macb_tx_ring_wrap(tail);
+		struct macb_dma_desc	*desc = &bp->tx_ring[entry];
+		struct macb_tx_skb	*tx_skb = &bp->tx_skb[entry];
+		unsigned int		len;
+
+		/* Make hw descriptor updates visible to CPU */
+		rmb();
+
+		len = MACB_BFEXT(TX_FRMLEN, desc->ctrl);
+
+		if (tx_skb->mapping)
+			dma_unmap_single(&bp->pdev->dev, tx_skb->mapping, len,
+					 DMA_TO_DEVICE);
+
+		if (tx_skb->skb) {
+			dev_kfree_skb(tx_skb->skb);
+			tx_skb->skb = NULL;
+		}
+	}
+
+	kfree(bp->tx_skb);
+	bp->tx_skb = NULL;
+}
+
 static void gem_free_rx_buffers(struct macb *bp)
 {
 	struct sk_buff		*skb;
@@ -1039,10 +1071,7 @@ static void macb_free_rx_buffers(struct macb *bp)
 
 static void macb_free_consistent(struct macb *bp)
 {
-	if (bp->tx_skb) {
-		kfree(bp->tx_skb);
-		bp->tx_skb = NULL;
-	}
+	macb_free_tx_buffers(bp);
 	bp->macbgem_ops.mog_free_rx_buffers(bp);
 	if (bp->rx_ring) {
 		dma_free_coherent(&bp->pdev->dev, RX_RING_BYTES,
