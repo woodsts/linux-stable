@@ -1265,6 +1265,7 @@ static u32 macb_dbw(struct macb *bp)
  * - set the possibility to use INCR16 bursts
  *   (if not supported by FIFO, it will fallback to default)
  * - set both rx/tx packet buffers to full memory size
+ * - set discard rx packets if no DMA resource
  * These are configurable parameters for GEM.
  */
 static void macb_configure_dma(struct macb *bp)
@@ -1276,6 +1277,7 @@ static void macb_configure_dma(struct macb *bp)
 		dmacfg |= GEM_BF(RXBS, bp->rx_buffer_size / RX_BUFFER_MULTIPLE);
 		dmacfg |= GEM_BF(FBLDO, 16);
 		dmacfg |= GEM_BIT(TXPBMS) | GEM_BF(RXBMS, -1L);
+		dmacfg |= GEM_BIT(DDRP);
 		gem_writel(bp, DMACFG, dmacfg);
 	}
 }
