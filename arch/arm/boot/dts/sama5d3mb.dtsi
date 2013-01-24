@@ -159,8 +159,11 @@
 
 		atmel,model = "wm8904 @ SAMA5D3EK";
 		atmel,audio-routing =
-			"MICBIAS", "IN1L",
-			"Left Capture Mux", "MICBIAS";
+			"Headphone Jack", "HPOUTL",
+			"Headphone Jack", "HPOUTR",
+			"IN2L", "Line In Jack",
+			"IN2R", "Line In Jack",
+			"IN1L", "Mic";
 
 		atmel,ssc-controller = <&ssc0>;
 		atmel,audio-codec = <&wm8904>;
