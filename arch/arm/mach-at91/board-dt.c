@@ -373,8 +373,8 @@ static void __init at91_dt_device_init(void)
 				__u8 manufacturer[4] = "Inlx";
 				__u8 monitor[14] = "AT043TN24";
 				/* set mXT224 and QT1070 IRQ lines as inputs */
-				at91_set_gpio_input(AT91_PIN_PE31, 1);
-				at91_set_gpio_input(AT91_PIN_PE30, 1);
+				gpio_direction_input(AT91_PIN_PE31);
+				gpio_direction_input(AT91_PIN_PE30);
 				/* set LCD configuration */
 				ek_lcdc_data.smem_len = 480 * 272 * 4;
 				memcpy(ek_lcdc_data.default_monspecs->manufacturer, manufacturer, 4);

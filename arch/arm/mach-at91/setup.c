@@ -40,6 +40,7 @@ void __init at91rm9200_set_type(int type)
 		at91_get_soc_subtype(&at91_soc_initdata));
 }
 
+#ifndef CONFIG_ARCH_AT91_NONE
 void __init at91_init_irq_default(void)
 {
 	at91_init_interrupts(at91_boot_soc.default_irq_priority);
@@ -53,6 +54,9 @@ void __init at91_init_interrupts(unsigned int *priority)
 	/* Enable GPIO interrupts */
 	at91_gpio_irq_setup();
 }
+#else
+#define at91_init_irq_default NULL
+#endif
 
 void __iomem *at91_ramc_base[2];
 EXPORT_SYMBOL_GPL(at91_ramc_base);
@@ -152,7 +156,7 @@ static void __init soc_detect(u32 dbgu_base)
 
 	case ARCH_ID_SAMA5D3:
 		at91_soc_initdata.type = AT91_SOC_SAMA5D3;
-		at91_boot_soc = sama5d3_soc;
+		at91_boot_soc = at91sama5d3_soc;
 		break;
 	}
 

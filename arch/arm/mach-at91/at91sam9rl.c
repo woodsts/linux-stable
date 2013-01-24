@@ -235,6 +235,7 @@ static void __init at91sam9rl_register_clocks(void)
 	clk_register(&pck1);
 }
 
+#ifndef CONFIG_PINCTRL_AT91
 /* --------------------------------------------------------------------
  *  GPIO
  * -------------------------------------------------------------------- */
@@ -254,6 +255,7 @@ static struct at91_gpio_bank at91sam9rl_gpio[] __initdata = {
 		.regbase	= AT91SAM9RL_BASE_PIOD,
 	}
 };
+#endif
 
 /* --------------------------------------------------------------------
  *  AT91SAM9RL processor initialization
@@ -292,8 +294,10 @@ static void __init at91sam9rl_initialize(void)
 	arm_pm_restart = at91sam9_alt_restart;
 	at91_extern_irq = (1 << AT91SAM9RL_ID_IRQ0);
 
+#ifndef CONFIG_PINCTRL_AT91
 	/* Register GPIO subsystem */
 	at91_gpio_init(at91sam9rl_gpio, 4);
+#endif
 }
 
 /* --------------------------------------------------------------------

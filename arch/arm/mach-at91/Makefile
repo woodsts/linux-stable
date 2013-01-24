@@ -2,10 +2,15 @@
 # Makefile for the linux kernel.
 #
 
-obj-y		:= irq.o gpio.o setup.o
+obj-y		:= irq.o setup.o
 obj-m		:=
 obj-n		:=
 obj-		:=
+
+ifneq ($(CONFIG_PINCTRL_AT91),y)
+obj-y	+= gpio.o
+obj-y	+= leds.o
+endif
 
 obj-$(CONFIG_AT91_PMC_UNIT)	+= clock.o
 obj-$(CONFIG_AT91_SAM9_ALT_RESET) += at91sam9_alt_reset.o
@@ -94,9 +99,6 @@ obj-$(CONFIG_MACH_AT91SAM_DT) += board-dt.o
 
 # AT91X40 board-specific support
 obj-$(CONFIG_MACH_AT91EB01)	+= board-eb01.o
-
-# Drivers
-obj-y				+= leds.o
 
 # Power Management
 obj-$(CONFIG_PM)		+= pm.o

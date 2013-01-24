@@ -366,15 +366,7 @@ static void __init sama5d3_map_io(void)
 	init_consistent_dma_size(SZ_8M);
 }
 
-void __init sama5d3_initialize(void)
-{
-	/* Register GPIO subsystem (using DT) */
-	at91_gpio_init(NULL, 0);
-}
-
-struct at91_init_soc __initdata sama5d3_soc __used = {
-	.builtin = 1,
+AT91_SOC_START(sama5d3)
 	.map_io = sama5d3_map_io,
 	.register_clocks = sama5d3_register_clocks,
-	.init = sama5d3_initialize,
-};
+AT91_SOC_END
