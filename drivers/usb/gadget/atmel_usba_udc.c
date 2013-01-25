@@ -1885,8 +1885,7 @@ static struct usba_ep *atmel_udc_of_init(struct platform_device *pdev,
 	while ((pp = of_get_next_child(np, pp)))
 		udc->num_ep++;
 
-	eps = devm_kzalloc(&pdev->dev, sizeof(struct usba_ep) * udc->num_ep,
-			   GFP_KERNEL);
+	eps = kzalloc(sizeof(struct usba_ep) * udc->num_ep, GFP_KERNEL);
 	if (!eps)
 		return ERR_PTR(-ENOMEM);
 
@@ -1964,8 +1963,7 @@ static struct usba_ep * __devinit usba_udc_pdata(struct platform_device *pdev,
 	if (!pdata)
 		return ERR_PTR(-ENXIO);
 
-	eps = devm_kzalloc(&pdev->dev, sizeof(struct usba_ep) * pdata->num_ep,
-			   GFP_KERNEL);
+	eps = kzalloc(sizeof(struct usba_ep) * pdata->num_ep, GFP_KERNEL);
 	if (!eps)
 		return ERR_PTR(-ENOMEM);
 
