@@ -35,7 +35,7 @@
 			nand-bus-width = <8>;
 			nand-ecc-mode = "hw";
 			atmel,has-pmecc;
-			atmel,pmecc-cap = <2>;
+			atmel,pmecc-cap = <4>;
 			atmel,pmecc-sector-size = <512>;
 			atmel,has-nfc;
 			atmel,use-nfc-sram;
