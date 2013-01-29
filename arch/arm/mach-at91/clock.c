@@ -467,14 +467,18 @@ static void __init init_programmable_clock(struct clk *clk)
 
 static int at91_clk_show(struct seq_file *s, void *unused)
 {
-	u32		scsr, pcsr, uckr = 0, sr;
+	u32		scsr, pcsr, pcsr1 = 0, uckr = 0, sr;
 	struct clk	*clk;
 
 	scsr = at91_pmc_read(AT91_PMC_SCSR);
 	pcsr = at91_pmc_read(AT91_PMC_PCSR);
+	if (cpu_is_sama5d3())
+		pcsr1 = at91_pmc_read(AT91_PMC_PCSR1);
 	sr = at91_pmc_read(AT91_PMC_SR);
 	seq_printf(s, "SCSR = %8x\n", scsr);
 	seq_printf(s, "PCSR = %8x\n", pcsr);
+	if (cpu_is_sama5d3())
+		seq_printf(s, "PCSR1 = %8x\n", pcsr1);
 	seq_printf(s, "MOR  = %8x\n", at91_pmc_read(AT91_CKGR_MOR));
 	seq_printf(s, "MCFR = %8x\n", at91_pmc_read(AT91_CKGR_MCFR));
 	seq_printf(s, "PLLA = %8x\n", at91_pmc_read(AT91_CKGR_PLLAR));
@@ -494,20 +498,30 @@ static int at91_clk_show(struct seq_file *s, void *unused)
 	list_for_each_entry(clk, &clocks, node) {
 		char	*state;
 
-		if (clk->mode == pmc_sys_mode)
+		if (clk->mode == pmc_sys_mode) {
 			state = (scsr & clk->pmc_mask) ? "on" : "off";
-		else if (clk->mode == pmc_periph_mode)
-			state = (pcsr & clk->pmc_mask) ? "on" : "off";
-		else if (clk->mode == pmc_uckr_mode)
-			state = (uckr & clk->pmc_mask) ? "on" : "off";
-		else if (clk->pmc_mask)
-			state = (sr & clk->pmc_mask) ? "on" : "off";
-		else if (clk == &clk32k || clk == &main_clk)
-			state = "on";
-		else
-			state = "";
+		} else if (clk->mode == pmc_periph_mode) {
+			if (cpu_is_sama5d3()) {
+				u32 pmc_mask = 1 << (clk->pid % 32);
 
-		seq_printf(s, "%-10s users=%2d %-3s %9ld Hz %s\n",
+				if (clk->pid > 31)
+					state = (pcsr1 & pmc_mask) ? "on" : "off";
+				else
+					state = (pcsr & pmc_mask) ? "on" : "off";
+			} else {
+				state = (pcsr & clk->pmc_mask) ? "on" : "off";
+			}
+		} else if (clk->mode == pmc_uckr_mode) {
+			state = (uckr & clk->pmc_mask) ? "on" : "off";
+		} else if (clk->pmc_mask) {
+			state = (sr & clk->pmc_mask) ? "on" : "off";
+		} else if (clk == &clk32k || clk == &main_clk) {
+			state = "on";
+		} else {
+			state = "";
+		}
+
+		seq_printf(s, "%-10s users=%2d %-3s %9lu Hz %s\n",
 			clk->name, clk->users, state, clk_get_rate(clk),
 			clk->parent ? clk->parent->name : "");
 	}

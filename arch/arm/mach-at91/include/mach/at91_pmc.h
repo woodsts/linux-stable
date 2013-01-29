@@ -177,4 +177,7 @@ extern void __iomem *at91_pmc_base;
 #define			AT91_PMC_PCR_DIV8	0x3		/* Peripheral clock is MCK/8 */
 #define		AT91_PMC_PCR_EN		(0x1  <<  28)		/* Enable */
 
+#define	AT91_PMC_PCER1		0x100			/* Peripheral Clock Enable Register 1 */
+#define	AT91_PMC_PCDR1		0x104			/* Peripheral Clock Disable Register 1 */
+#define	AT91_PMC_PCSR1		0x108			/* Peripheral Clock Status Register 1 */
 #endif
