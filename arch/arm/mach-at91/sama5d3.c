@@ -167,13 +167,13 @@ static struct clk udphs_clk = {
 };
 /* gmac only for sama5d33, sama5d34, sama5d35 */
 static struct clk macb0_clk = {
-	.name		= "pclk",
+	.name		= "macb0_clk",
 	.pid		= SAMA5D3_ID_GMAC,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
 /* emac only for sama5d31, sama5d35 */
 static struct clk macb1_clk = {
-	.name		= "pclk",
+	.name		= "macb1_clk",
 	.pid		= SAMA5D3_ID_EMAC,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
@@ -317,7 +317,9 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_DEV_ID("pclk", "500000.gadget", &udphs_clk),
 	CLKDEV_CON_DEV_ID("hclk", "500000.gadget", &utmi_clk),
 	CLKDEV_CON_DEV_ID("hclk", "f0028000.ethernet", &macb0_clk),
+	CLKDEV_CON_DEV_ID("pclk", "f0028000.ethernet", &macb0_clk),
 	CLKDEV_CON_DEV_ID("hclk", "f802c000.ethernet", &macb1_clk),
+	CLKDEV_CON_DEV_ID("pclk", "f802c000.ethernet", &macb1_clk),
 	CLKDEV_CON_DEV_ID("pclk", "f0008000.ssc", &ssc0_clk),
 	CLKDEV_CON_DEV_ID("pclk", "f000c000.ssc", &ssc1_clk),
 	CLKDEV_CON_DEV_ID("can_clk", "f000c000.can", &can0_clk),
