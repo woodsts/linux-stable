@@ -251,7 +251,6 @@ static void __init at91rm9200_register_clocks(void)
 	clk_register(&pck3);
 }
 
-#ifndef CONFIG_PINCTRL_AT91
 /* --------------------------------------------------------------------
  *  GPIO
  * -------------------------------------------------------------------- */
@@ -271,7 +270,6 @@ static struct at91_gpio_bank at91rm9200_gpio[] __initdata = {
 		.regbase	= AT91RM9200_BASE_PIOD,
 	}
 };
-#endif
 
 static void at91rm9200_idle(void)
 {
@@ -315,11 +313,9 @@ static void __init at91rm9200_initialize(void)
 			| (1 << AT91RM9200_ID_IRQ4) | (1 << AT91RM9200_ID_IRQ5)
 			| (1 << AT91RM9200_ID_IRQ6);
 
-#ifndef CONFIG_PINCTRL_AT91
 	/* Initialize GPIO subsystem */
 	at91_gpio_init(at91rm9200_gpio,
 		cpu_is_at91rm9200_bga() ? AT91RM9200_BGA : AT91RM9200_PQFP);
-#endif
 }
 
 

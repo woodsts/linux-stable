@@ -7,10 +7,8 @@ obj-m		:=
 obj-n		:=
 obj-		:=
 
-ifneq ($(CONFIG_PINCTRL_AT91),y)
 obj-y	+= gpio.o
 obj-y	+= leds.o
-endif
 
 obj-$(CONFIG_AT91_PMC_UNIT)	+= clock.o
 obj-$(CONFIG_AT91_SAM9_ALT_RESET) += at91sam9_alt_reset.o

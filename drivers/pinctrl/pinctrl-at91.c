@@ -1305,12 +1305,17 @@ static int gpio_irq_set_wake(struct irq_data *d, unsigned state)
 	return 0;
 }
 
-void at91_gpio_suspend(void)
+void at91_pinctrl_gpio_suspend(void)
 {
 	int i;
 
 	for (i = 0; i < gpio_banks; i++) {
-		void __iomem	*pio = gpio_chips[i]->regbase;
+		void __iomem	*pio;
+
+		if (!gpio_chips[i])
+			continue;
+
+		pio = gpio_chips[i]->regbase;
 
 		backups[i] = __raw_readl(pio + PIO_IMR);
 		__raw_writel(backups[i], pio + PIO_IDR);
@@ -1325,12 +1330,17 @@ void at91_gpio_suspend(void)
 	}
 }
 
-void at91_gpio_resume(void)
+void at91_pinctrl_gpio_resume(void)
 {
 	int i;
 
 	for (i = 0; i < gpio_banks; i++) {
-		void __iomem	*pio = gpio_chips[i]->regbase;
+		void __iomem	*pio;
+
+		if (!gpio_chips[i])
+			continue;
+
+		pio = gpio_chips[i]->regbase;
 
 		if (!wakeups[i]) {
 			if (clk_prepare(gpio_chips[i]->clock) == 0)
