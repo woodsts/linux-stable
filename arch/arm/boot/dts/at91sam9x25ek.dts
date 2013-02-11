@@ -16,7 +16,19 @@
 
 	ahb {
 		apb {
-			mmc1: mmc@f000c000 {
+			spi0: spi@f0000000 {
+				status = "okay";
+			};
+
+			can1: can@f8004000 {
+				status = "okay";
+			};
+
+			i2c0: i2c@f8010000 {
+				status = "okay";
+			};
+
+			macb0: ethernet@f802c000 {
 				status = "okay";
 			};
 

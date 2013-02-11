@@ -16,17 +16,16 @@
 
 	ahb {
 		apb {
-			mmc1: mmc@f000c000 {
+			spi0: spi@f0000000 {
 				status = "okay";
 			};
 
-			spi0: spi@f0000000 {
+			i2c0: i2c@f8010000 {
 				status = "okay";
-				m25p80@0 {
-					compatible = "atmel,at25df321a";
-					spi-max-frequency = <50000000>;
-					reg = <0>;
-				};
+			};
+
+			macb0: ethernet@f802c000 {
+				status = "okay";
 			};
 
 			watchdog@fffffe40 {

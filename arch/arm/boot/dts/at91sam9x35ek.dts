@@ -13,4 +13,62 @@
 / {
 	model = "Atmel AT91SAM9X35-EK";
 	compatible = "atmel,at91sam9x35ek", "atmel,at91sam9x5ek", "atmel,at91sam9x5", "atmel,at91sam9";
+
+	ahb {
+		apb {
+			spi0: spi@f0000000 {
+				status = "okay";
+			};
+
+			can1: can@f8004000 {
+				status = "okay";
+			};
+
+			i2c0: i2c@f8010000 {
+				status = "okay";
+
+				qt1070: keyboard@1b {
+					compatible = "qt1070";
+					reg = <0x1b>;
+					interrupt-parent = <&pioA>;
+					interrupts = <7 0x0>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_qt1070_irq>;
+				};
+			};
+
+			macb0: ethernet@f802c000 {
+				status = "okay";
+			};
+
+			lcd_bus@f8038000 {
+				status = "okay";
+
+				lcd@f8038000 {
+					status = "okay";
+				};
+
+				lcdovl1@f8038100 {
+					status = "okay";
+				};
+
+				lcdheo1@f8038280 {
+					status = "okay";
+				};
+			};
+
+			tsadcc: tsadcc@f804c000 {
+				status = "okay";
+			};
+
+			pinctrl@fffff400 {
+				board {
+					pinctrl_qt1070_irq: qt1070_irq {
+						atmel,pins =
+							<0 7 0x0 0x5>; /* PA7 GPIO with pull up deglith */
+					};
+				};
+			};
+		};
+	};
 };

@@ -56,7 +56,7 @@ config CAN_CALC_BITTIMING
 
 config CAN_AT91
 	tristate "Atmel AT91 onchip CAN controller"
-	depends on CAN_DEV && (ARCH_AT91SAM9263 || ARCH_AT91SAM9X5 || SOC_SAMA5D3)
+	depends on CAN_DEV && ARCH_AT91
 	---help---
 	  This is a driver for the SoC CAN controller in Atmel's AT91SAM9263,
 	  AT91SAM9X5 and SAMA5D3 processors.

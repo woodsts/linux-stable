@@ -18,7 +18,7 @@
 				atmel,mux-mask = <
 				      /*    A         B          C     */
 				       0xffffffff 0xffe0399f 0x00000000  /* pioA */
-				       0x00040000 0x00047e3f 0x00000000  /* pioB */
+				       0x0007ffc0 0x00047e3f 0x00000000  /* pioB */
 				       0xfdffffff 0x00000000 0xb83fffff  /* pioC */
 				       0x003fffff 0x003f8000 0x00000000  /* pioD */
 				      >;

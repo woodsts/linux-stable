@@ -24,6 +24,21 @@
 	};
 
 	ahb {
+		apb {
+			spi0: spi@f0000000 {
+				cs-gpios = <&pioA 14 0>;
+				/*
+				 * Only valid for Embest and Ronetix modules,
+				 * Cogent modules use an at45 dataflash.
+				 */
+				m25p80@0 {
+					compatible = "atmel,at25df321a";
+					spi-max-frequency = <50000000>;
+					reg = <0>;
+				};
+			};
+		};
+
 		nand0: nand@40000000 {
 			nand-bus-width = <8>;
 			nand-ecc-mode = "hw";
