@@ -109,4 +109,10 @@ static inline int of_platform_populate(struct device_node *root,
 }
 #endif /* !CONFIG_OF_ADDRESS */
 
+#if !defined(CONFIG_OF_DEVICE)
+static inline struct platform_device *of_find_device_by_node(struct device_node *np) {
+	return NULL;
+}
+#endif
+
 #endif	/* _LINUX_OF_PLATFORM_H */
