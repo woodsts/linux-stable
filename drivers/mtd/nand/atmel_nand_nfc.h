@@ -1,6 +1,6 @@
 /*
- * Atmel Nand flash Controller (NFC) - System peripherals regsters.
- * Based on AT91SAMA5D3 datasheet.
+ * Atmel Nand Flash Controller (NFC) - System peripherals regsters.
+ * Based on SAMA5D3 datasheet.
  *
  * Copyright (C) 2012 Atmel Corporation.
  *
