@@ -1102,7 +1102,7 @@
 			reg = <	0x60000000 0x01000000	/* EBI CS3 */
 				0xffffc070 0x00000490	/* SMC PMECC regs */
 				0xffffc500 0x00000100	/* SMC PMECC Error Location regs */
-				0x00100000 0x00100000	/* ROM code */
+				0x00110000 0x00018000	/* ROM code */
 				0x70000000 0x10000000	/* NFC Command Registers */
 				0xffffc000 0x00000070	/* NFC HSMC regs */
 				0x00200000 0x00100000	/* NFC SRAM banks */
@@ -1112,7 +1112,7 @@
 			atmel,nand-cmd-offset = <22>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_nand0_ale_cle>;
-			atmel,pmecc-lookup-table-offset = <0x10000 0x18000>;
+			atmel,pmecc-lookup-table-offset = <0x0 0x8000>;
 			status = "disabled";
 		};
 	};
