@@ -446,7 +446,7 @@ static int __devexit atmel_tsadcc_remove(struct platform_device *pdev)
 static const struct of_device_id atmel_tsaddcc_dt_ids[] = {
 	{ .compatible = "atmel,at91sam9x5-tsadcc"},
 	{ /* sentinel */ }
-}
+};
 
 MODULE_DEVICE_TABLE(of, atmel_tsaddcc_dt_ids);
 #endif
