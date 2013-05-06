@@ -18,7 +18,6 @@
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/gfp.h>
-#include <linux/module.h>
 #include <linux/platform_data/atmel.h>
 #include <mach/cpu.h>
 #include <asm/gpio.h>
