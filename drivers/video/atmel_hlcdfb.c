@@ -18,7 +18,7 @@
 #include <linux/init.h>
 #include <linux/delay.h>
 
-#include <mach/board.h>
+#include <linux/platform_data/atmel.h>
 #include <mach/cpu.h>
 #include <mach/atmel_hlcdc.h>
 #include <mach/atmel_hlcdc_ovl.h>
