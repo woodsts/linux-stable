@@ -1482,7 +1482,7 @@ static int at91sam9x5_video_fb_event_notify(struct notifier_block *self,
 	return 0;
 }
 
-static int __devinit at91sam9x5_video_probe(struct platform_device *pdev)
+static int at91sam9x5_video_probe(struct platform_device *pdev)
 {
 	int ret = -ENOMEM;
 	size_t i;
@@ -1523,7 +1523,7 @@ err_alloc_priv:
 	return 0;
 }
 
-static int __devexit at91sam9x5_video_remove(struct platform_device *pdev)
+static int at91sam9x5_video_remove(struct platform_device *pdev)
 {
 	struct at91sam9x5_video_priv *priv = platform_get_drvdata(pdev);
 
@@ -1557,7 +1557,7 @@ static struct platform_driver at91sam9x5_video_driver = {
 		.of_match_table	= of_match_ptr(atmel_heo_dt_ids),
 	},
 	.probe = at91sam9x5_video_probe,
-	.remove = __devexit_p(at91sam9x5_video_remove),
+	.remove = at91sam9x5_video_remove,
 };
 
 static int __init at91sam9x5_video_init(void)
