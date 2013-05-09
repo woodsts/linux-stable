@@ -102,6 +102,56 @@ tmp2	.req	r5
 2:
 	.endm
 
+/*
+ * Put the processor to enter into Standby mode, wait for interrupt to wakeup
+ */
+	.macro _do_wfi
+
+#if defined(CONFIG_CPU_V7)
+	/*
+	 * Excute ISB instruction flushed the pipeline in the processor,
+	 * so that all instructions that come after the ISB instruction
+	 * in program order are fetched from cache or memory.
+	 */
+	isb
+
+	/*
+	 * Execute a barrier instruction to ensure that all cache,
+	 * TLB and branch predictor maintenance operations issued
+	 * by any CPU in the cluster have completed.
+	 */
+	dsb
+	dmb
+
+	/*
+	 * Execute a WFI instruction and wait until the
+	 * STANDBYWFI output is asserted to indicate that the
+	 * CPU is in idle and low power state. CPU can specualatively
+	 * prefetch the instructions so add NOPs after WFI
+	 */
+	wfi		@ Wait For Interrupt
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+#else
+	mcr	p15, 0, tmp1, c7, c0, 4
+#endif
+
+	.endm
+
 	.text
 
 /* void at91_slow_clock(void __iomem *pmc, void __iomem *sdramc,
@@ -220,7 +270,7 @@ sdr_sr_done:
 	str	tmp1, [pmc, #AT91_CKGR_MOR]
 
 	/* Wait for interrupt */
-	mcr	p15, 0, tmp1, c7, c0, 4
+	_do_wfi
 
 	/* Turn on the main oscillator */
 	ldr	tmp1, [pmc, #AT91_CKGR_MOR]
