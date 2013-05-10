@@ -38,6 +38,7 @@
 #define MOSCRDY_TIMEOUT 	1000
 #define PLLALOCK_TIMEOUT	1000
 #define PLLBLOCK_TIMEOUT	1000
+#define UPLLLOCK_TIMEOUT	1000
 
 pmc	.req	r0
 sdramc	.req	r1
@@ -98,6 +99,20 @@ tmp2	.req	r5
 	beq	2f
 	ldr	tmp1, [pmc, #AT91_PMC_SR]
 	tst	tmp1, #AT91_PMC_LOCKB
+	beq	1b
+2:
+	.endm
+
+/*
+ * Wait until UTMI PLL has locked.
+ */
+	.macro wait_uplllock
+	mov	tmp2, #UPLLLOCK_TIMEOUT
+1:	sub	tmp2, tmp2, #1
+	cmp	tmp2, #0
+	beq	2f
+	ldr	tmp1, [pmc, #AT91_PMC_SR]
+	tst	tmp1, #AT91_PMC_LOCKU
 	beq	1b
 2:
 	.endm
@@ -264,6 +279,11 @@ sdr_sr_done:
 	mov	tmp1, #AT91_PMC_PLLCOUNT
 	str	tmp1, [pmc, #AT91_CKGR_PLLBR]
 
+	/* Disable UTMI PLL */
+	ldr	tmp1, [pmc, #AT91_CKGR_UCKR]
+	bic	tmp1, tmp1, #AT91_PMC_UPLLEN
+	str	tmp1, [pmc, #AT91_CKGR_UCKR]
+
 	/* Turn off the main oscillator */
 	ldr	tmp1, [pmc, #AT91_CKGR_MOR]
 	bic	tmp1, tmp1, #AT91_PMC_MOSCEN
@@ -290,6 +310,13 @@ sdr_sr_done:
 1:
 	wait_pllblock
 2:
+
+	/* Turn on UTMI PLL */
+	ldr	tmp1, [pmc, #AT91_CKGR_UCKR]
+	orr	tmp1, tmp1, #AT91_PMC_UPLLEN
+	str	tmp1, [pmc, #AT91_CKGR_UCKR]
+
+	wait_uplllock
 
 	/* Restore PLLA setting */
 	ldr	tmp1, .saved_pllar
