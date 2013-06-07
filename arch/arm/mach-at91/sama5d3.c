@@ -177,13 +177,13 @@ static struct clk udphs_clk = {
 	.pid		= SAMA5D3_ID_UDPHS,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
-/* gmac only for sama5d33, sama5d34, sama5d35 */
+/* gmac only for sama5d33, sama5d34, sama5d35, sama5d36 */
 static struct clk macb0_clk = {
 	.name		= "macb0_clk",
 	.pid		= SAMA5D3_ID_GMAC,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
-/* emac only for sama5d31, sama5d35 */
+/* emac only for sama5d31, sama5d35, sama5d36 */
 static struct clk macb1_clk = {
 	.name		= "macb1_clk",
 	.pid		= SAMA5D3_ID_EMAC,
@@ -195,7 +195,7 @@ static struct clk lcdc_clk = {
 	.pid		= SAMA5D3_ID_LCDC,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
-/* isi only for sama5d33, sama5d35 */
+/* isi only for sama5d33, sama5d35, sama5d36 */
 static struct clk isi_clk = {
 	.name		= "isi_clk",
 	.pid		= SAMA5D3_ID_ISI,
@@ -357,11 +357,13 @@ static void __init sama5d3_register_clocks(void)
 
 	if ( cpu_is_sama5d33()
 	|| cpu_is_sama5d34()
-	|| cpu_is_sama5d35() )
+	|| cpu_is_sama5d35()
+	|| cpu_is_sama5d36())
 		clk_register(&macb0_clk);
 
 	if ( cpu_is_sama5d31()
-	|| cpu_is_sama5d35() )
+	|| cpu_is_sama5d35()
+	|| cpu_is_sama5d36())
 		clk_register(&macb1_clk);
 
 	if (!cpu_is_sama5d35())
