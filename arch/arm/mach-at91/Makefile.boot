@@ -48,3 +48,5 @@ dtb-$(CONFIG_MACH_AT91SAM_DT) += sama5d33ek_pda.dtb
 dtb-$(CONFIG_MACH_AT91SAM_DT) += sama5d34ek.dtb
 dtb-$(CONFIG_MACH_AT91SAM_DT) += sama5d34ek_pda.dtb
 dtb-$(CONFIG_MACH_AT91SAM_DT) += sama5d35ek.dtb
+dtb-$(CONFIG_MACH_AT91SAM_DT) += sama5d36ek.dtb
+dtb-$(CONFIG_MACH_AT91SAM_DT) += sama5d36ek_pda.dtb
