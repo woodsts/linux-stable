@@ -1048,6 +1048,7 @@
 					0xffffc000 0x00000070	/* NFC HSMC regs */
 					0x00200000 0x00100000	/* NFC SRAM banks */
 					>;
+				atmel,write-by-sram;
 			};
 		};
 	};
