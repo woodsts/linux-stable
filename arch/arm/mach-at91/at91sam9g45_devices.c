@@ -978,10 +978,15 @@ static struct atmel_lcdfb_info lcdc_data;
 static struct resource lcdc_resources[] = {
 	[0] = {
 		.start	= AT91SAM9G45_LCDC_BASE,
-		.end	= AT91SAM9G45_LCDC_BASE + SZ_4K - 1,
+		.end	= AT91SAM9G45_LCDC_BASE + 0x900 - 1,
 		.flags	= IORESOURCE_MEM,
 	},
 	[1] = {
+		.start	= AT91SAM9G45_LCDC_BASE + ATMEL_LCDC_LUT,
+		.end	= AT91SAM9G45_LCDC_BASE + ATMEL_LCDC_LUT + SZ_1K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	[2] = {
 		.start	= NR_IRQS_LEGACY + AT91SAM9G45_ID_LCDC,
 		.end	= NR_IRQS_LEGACY + AT91SAM9G45_ID_LCDC,
 		.flags	= IORESOURCE_IRQ,
