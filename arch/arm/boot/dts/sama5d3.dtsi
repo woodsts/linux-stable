@@ -42,7 +42,9 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		cpu@0 {
+			device_type = "cpu";
 			compatible = "arm,cortex-a5";
+			reg = <0x0>;
 		};
 	};
 
