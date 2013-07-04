@@ -193,7 +193,7 @@
 				lcdovl2@f0030240 {
 					compatible = "atmel,at91sam9x5-lcd";
 					reg = <0xf0030240 0xff
-					       0xf00311fc 0x3ff>;
+					       0xf0030e00 0x3ff>;
 					status = "disabled";
 				};
 
