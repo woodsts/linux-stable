@@ -33,7 +33,7 @@
 #include <linux/input.h>
 #include <linux/leds.h>
 
-#include <video/atmel_lcdc.h>
+#include <video/atmel_lcdfb.h>
 
 #include <asm/setup.h>
 #include <asm/mach-types.h>
@@ -46,6 +46,7 @@
 #include <mach/hardware.h>
 #include <mach/at91sam9_smc.h>
 #include <mach/system_rev.h>
+#include <mach/atmel_lcdc.h>
 
 #include "at91_aic.h"
 #include "at91_shdwc.h"

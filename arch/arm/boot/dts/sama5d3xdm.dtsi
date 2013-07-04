@@ -25,6 +25,26 @@
 				status = "disabled";
 			};
 
+			lcd_bus@f0030000 {
+				status = "okay";
+
+				lcd@f0030000 {
+					status = "okay";
+				};
+
+				lcdovl1@f0030140 {
+					status = "okay";
+				};
+
+				lcdovl2@f0030240 {
+					status = "okay";
+				};
+
+				lcdheo1@f0030340 {
+					status = "okay";
+				};
+			};
+
 			tsadcc: tsadcc@f8018000 {
 				status = "okay";
 			};

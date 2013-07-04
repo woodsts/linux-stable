@@ -19,52 +19,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef __ATMEL_LCDC_H__
-#define __ATMEL_LCDC_H__
-
-#include <linux/workqueue.h>
-
-/* Way LCD wires are connected to the chip:
- * Some Atmel chips use BGR color mode (instead of standard RGB)
- * A swapped wiring onboard can bring to RGB mode.
- */
-#define ATMEL_LCDC_WIRING_BGR	0
-#define ATMEL_LCDC_WIRING_RGB	1
-
-struct atmel_lcdfb_config;
-
- /* LCD Controller info data structure, stored in device platform_data */
-struct atmel_lcdfb_info {
-	spinlock_t		lock;
-	struct fb_info		*info;
-	void __iomem		*mmio;
-	int			irq_base;
-	struct work_struct	task;
-
-	unsigned int		guard_time;
-	unsigned int 		smem_len;
-	struct platform_device	*pdev;
-	struct clk		*bus_clk;
-	struct clk		*lcdc_clk;
-
-#ifdef CONFIG_BACKLIGHT_ATMEL_LCDC
-	struct backlight_device	*backlight;
-	u8			bl_power;
-#endif
-	bool			lcdcon_is_backlight;
-	bool			lcdcon_pol_negative;
-	u8			saved_lcdcon;
-
-	u8			default_bpp;
-	u8			lcd_wiring_mode;
-	unsigned int		default_lcdcon2;
-	unsigned int		default_dmacon;
-	void (*atmel_lcdfb_power_control)(int on);
-	struct fb_monspecs	*default_monspecs;
-	u32			pseudo_palette[16];
-
-	struct atmel_lcdfb_config *config;
-};
+#ifndef __MACH_ATMEL_LCDC_H__
+#define __MACH_ATMEL_LCDC_H__
 
 #define ATMEL_LCDC_DMABADDR1	0x00
 #define ATMEL_LCDC_DMABADDR2	0x04
@@ -216,6 +172,6 @@ struct atmel_lcdfb_info {
 #define	ATMEL_LCDC_OWRI		(1 << 5)
 #define	ATMEL_LCDC_MERI		(1 << 6)
 
-#define ATMEL_LCDC_LUT(n)	(0x0c00 + ((n)*4))
+#define ATMEL_LCDC_LUT		0x0c00
 
-#endif /* __ATMEL_LCDC_H__ */
+#endif /* __MACH_ATMEL_LCDC_H__ */
