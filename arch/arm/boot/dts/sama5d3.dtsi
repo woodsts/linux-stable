@@ -265,6 +265,7 @@
 				atmel,adc-use-external;
 				atmel,adc-vref = <3000>;
 				atmel,adc-res = <10 12>;
+				atmel,adc-sample-hold-time = <11>;
 				atmel,adc-res-names = "lowres", "highres";
 				status = "disabled";
 
