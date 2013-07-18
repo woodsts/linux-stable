@@ -42,6 +42,13 @@
 		};
 	};
 
+	leds {
+		d3 {
+			label = "d3";
+			gpios = <&pioE 24 0>;
+		};
+	};
+
 	sound {
 		status = "okay";
 	};
