@@ -24,6 +24,10 @@
 				status = "okay";
 			};
 
+			ssc0: ssc@f0008000 {
+				status = "okay";
+			};
+
 			can0: can@f000c000 {
 				status = "okay";
 			};
@@ -42,6 +46,7 @@
 				status = "okay";
 			};
 
+			/* ISI VSYNC/HSYNC Conflict with i2c0 */
 			isi: isi@f0034000 {
 				status = "okay";
 			};
@@ -50,5 +55,10 @@
 				status = "okay";
 			};
 		};
+	};
+
+	/* Sound can work if the i2c bus, which connect the codec, is enabled */
+	sound {
+		status = "okay";
 	};
 };
