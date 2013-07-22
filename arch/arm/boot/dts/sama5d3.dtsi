@@ -122,9 +122,6 @@
 				compatible = "atmel,at91sam9x5-i2c";
 				reg = <0xf0014000 0x4000>;
 				interrupts = <18 IRQ_TYPE_LEVEL_HIGH 6>;
-				dmas = <&dma0 2 AT91_DMA_CFG_PER_ID(7)>,
-				       <&dma0 2 AT91_DMA_CFG_PER_ID(8)>;
-				dma-names = "tx", "rx";
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_i2c0>;
 				#address-cells = <1>;
