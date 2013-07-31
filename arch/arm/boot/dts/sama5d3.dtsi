@@ -21,6 +21,8 @@
 		serial2 = &usart1;
 		serial3 = &usart2;
 		serial4 = &usart3;
+		serial5 = &uart0;
+		serial6 = &uart1;
 		gpio0 = &pioA;
 		gpio1 = &pioB;
 		gpio2 = &pioC;
@@ -369,20 +371,54 @@
 			};
 
 			usart2: serial@f8020000 {
-				compatible = "atmel,at91sam9260-usart";
+				compatible = "atmel,at91sam9x5-usart";
 				reg = <0xf8020000 0x100>;
 				interrupts = <14 4 5>;
+				atmel,use-dma-rx;
+				dma-rx = <&dma1 0x20000208>;
+				atmel,use-dma-tx;
+				dma-tx = <&dma1 0x10002070>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_usart2>;
 				status = "disabled";
 			};
 
 			usart3: serial@f8024000 {
-				compatible = "atmel,at91sam9260-usart";
+				compatible = "atmel,at91sam9x5-usart";
 				reg = <0xf8024000 0x100>;
 				interrupts = <15 4 5>;
+				atmel,use-dma-rx;
+				dma-rx = <&dma1 0x2000020a>;
+				atmel,use-dma-tx;
+				dma-tx = <&dma1 0x10002090>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_usart3>;
+				status = "disabled";
+			};
+
+			uart0: serial@f0024000 {
+				compatible = "atmel,at91sam9x5-usart";
+				reg = <0xf0024000 0x100>;
+				interrupts = <16 4 5>;
+				atmel,use-dma-rx;
+				dma-rx = <&dma0 0x2000020c>;
+				atmel,use-dma-tx;
+				dma-tx = <&dma0 0x100020b0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_uart0>;
+				status = "disabled";
+			};
+
+			uart1: serial@f8028000 {
+				compatible = "atmel,at91sam9x5-usart";
+				reg = <0xf8028000 0x100>;
+				interrupts = <17 4 5>;
+				atmel,use-dma-rx;
+				dma-rx = <&dma1 0x20000206>;
+				atmel,use-dma-tx;
+				dma-tx = <&dma1 0x10002050>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_uart1>;
 				status = "disabled";
 			};
 
@@ -452,9 +488,13 @@
 			};
 
 			dbgu: serial@ffffee00 {
-				compatible = "atmel,at91sam9260-usart";
+				compatible = "atmel,at91sam9x5-usart";
 				reg = <0xffffee00 0x200>;
 				interrupts = <2 4 7>;
+				atmel,use-dma-rx;
+				dma-rx = <&dma1 0x2000020e>;
+				atmel,use-dma-tx;
+				dma-tx = <&dma1 0x100020d0>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_dbgu>;
 				status = "disabled";
