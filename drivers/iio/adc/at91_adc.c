@@ -72,6 +72,7 @@ enum atmel_adc_ts_type {
 
 struct at91_adc_state {
 	struct clk		*adc_clk;
+	u32			adc_clk_rate;
 	u16			*buffer;
 	unsigned long		channels_mask;
 	struct clk		*clk;
@@ -685,6 +686,10 @@ static int at91_adc_probe_dt(struct at91_adc_state *st,
 	st->caps = (struct at91_adc_caps *)
 		of_match_device(at91_adc_dt_ids, &pdev->dev)->data;
 
+	prop = 0;
+	of_property_read_u32(node, "atmel,adc-clock-rate", &prop);
+	st->adc_clk_rate = prop;
+
 	st->use_external = of_property_read_bool(node, "atmel,adc-use-external-triggers");
 
 	if (of_property_read_u32(node, "atmel,adc-channels-used", &prop)) {
@@ -995,7 +1000,8 @@ static int at91_adc_probe(struct platform_device *pdev)
 	 * specified by the electrical characteristics of the board.
 	 */
 	mstrclk = clk_get_rate(st->clk);
-	adc_clk = clk_get_rate(st->adc_clk);
+	adc_clk = st->adc_clk_rate ?
+		st->adc_clk_rate : clk_get_rate(st->adc_clk);
 	adc_clk_khz = adc_clk / 1000;
 
 	dev_dbg(&pdev->dev, "Master clock is set as: %d Hz, adc_clk should set as: %d Hz\n",

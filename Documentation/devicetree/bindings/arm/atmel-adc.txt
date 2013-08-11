@@ -30,6 +30,8 @@ Optional properties:
           disabled. Since touch screen will occupied the trigger register.
   - atmel,adc-ts-pressure-threshold: a pressure threshold for touchscreen. It
                                      make touch detect more precision.
+  - atmel,adc-clock-rate: ADC clock rate. If not specified, use the default
+			  adc_op_clk.
  
 Optional trigger Nodes:
   - Required properties:
