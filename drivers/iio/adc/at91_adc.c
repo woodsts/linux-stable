@@ -678,8 +678,8 @@ static int at91_adc_probe(struct platform_device *pdev)
 	shtim = round_up((st->sample_hold_time * adc_clk_khz /
 			  1000) - 1, 1);
 
-	reg = AT91_ADC_PRESCAL_(prsc) & AT91_ADC_PRESCAL;
-	reg |= AT91_ADC_STARTUP_(ticks) & AT91_ADC_STARTUP;
+	reg = AT91_ADC_PRESCAL_(prsc) & st->registers->mr_prescal_mask;
+	reg |= AT91_ADC_STARTUP_(ticks) & st->registers->mr_startup_mask;
 	if (st->low_res)
 		reg |= AT91_ADC_LOWRES;
 	if (st->sleep_mode)
@@ -756,6 +756,8 @@ static struct at91_adc_caps at91sam9260_caps = {
 		.drdy_mask = AT91_ADC_DRDY,
 		.status_register = AT91_ADC_SR,
 		.trigger_register = AT91_ADC_TRGR_9260,
+		.mr_prescal_mask = AT91_ADC_PRESCAL_9260,
+		.mr_startup_mask = AT91_ADC_STARTUP_9260,
 	},
 };
 
@@ -765,6 +767,8 @@ static struct at91_adc_caps at91sam9g45_caps = {
 		.drdy_mask = AT91_ADC_DRDY,
 		.status_register = AT91_ADC_SR,
 		.trigger_register = AT91_ADC_TRGR_9G45,
+		.mr_prescal_mask = AT91_ADC_PRESCAL_9G45,
+		.mr_startup_mask = AT91_ADC_STARTUP_9G45,
 	},
 };
 
@@ -774,6 +778,9 @@ static struct at91_adc_caps at91sam9x5_caps = {
 		.drdy_mask = AT91_ADC_SR_DRDY_9X5,
 		.status_register = AT91_ADC_SR_9X5,
 		.trigger_register = AT91_ADC_TRGR_9X5,
+		/* prescal mask is same as 9G45 */
+		.mr_prescal_mask = AT91_ADC_PRESCAL_9G45,
+		.mr_startup_mask = AT91_ADC_STARTUP_9X5,
 	},
 };
 
