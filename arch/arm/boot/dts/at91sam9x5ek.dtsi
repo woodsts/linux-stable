@@ -94,6 +94,10 @@
 				};
 			};
 
+			ssc0: ssc@f0010000 {
+				status = "okay";
+			};
+
 			macb0: ethernet@f802c000 {
 				phy-mode = "rmii";
 			};
