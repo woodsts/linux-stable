@@ -44,6 +44,10 @@
 				};
 			};
 
+			ssc0: ssc@f0010000 {
+				status = "okay";
+			};
+
 			dbgu: serial@fffff200 {
 				status = "okay";
 			};
