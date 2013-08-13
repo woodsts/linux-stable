@@ -934,9 +934,22 @@ static int ov5642_cropcap(struct v4l2_subdev *sd, struct v4l2_cropcap *a)
 static int ov5642_g_mbus_config(struct v4l2_subdev *sd,
 				struct v4l2_mbus_config *cfg)
 {
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
+	struct ov5642 *priv = to_ov5642(client);
+
 	cfg->type = V4L2_MBUS_CSI2;
 	cfg->flags = V4L2_MBUS_CSI2_2_LANE | V4L2_MBUS_CSI2_CHANNEL_0 |
 					V4L2_MBUS_CSI2_CONTINUOUS_CLOCK;
+
+
+	if (priv->is_ov5640) {
+		cfg->flags = V4L2_MBUS_PCLK_SAMPLE_RISING | V4L2_MBUS_MASTER |
+			V4L2_MBUS_VSYNC_ACTIVE_HIGH | V4L2_MBUS_HSYNC_ACTIVE_HIGH |
+			V4L2_MBUS_DATA_ACTIVE_HIGH;
+		cfg->type = V4L2_MBUS_PARALLEL;
+		cfg->flags = soc_camera_apply_board_flags(ssdd, cfg);
+	}
 
 	return 0;
 }
