@@ -316,6 +316,8 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_DEV_ID("usart", "f0020000.serial", &usart1_clk),
 	CLKDEV_CON_DEV_ID("usart", "f8020000.serial", &usart2_clk),
 	CLKDEV_CON_DEV_ID("usart", "f8024000.serial", &usart3_clk),
+	CLKDEV_CON_DEV_ID("usart", "f0024000.serial", &uart0_clk),
+	CLKDEV_CON_DEV_ID("usart", "f8028000.serial", &uart1_clk),
 	CLKDEV_CON_DEV_ID(NULL, "f0014000.i2c", &twi0_clk),
 	CLKDEV_CON_DEV_ID(NULL, "f0018000.i2c", &twi1_clk),
 	CLKDEV_CON_DEV_ID(NULL, "f801c000.i2c", &twi2_clk),
