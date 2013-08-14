@@ -29,6 +29,8 @@
 #define SAMA5D3_ID_USART1	13	/* USART1 */
 #define SAMA5D3_ID_USART2	14	/* USART2 */
 #define SAMA5D3_ID_USART3	15	/* USART3 */
+#define SAMA5D3_ID_UART0	16	/* UART0 */
+#define SAMA5D3_ID_UART1	17	/* UART1 */
 #define SAMA5D3_ID_TWI0		18	/* Two-Wire Interface 0 */
 #define SAMA5D3_ID_TWI1		19	/* Two-Wire Interface 1 */
 #define SAMA5D3_ID_TWI2		20	/* Two-Wire Interface 2 */
