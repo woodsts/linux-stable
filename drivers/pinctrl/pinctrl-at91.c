@@ -61,6 +61,9 @@ static int gpio_banks;
 #define DEGLITCH	(1 << 2)
 #define PULL_DOWN	(1 << 3)
 #define DIS_SCHMIT	(1 << 4)
+#define OUTPUT		(1 << 5)
+#define OUTPUT_VAL_SHIFT	6
+#define OUTPUT_VAL	(0x1 << OUTPUT_VAL_SHIFT)
 #define DEBOUNCE	(1 << 16)
 #define DEBOUNCE_VAL_SHIFT	17
 #define DEBOUNCE_VAL	(0x3fff << DEBOUNCE_VAL_SHIFT)
@@ -334,6 +337,19 @@ static void at91_mux_set_pullup(void __iomem *pio, unsigned mask, bool on)
 		writel_relaxed(mask, pio + PIO_PPDDR);
 
 	writel_relaxed(mask, pio + (on ? PIO_PUER : PIO_PUDR));
+}
+
+static bool at91_mux_get_output(void __iomem *pio, unsigned pin, bool *val)
+{
+	*val = (readl_relaxed(pio + PIO_ODSR) >> pin) & 0x1;
+	return (readl_relaxed(pio + PIO_OSR) >> pin) & 0x1;
+}
+
+static void at91_mux_set_output(void __iomem *pio, unsigned mask, bool is_on,
+				bool val)
+{
+	writel_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
+	writel_relaxed(mask, pio + (is_on ? PIO_OER : PIO_ODR));
 }
 
 static unsigned at91_mux_get_multidrive(void __iomem *pio, unsigned pin)
@@ -718,6 +734,7 @@ static int at91_pinconf_get(struct pinctrl_dev *pctldev,
 	void __iomem *pio;
 	unsigned pin;
 	int div;
+	bool out;
 
 	dev_dbg(info->dev, "%s:%d, pin_id=%d, config=0x%lx", __func__, __LINE__, pin_id, *config);
 	pio = pin_to_controller(info, pin_to_bank(pin_id));
@@ -738,6 +755,9 @@ static int at91_pinconf_get(struct pinctrl_dev *pctldev,
 	if (info->ops->get_schmitt_trig && info->ops->get_schmitt_trig(pio, pin))
 		*config |= DIS_SCHMIT;
 
+	if (at91_mux_get_output(pio, pin, &out))
+		*config |= OUTPUT | (out << OUTPUT_VAL_SHIFT);
+
 	return 0;
 }
 
@@ -755,6 +775,8 @@ static int at91_pinconf_set(struct pinctrl_dev *pctldev,
 	if (config & PULL_UP && config & PULL_DOWN)
 		return -EINVAL;
 
+	at91_mux_set_output(pio, mask, config & OUTPUT,
+			    (config & OUTPUT_VAL) >> OUTPUT_VAL_SHIFT);
 	at91_mux_set_pullup(pio, mask, config & PULL_UP);
 	at91_mux_set_multidrive(pio, mask, config & MULTI_DRIVE);
 	if (info->ops->set_deglitch)
