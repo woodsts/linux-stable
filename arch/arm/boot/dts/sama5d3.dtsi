@@ -261,7 +261,6 @@
 					&pinctrl_adc0_ad11
 					>;
 				atmel,adc-channels-used = <0xfff>;
-				atmel,adc-num-channels = <12>;
 				atmel,adc-startup-time = <40>;
 				atmel,adc-use-external;
 				atmel,adc-vref = <3000>;

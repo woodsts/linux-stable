@@ -688,7 +688,6 @@
 				atmel,adc-use-external;
 				atmel,adc-channels-used = <0xffff>;
 				atmel,adc-vref = <3300>;
-				atmel,adc-num-channels = <12>;
 				atmel,adc-startup-time = <40>;
 				atmel,adc-res = <8 10>;
 				atmel,adc-res-names = "lowres", "highres";

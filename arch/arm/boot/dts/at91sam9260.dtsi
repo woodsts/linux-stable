@@ -613,7 +613,6 @@
 				atmel,adc-use-external-triggers;
 				atmel,adc-channels-used = <0xf>;
 				atmel,adc-vref = <3300>;
-				atmel,adc-num-channels = <4>;
 				atmel,adc-startup-time = <15>;
 				atmel,adc-res = <8 10>;
 				atmel,adc-res-names = "lowres", "highres";
