@@ -1326,6 +1326,8 @@ static struct at91_adc_reg_desc at91_adc_register_g20 = {
 	.drdy_mask = AT91_ADC_DRDY,
 	.status_register = AT91_ADC_SR,
 	.trigger_register = AT91_ADC_MR,
+	.mr_prescal_mask = AT91_ADC_PRESCAL_9260,
+	.mr_startup_mask = AT91_ADC_STARTUP_9260,
 };
 
 void __init at91_add_device_adc(struct at91_adc_data *data)
