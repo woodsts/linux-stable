@@ -32,6 +32,7 @@
 #include <mach/at91sam9_smc.h>
 #include <linux/platform_data/dma-atmel.h>
 #include <mach/atmel-mci.h>
+#include <mach/atmel_lcdc.h>
 
 #include <media/atmel-isi.h>
 
