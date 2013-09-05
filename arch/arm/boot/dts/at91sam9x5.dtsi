@@ -266,6 +266,13 @@
 				};
 			};
 
+			isi: isi@f8048000 {
+				compatible = "atmel,at91sam9g45-isi";
+				reg = <0xf8048000 0x4000>;
+				interrupts = <25 4 5>;
+				status = "disabled";
+			};
+
 			tsadcc: tsadcc@f804c000 {
 				compatible = "atmel,at91sam9x5-tsadcc";
 				reg = <0xf804c000 0x4000>;
@@ -681,6 +688,29 @@
 							<0 2 0x2 0x1	/* PA2 periph B with pullpup  */
 							 0 3 0x2 0x1	/* PA3 periph B with pullpup */
 							 0 4 0x2 0x1>;	/* PA4 periph B with pullpup */
+					};
+				};
+
+				isi {
+					pinctrl_isi: isi-0 {
+						atmel,pins =
+							<2 0 0x2 0x0	/* PC0 periph B ISI_D0, conflicts with LCDDAT0 */
+							 2 1 0x2 0x0	/* PC1 periph B ISI_D1, conflicts with LCDDAT1 */
+							 2 2 0x2 0x0	/* PC2 periph B ISI_D2, conflicts with LCDDAT2 */
+							 2 3 0x2 0x0	/* PC3 periph B ISI_D3, conflicts with LCDDAT3 */
+							 2 4 0x2 0x0	/* PC4 periph B ISI_D4, conflicts with LCDDAT4 */
+							 2 5 0x2 0x0	/* PC5 periph B ISI_D5, conflicts with LCDDAT5 */
+							 2 6 0x2 0x0	/* PC6 periph B ISI_D6, conflicts with LCDDAT6 */
+							 2 7 0x2 0x0	/* PC7 periph B ISI_D7, conflicts with LCDDAT7 */
+							 2 12 0x2 0x0	/* PC12 periph B ISI_PCK, conflicts with LCDDAT12 */
+							 2 14 0x2 0x0	/* PC14 periph B ISI_HSYNC, conflicts with LCDDAT14 */
+							 2 13 0x2 0x0	/* PC13 periph B ISI_VSYNC, conflicts with LCDDAT13 */
+							 2 8 0x2 0x0	/* PC8 periph B ISI_PD8, conflicts with LCDDAT8 */
+							 2 9 0x2 0x0>;	/* PC9 periph B ISI_PD9, conflicts with LCDDAT9 */
+					};
+					pinctrl_isi_pck_as_mck: isi_pck_as_mck-0 {
+						atmel,pins =
+							<2 15 0x3 0x0>;	/* PC15 periph C ISI_MCK */
 					};
 				};
 
