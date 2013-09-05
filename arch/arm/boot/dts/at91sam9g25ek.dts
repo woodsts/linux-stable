@@ -16,11 +16,11 @@
 
 	ahb {
 		apb {
-			spi0: spi@f0000000 {
+			i2c0: i2c@f8010000 {
 				status = "okay";
 			};
 
-			i2c0: i2c@f8010000 {
+			isi: isi@f8048000 {
 				status = "okay";
 			};
 

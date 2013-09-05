@@ -236,6 +236,7 @@ struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf0034000, "atmel_isi", &isi_data),
+	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf8048000, "atmel_isi", &isi_data),
 	{ /* sentinel */ }
 };
 
@@ -344,6 +345,16 @@ static void __init at91_dt_device_init(void)
 				ek_lcdc_data.default_monspecs->modedb->lower_margin = 2;
 				ek_lcdc_data.default_monspecs->modedb->hsync_len = 41;
 				ek_lcdc_data.default_monspecs->modedb->vsync_len = 11;
+			}
+		}
+	} else if (of_machine_is_compatible("atmel,at91sam9x5ek")) {
+		struct device_node *np;
+
+		np = of_find_compatible_node(NULL, NULL, "atmel,at91sam9g45-isi");
+		if (np) {
+			if (of_device_is_available(np)) {
+				camera_set_gpio_pins(AT91_PIN_PA7, AT91_PIN_PA13);
+				at91_config_isi(true, "pck0");
 			}
 		}
 	}
