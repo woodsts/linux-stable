@@ -69,10 +69,10 @@
  * 1:1 scale. Hopefully these restrictions will be removed in the future.
  */
 #define OV5642_MAX_WIDTH	OV5642_SENSOR_SIZE_X
-#define OV5642_MAX_HEIGHT	480
+#define OV5642_MAX_HEIGHT	720
 
 /* default sizes */
-#define OV5642_DEFAULT_WIDTH	640
+#define OV5642_DEFAULT_WIDTH	1280
 #define OV5642_DEFAULT_HEIGHT	OV5642_MAX_HEIGHT
 
 /* minimum extra blanking */
@@ -85,6 +85,17 @@
  * and this leads to weird output. So we set 1000 lines as minimum.
  */
 #define BLANKING_MIN_HEIGHT		1000
+
+struct ov5640_size {
+	int	width;
+	int	height;
+};
+
+static const struct ov5640_size ov5640_support_sizes[] = {
+	/* smaller resolution first */
+	{ .width = 640, .height = 480 },		/* VGA */
+	{ .width = 1280, .height = 960 },	/* 1280x960 */
+};
 
 struct regval_list {
 	u16 reg_num;
@@ -1092,9 +1103,10 @@ static int ov5642_try_fmt(struct v4l2_subdev *sd,
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov5642 *priv = to_ov5642(client);
 	const struct ov5642_datafmt *fmt = ov5642_find_datafmt(mf->code);
+	int i;
 
-	mf->width = priv->crop_rect.width;
-	mf->height = priv->crop_rect.height;
+	dev_info(&client->dev, "try_fmt: width = %d, height = %d\n",
+			mf->width, mf->height);
 
 	if (!fmt) {
 		mf->code	= ov5642_colour_fmts[0].code;
@@ -1102,6 +1114,25 @@ static int ov5642_try_fmt(struct v4l2_subdev *sd,
 	}
 
 	mf->field	= V4L2_FIELD_NONE;
+
+	if (!priv->is_ov5640) {
+		mf->width = priv->crop_rect.width;
+		mf->height = priv->crop_rect.height;
+		return 0;
+	}
+
+	/* ov5640 */
+	for (i = 0; i < ARRAY_SIZE(ov5640_support_sizes); i++) {
+		if (mf->width <= ov5640_support_sizes[i].width)
+			break;	/* use this */
+	}
+
+	/* bigger than our max support size then use our max size */
+	if (i == ARRAY_SIZE(ov5640_support_sizes))
+		i = ARRAY_SIZE(ov5640_support_sizes) - 1;
+
+	mf->width = priv->crop_rect.width = ov5640_support_sizes[i].width;
+	mf->height = priv->crop_rect.height = ov5640_support_sizes[i].height;
 
 	return 0;
 }
@@ -1116,6 +1147,8 @@ static int ov5642_s_fmt(struct v4l2_subdev *sd,
 	if (!ov5642_find_datafmt(mf->code))
 		return -EINVAL;
 
+	dev_info(&client->dev, "set_fmt: width = %d, height = %d\n",
+			mf->width, mf->height);
 	ov5642_try_fmt(sd, mf);
 	priv->fmt = ov5642_find_datafmt(mf->code);
 
@@ -1127,14 +1160,32 @@ static int ov5642_g_fmt(struct v4l2_subdev *sd,
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov5642 *priv = to_ov5642(client);
+	int i;
 
 	const struct ov5642_datafmt *fmt = priv->fmt;
 
 	mf->code	= fmt->code;
 	mf->colorspace	= fmt->colorspace;
-	mf->width	= priv->crop_rect.width;
-	mf->height	= priv->crop_rect.height;
 	mf->field	= V4L2_FIELD_NONE;
+
+	if (!priv->is_ov5640) {
+		mf->width = priv->crop_rect.width;
+		mf->height = priv->crop_rect.height;
+		return 0;
+	}
+
+	/* ov5640 */
+	for (i = 0; i < ARRAY_SIZE(ov5640_support_sizes); i++) {
+		if (mf->width <= ov5640_support_sizes[i].width)
+			break;	/* use this */
+	}
+
+	/* bigger than our max support size then use our max size */
+	if (i == ARRAY_SIZE(ov5640_support_sizes))
+		i = ARRAY_SIZE(ov5640_support_sizes) - 1;
+
+	mf->width = ov5640_support_sizes[i].width;
+	mf->height = ov5640_support_sizes[i].height;
 
 	return 0;
 }
