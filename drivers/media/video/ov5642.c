@@ -911,6 +911,34 @@ static struct regval_list ov5640_default_regs_finalise[] = {
 	{0xffff, 0xff},
 };
 
+static struct regval_list ov5640_default_regs_finalise_960p[] = {
+	{0x3800, 0x0  },
+	{0x3801, 0x0  },
+	{0x3802, 0x0  },
+	{0x3803, 0x0  },
+	{0x380c, 0xB  },
+	{0x380d, 0x1C },
+	{0x380e, 0x7  },
+	{0x380f, 0xB0 },
+	{0x3808, 0x5  },
+	{0x3809, 0x0  },
+	{0x380A, 0x3  },
+	{0x380B, 0xC0 },
+	{0x3804, 0xA  },
+	{0x3805, 0x3F },
+	{0x3806, 0x7  },
+	{0x3807, 0x9F },
+	{0x3810, 0x0  },
+	{0x3811, 0x20,},
+	{0x3812, 0x0  },
+	{0x3813, 0x10,},
+	{0x3814, 0x11,},
+	{0x3815, 0x11,},
+	{0x5001, 0xa3 },
+	{0xffff, 0xff},
+};
+
+
 struct ov5642_datafmt {
 	enum v4l2_mbus_pixelcode	code;
 	enum v4l2_colorspace		colorspace;
@@ -1105,7 +1133,7 @@ static int ov5642_try_fmt(struct v4l2_subdev *sd,
 	const struct ov5642_datafmt *fmt = ov5642_find_datafmt(mf->code);
 	int i;
 
-	dev_info(&client->dev, "try_fmt: width = %d, height = %d\n",
+	dev_dbg(&client->dev, "try_fmt: width = %d, height = %d\n",
 			mf->width, mf->height);
 
 	if (!fmt) {
@@ -1147,10 +1175,15 @@ static int ov5642_s_fmt(struct v4l2_subdev *sd,
 	if (!ov5642_find_datafmt(mf->code))
 		return -EINVAL;
 
-	dev_info(&client->dev, "set_fmt: width = %d, height = %d\n",
+	dev_dbg(&client->dev, "set_fmt: width = %d, height = %d\n",
 			mf->width, mf->height);
 	ov5642_try_fmt(sd, mf);
 	priv->fmt = ov5642_find_datafmt(mf->code);
+
+	if (priv->crop_rect.width == 1280)
+		ov5642_write_array(client, ov5640_default_regs_finalise_960p);
+	else
+		ov5642_write_array(client, ov5640_default_regs_finalise);
 
 	return 0;
 }
@@ -1236,10 +1269,15 @@ static int ov5642_s_crop(struct v4l2_subdev *sd, struct v4l2_crop *a)
 	priv->crop_rect.width		= rect->width;
 	priv->crop_rect.height		= rect->height;
 
+	dev_dbg(&client->dev, "ov5642_s_crop(): width = %d, height = %d\n",
+		priv->crop_rect.width, priv->crop_rect.height);
+
 	/* ov5640 */
 	if (priv->is_ov5640) {
 		ret = ov5642_write_array(client, ov5640_default_regs_init);
 		ret = ov5642_write_array(client, ov5640_default_regs_finalise);
+		if (rect->width == 1280)
+			ret = ov5642_write_array(client, ov5640_default_regs_finalise_960p);
 		return ret;
 	}
 
@@ -1315,6 +1353,8 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 
 	client = v4l2_get_subdevdata(sd);
 	priv = to_ov5642(client);
+	dev_dbg(&client->dev, "ov5642_s_power(): width = %d, height = %d\n",
+		priv->crop_rect.width, priv->crop_rect.height);
 
 	/* ov5640 */
 	if (priv->is_ov5640) {
