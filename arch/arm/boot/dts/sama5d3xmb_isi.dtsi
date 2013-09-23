@@ -1,0 +1,33 @@
+/*
+ * sama5d3mb_isi.dtsi - Device Tree file for SAMA5-EK board to enable ISI
+ * Includes this dtsi in the end of sama5d3xek.dts will enable ISI.
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/ {
+	ahb {
+		apb {
+			i2c0: i2c@f0014000 {
+				status = "disabled";
+			};
+
+			/* ISI VSYNC/HSYNC Conflict with i2c0 */
+			isi: isi@f0034000 {
+				status = "okay";
+			};
+		};
+	};
+
+	/* As sound depends on i2c0, we disable sound as well */
+	sound {
+		status = "disabled";
+	};
+
+	leds {
+		d3 {
+			/* Conflict with ISI module's reset pin */
+			status = "disabled";
+		};
+	};
+};
