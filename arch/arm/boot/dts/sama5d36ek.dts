@@ -32,6 +32,10 @@
 				status = "okay";
 			};
 
+			i2c0: i2c@f0014000 {
+				status = "okay";
+			};
+
 			i2c1: i2c@f0018000 {
 				status = "okay";
 
@@ -46,11 +50,6 @@
 				status = "okay";
 			};
 
-			/* ISI VSYNC/HSYNC Conflict with i2c0 */
-			isi: isi@f0034000 {
-				status = "okay";
-			};
-
 			macb1: ethernet@f802c000 {
 				status = "okay";
 			};
@@ -62,3 +61,5 @@
 		status = "okay";
 	};
 };
+
+/include/ "sama5d3mb_isi.dtsi"

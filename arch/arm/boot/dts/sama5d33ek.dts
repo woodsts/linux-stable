@@ -53,3 +53,6 @@
 		status = "okay";
 	};
 };
+
+/* Uncomment following line will enable ISI support */
+/* /include/ "sama5d3mb_isi.dtsi" */

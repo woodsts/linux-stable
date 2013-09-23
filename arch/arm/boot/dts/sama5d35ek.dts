@@ -23,7 +23,15 @@
 				status = "okay";
 			};
 
+			ssc0: ssc@f0008000 {
+				status = "okay";
+			};
+
 			can0: can@f000c000 {
+				status = "okay";
+			};
+
+			i2c0: i2c@f0014000 {
 				status = "okay";
 			};
 
@@ -35,14 +43,14 @@
 				status = "okay";
 			};
 
-			isi: isi@f0034000 {
-				status = "okay";
-			};
-
 			macb1: ethernet@f802c000 {
 				status = "okay";
 			};
 		};
+	};
+
+	sound {
+		status = "okay";
 	};
 
 	gpio_keys {
@@ -58,3 +66,5 @@
 		};
 	};
 };
+
+/include/ "sama5d3mb_isi.dtsi"
