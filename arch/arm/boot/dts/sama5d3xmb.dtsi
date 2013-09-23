@@ -163,5 +163,6 @@
 
 		atmel,ssc-controller = <&ssc0>;
 		atmel,audio-codec = <&wm8904>;
+		status = "disabled";
 	};
 };
