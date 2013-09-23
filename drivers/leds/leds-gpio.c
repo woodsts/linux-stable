@@ -173,7 +173,7 @@ static struct gpio_leds_priv * __devinit gpio_leds_create_of(struct platform_dev
 	int count = 0, ret;
 
 	/* count LEDs in this device, so we know how much to allocate */
-	for_each_child_of_node(np, child)
+	for_each_available_child_of_node(np, child)
 		count++;
 	if (!count)
 		return NULL;
@@ -183,7 +183,7 @@ static struct gpio_leds_priv * __devinit gpio_leds_create_of(struct platform_dev
 	if (!priv)
 		return NULL;
 
-	for_each_child_of_node(np, child) {
+	for_each_available_child_of_node(np, child) {
 		struct gpio_led led = {};
 		enum of_gpio_flags flags;
 		const char *state;
