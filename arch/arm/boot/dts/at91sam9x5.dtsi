@@ -30,6 +30,7 @@
 		i2c0 = &i2c0;
 		i2c1 = &i2c1;
 		i2c2 = &i2c2;
+		ssc0 = &ssc0;
 	};
 	cpus {
 		cpu@0 {
