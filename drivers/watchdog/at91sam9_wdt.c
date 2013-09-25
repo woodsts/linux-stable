@@ -203,7 +203,7 @@ static struct watchdog_device at91wdt_wdd = {
 	.ops = &at91wdt_ops,
 };
 
-static int __init at91wdt_probe(struct platform_device *pdev)
+static int at91wdt_probe(struct platform_device *pdev)
 {
 	struct at91wdt_drvdata *driver_data;
 	struct resource	*r;
@@ -263,7 +263,7 @@ static int __exit at91wdt_remove(struct platform_device *pdev)
 }
 
 #if defined(CONFIG_OF)
-static const struct of_device_id at91_wdt_dt_ids[] __initconst = {
+static const struct of_device_id at91_wdt_dt_ids[] = {
 	{ .compatible = "atmel,at91sam9260-wdt" },
 	{ /* sentinel */ }
 };
