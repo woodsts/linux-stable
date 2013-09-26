@@ -455,7 +455,11 @@ static int atmel_ssc_hw_params(struct snd_pcm_substream *substream,
 			| SSC_BF(RCMR_START, start_event)
 			| SSC_BF(RCMR_CKI, SSC_CKI_RISING)
 			| SSC_BF(RCMR_CKO, SSC_CKO_NONE)
+#if defined(CONFIG_MACH_AT91SAM9G20EK) || defined(CONFIG_MACH_AT91SAM9G20EK_2MMC)
+			| SSC_BF(RCMR_CKS, SSC_CKS_CLOCK);
+#else
 			| SSC_BF(RCMR_CKS, SSC_CKS_PIN);
+#endif
 
 		rfmr =	  SSC_BF(RFMR_FSEDGE, SSC_FSEDGE_POSITIVE)
 			| SSC_BF(RFMR_FSOS, SSC_FSOS_NONE)
@@ -470,7 +474,11 @@ static int atmel_ssc_hw_params(struct snd_pcm_substream *substream,
 			| SSC_BF(TCMR_START, start_event)
 			| SSC_BF(TCMR_CKI, SSC_CKI_FALLING)
 			| SSC_BF(TCMR_CKO, SSC_CKO_NONE)
+#if defined(CONFIG_MACH_AT91SAM9G20EK) || defined(CONFIG_MACH_AT91SAM9G20EK_2MMC)
+			| SSC_BF(TCMR_CKS, SSC_CKS_PIN);
+#else
 			| SSC_BF(TCMR_CKS, SSC_CKS_CLOCK);
+#endif
 
 		tfmr =	  SSC_BF(TFMR_FSEDGE, SSC_FSEDGE_POSITIVE)
 			| SSC_BF(TFMR_FSDEN, 0)
