@@ -1466,6 +1466,8 @@ static int ov5642_probe(struct i2c_client *client,
 	return 0;
 
 error:
+	/* revisit: read a dummy data to recover the i2c bus */
+	i2c_smbus_read_byte_data(client, 0x00);
 	kfree(priv);
 	return ret;
 }
