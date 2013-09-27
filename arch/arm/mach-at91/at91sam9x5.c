@@ -229,6 +229,7 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_DEV_ID("spi_clk", "f0004000.spi", &spi1_clk),
 	CLKDEV_CON_DEV_ID("mci_clk", "f0008000.mmc", &mmc0_clk),
 	CLKDEV_CON_DEV_ID("mci_clk", "f000c000.mmc", &mmc1_clk),
+	CLKDEV_CON_DEV_ID(NULL, "f0010000.ssc", &ssc_clk),
 	CLKDEV_CON_DEV_ID("can_clk", "f8000000.can", &can0_clk),
 	CLKDEV_CON_DEV_ID("can_clk", "f8004000.can", &can1_clk),
 	CLKDEV_CON_DEV_ID("t0_clk", "f8008000.timer", &tcb0_clk),
