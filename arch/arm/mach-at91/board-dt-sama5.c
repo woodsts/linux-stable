@@ -138,7 +138,7 @@ static void camera_set_gpio_pins(uint reset_pin, uint power_pin)
 /*
  * soc-camera OV2640
  */
-static unsigned long isi_camera_query_bus_param(struct soc_camera_link *link)
+static unsigned long isi_camera_query_bus_param(struct soc_camera_subdev_desc *link)
 {
 	/* ISI board for ek using default 8-bits connection */
 	return SOCAM_DATAWIDTH_8;
@@ -203,19 +203,27 @@ static struct i2c_board_info i2c_ov5640 = {
 	I2C_BOARD_INFO("ov5642", 0x3c),
 };
 
-static struct soc_camera_link iclink_ov2640 = {
-	.bus_id			= -1,
-	.board_info		= &i2c_ov2640,
-	.i2c_adapter_id		= 1,
-	.power			= i2c_camera_power,
-	.query_bus_param	= isi_camera_query_bus_param,
+static struct soc_camera_desc iclink_ov2640 = {
+	.subdev_desc = {
+		.power 		= i2c_camera_power,
+		.query_bus_param	= isi_camera_query_bus_param,
+	},
+	.host_desc = {
+		.bus_id		= -1,
+		.board_info	= &i2c_ov2640,
+		.i2c_adapter_id	= 1,
+	},
 };
-static struct soc_camera_link iclink_ov5640 = {
-	.bus_id			= -1,
-	.board_info		= &i2c_ov5640,
-	.i2c_adapter_id		= 1,
-	.power			= i2c_camera_power,
-	.query_bus_param	= isi_camera_query_bus_param,
+static struct soc_camera_desc iclink_ov5640 = {
+	.subdev_desc = {
+		.power		= i2c_camera_power,
+		.query_bus_param	= isi_camera_query_bus_param,
+	},
+	.host_desc = {
+		.bus_id			= -1,
+		.board_info		= &i2c_ov5640,
+		.i2c_adapter_id		= 1,
+	},
 };
 
 static struct platform_device isi_ov2640 = {
