@@ -89,7 +89,7 @@ static struct atmel_lcdfb_info __initdata ek_lcdc_data = {
 /*
  *  ISI
  */
-static struct isi_platform_data __initdata isi_data = {
+static struct isi_platform_data isi_data = {
 	.frate			= ISI_CFG1_FRATE_CAPTURE_ALL,
 	/* to use codec and preview path simultaneously */
 	.full_mode		= 1,
