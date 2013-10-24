@@ -25,13 +25,19 @@
 
 #include "at91_aic.h"
 #include "generic.h"
+#include "clock.h"
 
 /************************************/
 /* TEMPORARY NON-DT STUFF FOR MIURA */
 /************************************/
+#include <linux/clk.h>
+#include <linux/delay.h>
 #include <linux/fb.h>
 #include <video/atmel_lcdfb.h>
 #include <mach/atmel_hlcdc.h>
+#include <media/soc_camera.h>
+#include <media/atmel-isi.h>
+
 /*
  * LCD Controller
  */
@@ -80,6 +86,157 @@ static struct atmel_lcdfb_info __initdata ek_lcdc_data = {
 	.lcd_wiring_mode		= ATMEL_LCDC_WIRING_RGB,
 };
 
+/*
+ *  ISI
+ */
+static struct isi_platform_data __initdata isi_data = {
+	.frate			= ISI_CFG1_FRATE_CAPTURE_ALL,
+	/* to use codec and preview path simultaneously */
+	.full_mode		= 1,
+	.data_width_flags	= ISI_DATAWIDTH_8 | ISI_DATAWIDTH_10,
+	/* ISI_MCK is provided by programmable clock or external clock */
+	.mck_hz			= 25000000,
+};
+
+static struct clk_lookup isi_mck_lookups[] = {
+	CLKDEV_CON_DEV_ID("isi_mck", "atmel_isi", NULL),
+};
+
+void __init at91_config_isi(bool use_pck_as_mck, const char *pck_id)
+{
+	struct clk *pck;
+	struct clk *parent;
+
+	if (use_pck_as_mck) {
+		pck = clk_get(NULL, pck_id);
+		parent = clk_get(NULL, "plla");
+
+		BUG_ON(IS_ERR(pck) || IS_ERR(parent));
+
+		if (clk_set_parent(pck, parent)) {
+			pr_err("Failed to set PCK's parent\n");
+		} else {
+			/* Register PCK as ISI_MCK */
+			isi_mck_lookups[0].clk = pck;
+			clkdev_add_table(isi_mck_lookups,
+				ARRAY_SIZE(isi_mck_lookups));
+		}
+
+		clk_put(pck);
+		clk_put(parent);
+	}
+}
+
+static unsigned int camera_reset_pin;
+static unsigned int camera_power_pin;
+static void camera_set_gpio_pins(uint reset_pin, uint power_pin)
+{
+	camera_reset_pin = reset_pin;
+	camera_power_pin = power_pin;
+}
+
+/*
+ * soc-camera OV2640
+ */
+static unsigned long isi_camera_query_bus_param(struct soc_camera_link *link)
+{
+	/* ISI board for ek using default 8-bits connection */
+	return SOCAM_DATAWIDTH_8;
+}
+
+static int i2c_camera_power(struct device *dev, int on)
+{
+	int res, ret = 0;
+
+	pr_debug("%s: %s the camera\n", __func__, on ? "ENABLE" : "DISABLE");
+
+	res = devm_gpio_request(dev, camera_power_pin, "ov2640_power");
+	if (res < 0) {
+		printk("can't request ov2640_power pin\n");
+		return -1;
+	}
+
+	res = devm_gpio_request(dev, camera_reset_pin, "ov2640_reset");
+	if (res < 0) {
+		printk("can't request ov2640_reset pin\n");
+		devm_gpio_free(dev, camera_power_pin);
+		return -1;
+	}
+
+	/* enable or disable the camera */
+	res = gpio_direction_output(camera_power_pin, !on);
+	if (res < 0) {
+		printk("can't request output direction for ov2640_power pin\n");
+		ret = -1;
+		goto out;
+	}
+
+	if (!on)
+		goto out;
+
+	/* If enabled, give a reset impulse */
+	res = gpio_direction_output(camera_reset_pin, 0);
+	if (res < 0) {
+		printk("can't request output direction for ov2640_reset pin\n");
+		ret = -1;
+		goto out;
+	}
+	msleep(20);
+	res = gpio_direction_output(camera_reset_pin, 1);
+	if (res < 0) {
+		printk("can't request output direction for ov2640_reset pin\n");
+		ret = -1;
+		goto out;
+	}
+	msleep(100);
+
+out:
+	devm_gpio_free(dev, camera_reset_pin);
+	devm_gpio_free(dev, camera_power_pin);
+	return ret;
+}
+
+static struct i2c_board_info i2c_ov2640 = {
+	I2C_BOARD_INFO("ov2640", 0x30),
+};
+static struct i2c_board_info i2c_ov5640 = {
+	I2C_BOARD_INFO("ov5642", 0x3c),
+};
+
+static struct soc_camera_link iclink_ov2640 = {
+	.bus_id			= -1,
+	.board_info		= &i2c_ov2640,
+	.i2c_adapter_id		= 0,
+	.power			= i2c_camera_power,
+	.query_bus_param	= isi_camera_query_bus_param,
+};
+static struct soc_camera_link iclink_ov5640 = {
+	.bus_id			= -1,
+	.board_info		= &i2c_ov5640,
+	.i2c_adapter_id		= 0,
+	.power			= i2c_camera_power,
+	.query_bus_param	= isi_camera_query_bus_param,
+};
+
+static struct platform_device isi_ov2640 = {
+	.name	= "soc-camera-pdrv",
+	.id	= 0,
+	.dev	= {
+		.platform_data = &iclink_ov2640,
+	},
+};
+static struct platform_device isi_ov5640 = {
+	.name	= "soc-camera-pdrv",
+	.id	= 1,
+	.dev	= {
+		.platform_data = &iclink_ov5640,
+	},
+};
+
+static struct platform_device *sensors[] __initdata = {
+	&isi_ov2640,
+	&isi_ov5640,
+};
 
 struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf8038000, "atmel_hlcdfb_base", &ek_lcdc_data),
@@ -87,6 +244,7 @@ struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030000, "atmel_hlcdfb_base", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
+	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf0034000, "atmel_isi", &isi_data),
 	{ /* sentinel */ }
 };
 
@@ -125,12 +283,23 @@ static int ksz9021rn_phy_fixup(struct phy_device *phy)
 
 static void __init sama5_dt_device_init(void)
 {
+	struct device_node *np;
+
 	if (of_machine_is_compatible("atmel,sama5d3xcm") &&
 	    IS_ENABLED(CONFIG_PHYLIB))
 		phy_register_fixup_for_uid(PHY_ID_KSZ9021, MICREL_PHY_ID_MASK,
 			ksz9021rn_phy_fixup);
 
+	np = of_find_compatible_node(NULL, NULL, "atmel,at91sam9g45-isi");
+	if (np) {
+		if (of_device_is_available(np)) {
+			camera_set_gpio_pins(AT91_PIN_PE24, AT91_PIN_PE29);
+			at91_config_isi(true, "pck1");
+		}
+	}
+
 	of_platform_populate(NULL, of_default_bus_match_table, at91_auxdata_lookup, NULL);
+	platform_add_devices(sensors, ARRAY_SIZE(sensors));
 }
 
 static const char *sama5_dt_board_compat[] __initdata = {
