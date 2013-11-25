@@ -615,6 +615,8 @@ struct ov5642 {
 	/* blanking information */
 	int total_width;
 	int total_height;
+
+	bool is_ov5640;	/* true means is ov5640. */
 };
 
 static const struct ov5642_datafmt ov5642_colour_fmts[] = {
@@ -868,6 +870,14 @@ static int ov5642_s_crop(struct v4l2_subdev *sd, const struct v4l2_crop *a)
 	priv->crop_rect.width		= rect.width;
 	priv->crop_rect.height		= rect.height;
 
+	/* ov5640 */
+	if (priv->is_ov5640) {
+		/* TODO: not support yet. */
+		ret = -ENODEV;
+		return ret;
+	}
+
+	/* ov5642 */
 	ret = ov5642_write_array(client, ov5642_default_regs_init);
 	if (!ret)
 		ret = ov5642_set_resolution(sd);
@@ -929,6 +939,14 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 	if (ret < 0)
 		return ret;
 
+	/* ov5640 */
+	if (priv->is_ov5640) {
+		/* TODO: not support yet. */
+		ret = -ENODEV;
+		return ret;
+	}
+
+	/* ov5642 */
 	ret = ov5642_write_array(client, ov5642_default_regs_init);
 	if (!ret)
 		ret = ov5642_set_resolution(sd);
@@ -965,6 +983,7 @@ static struct v4l2_subdev_ops ov5642_subdev_ops = {
 static int ov5642_video_probe(struct i2c_client *client)
 {
 	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
+	struct ov5642 *priv = to_ov5642(client);
 	int ret;
 	u8 id_high, id_low;
 	u16 id;
@@ -988,10 +1007,15 @@ static int ov5642_video_probe(struct i2c_client *client)
 
 	dev_info(&client->dev, "Chip ID 0x%04x detected\n", id);
 
-	if (id != 0x5642) {
+	switch (id) {
+	case 0x5640:
+		priv->is_ov5640 = true;	/* fall through */
+	case 0x5642:
+		break;
+	default:
 		ret = -ENODEV;
 		goto done;
-	}
+	};
 
 	ret = 0;
 
