@@ -977,10 +977,16 @@ static int ov2640_s_fmt(struct v4l2_subdev *sd,
 static int ov2640_try_fmt(struct v4l2_subdev *sd,
 			  struct v4l2_mbus_framefmt *mf)
 {
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	struct ov2640_priv *priv = to_ov2640(client);
+
 	/*
 	 * select suitable win, but don't store it
 	 */
-	ov2640_select_win(&mf->width, &mf->height);
+	if (priv->model == V4L2_IDENT_OV2640)
+		ov2640_select_win(&mf->width, &mf->height);
+	else
+		ov2643_select_win(&mf->width, &mf->height);
 
 	mf->field	= V4L2_FIELD_NONE;
 
