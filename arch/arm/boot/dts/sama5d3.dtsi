@@ -25,6 +25,7 @@
 		serial2 = &usart1;
 		serial3 = &usart2;
 		serial4 = &usart3;
+		serial5 = &uart0;
 		gpio0 = &pioA;
 		gpio1 = &pioB;
 		gpio2 = &pioC;
@@ -154,6 +155,15 @@
 				interrupts = <13 IRQ_TYPE_LEVEL_HIGH 5>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_usart1>;
+				status = "disabled";
+			};
+
+			uart0: serial@f0024000 {
+				compatible = "atmel,at91sam9260-usart";
+				reg = <0xf0024000 0x100>;
+				interrupts = <16 IRQ_TYPE_LEVEL_HIGH 5>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_uart0>;
 				status = "disabled";
 			};
 
