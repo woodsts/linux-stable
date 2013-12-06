@@ -338,6 +338,51 @@ static void __init sama5_dt_device_init(void)
 		}
 	}
 
+	/* Hack for PDA display modules to update lcd settings */
+	if (of_machine_is_compatible("pda,tm70xx")) {
+		__u8 manufacturer[4] = "PALM";
+		__u8 monitor[14] = "AT07";
+
+		/* set LCD configuration */
+		at91_tft_vga_modes[0].name = "PALM";
+		at91_tft_vga_modes[0].left_margin = 128;
+		at91_tft_vga_modes[0].right_margin = 0;
+		at91_tft_vga_modes[0].upper_margin = 23;
+		at91_tft_vga_modes[0].lower_margin = 22;
+		at91_tft_vga_modes[0].hsync_len = 5;
+		at91_tft_vga_modes[0].vsync_len = 5;
+
+		memcpy(at91fb_default_monspecs.manufacturer, manufacturer, 4);
+		memcpy(at91fb_default_monspecs.monitor, monitor, 14);
+
+		ek_lcdc_data.default_lcdcon2 = LCDC_LCDCFG5_MODE_OUTPUT_18BPP;
+
+		printk("LCD parameters updated for PDA7 display module\n");
+	}
+	if (of_machine_is_compatible("pda,tm43xx")) {
+		__u8 manufacturer[4] = "Inlx";
+		__u8 monitor[14] = "AT043TN24";
+
+		/* set LCD configuration */
+		at91_tft_vga_modes[0].name = "Inlx";
+		at91_tft_vga_modes[0].xres = 480;
+		at91_tft_vga_modes[0].yres = 272;
+		at91_tft_vga_modes[0].pixclock = KHZ2PICOS(9000);
+		at91_tft_vga_modes[0].left_margin = 2;
+		at91_tft_vga_modes[0].right_margin = 2;
+		at91_tft_vga_modes[0].upper_margin = 2;
+		at91_tft_vga_modes[0].lower_margin = 2;
+		at91_tft_vga_modes[0].hsync_len = 41;
+		at91_tft_vga_modes[0].vsync_len = 11;
+
+		memcpy(at91fb_default_monspecs.manufacturer, manufacturer, 4);
+		memcpy(at91fb_default_monspecs.monitor, monitor, 14);
+
+		ek_lcdc_data.smem_len = 480 * 272 * 4;
+
+		printk("LCD parameters updated for PDA4 display module\n");
+	}
+
 	of_platform_populate(NULL, of_default_bus_match_table, at91_auxdata_lookup, NULL);
 	platform_add_devices(sensors, ARRAY_SIZE(sensors));
 }
