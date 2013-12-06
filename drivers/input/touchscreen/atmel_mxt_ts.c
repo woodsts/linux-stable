@@ -686,6 +686,7 @@ static int mxt_make_highchg(struct mxt_data *data)
 	return 0;
 }
 
+#if 0
 static void mxt_handle_pdata(struct mxt_data *data)
 {
 	const struct mxt_platform_data *pdata = data->pdata;
@@ -733,6 +734,7 @@ static void mxt_handle_pdata(struct mxt_data *data)
 				MXT_CTE_VOLTAGE, voltage);
 	}
 }
+#endif
 
 static int mxt_get_info(struct mxt_data *data)
 {
@@ -841,7 +843,8 @@ static int mxt_initialize(struct mxt_data *data)
 	if (error)
 		goto err_free_object_table;
 
-	mxt_handle_pdata(data);
+	/* don't overwrite settings, it's too risky */
+	/* mxt_handle_pdata(data); */
 
 	/* Backup to memory */
 	mxt_write_object(data, MXT_GEN_COMMAND_T6,
@@ -1136,8 +1139,15 @@ static int mxt_probe(struct i2c_client *client,
 	int error;
 	unsigned int num_mt_slots;
 
-	if (!pdata)
-		return -EINVAL;
+	if (!pdata) {
+		if (client->dev.of_node) {
+			pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
+			if (!pdata)
+				return -EINVAL;
+		} else {
+			return -EINVAL;
+		}
+	}
 
 	data = kzalloc(sizeof(struct mxt_data), GFP_KERNEL);
 	input_dev = input_allocate_device();
