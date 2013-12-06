@@ -106,12 +106,29 @@ static u32 isi_readl(struct atmel_isi *isi, u32 reg)
 }
 
 static int configure_geometry(struct atmel_isi *isi, u32 width,
-			u32 height, enum v4l2_mbus_pixelcode code)
+			u32 height, const struct soc_camera_format_xlate *xlate)
 {
 	u32 cfg2;
 
+	/* According to the memory output, enable codec or preview path */
+	switch (xlate->host_fmt->fourcc) {
+	case V4L2_PIX_FMT_RGB565:
+		isi->enable_preview_path = true;
+		break;
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_VYUY:
+		isi->enable_preview_path = false;
+		break;
+	default:
+		dev_err(isi->icd->parent, "not support output memory v4l2 format: %d\n",
+			xlate->host_fmt->fourcc);
+		return -EINVAL;
+	}
+
 	/* According to sensor's output format to set cfg2 */
-	switch (code) {
+	switch (xlate->code) {
 	/* YUV, including grey */
 	case V4L2_MBUS_FMT_Y8_1X8:
 		cfg2 = ISI_CFG2_GRAYSCALE;
@@ -128,7 +145,11 @@ static int configure_geometry(struct atmel_isi *isi, u32 width,
 	case V4L2_MBUS_FMT_YUYV8_2X8:
 		cfg2 = ISI_CFG2_YCC_SWAP_DEFAULT;
 		break;
-	/* RGB, TODO */
+	/* RGB */
+	case V4L2_MBUS_FMT_RGB565_2X8_LE:
+		cfg2 = ISI_CFG2_COL_SPACE_RGB | ISI_CFG2_RGB_MODE_565 |
+			ISI_CFG2_RGB_CFG_MODE_3;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -141,6 +162,14 @@ static int configure_geometry(struct atmel_isi *isi, u32 width,
 	cfg2 |= ((height - 1) << ISI_CFG2_IM_VSIZE_OFFSET)
 			& ISI_CFG2_IM_VSIZE_MASK;
 	isi_writel(isi, ISI_CFG2, cfg2);
+
+	/* TODO: max preview is 640x480 */
+	cfg2 = ((width - 1) << ISI_PSIZE_PREV_HSIZE_OFFSET) &
+		ISI_PSIZE_PREV_HSIZE_MASK;
+	cfg2 |= ((height - 1) << ISI_PSIZE_PREV_VSIZE_OFFSET)
+		& ISI_PSIZE_PREV_VSIZE_MASK;
+	isi_writel(isi, ISI_PSIZE, cfg2);
+	isi_writel(isi, ISI_PDECF, 16);	/* no down sample */
 
 	return 0;
 }
@@ -534,7 +563,7 @@ static int isi_camera_set_fmt(struct soc_camera_device *icd,
 	if (mf.code != xlate->code)
 		return -EINVAL;
 
-	ret = configure_geometry(isi, pix->width, pix->height, xlate->code);
+	ret = configure_geometry(isi, pix->width, pix->height, xlate);
 	if (ret < 0)
 		return ret;
 
