@@ -130,6 +130,43 @@ static u32 isi_readl(struct atmel_isi *isi, u32 reg)
 	return readl(isi->regs + reg);
 }
 
+static u32 setup_yuv_swap(struct atmel_isi *isi,
+	const struct soc_camera_format_xlate *xlate)
+{
+	if (isi->enable_preview_path) {
+		switch (xlate->code) {
+		/* Set YUV format for isi to convert into RGB format */
+		case V4L2_MBUS_FMT_UYVY8_2X8:
+			return ISI_CFG2_YCC_SWAP_DEFAULT;
+		case V4L2_MBUS_FMT_VYUY8_2X8:
+			return ISI_CFG2_YCC_SWAP_MODE_1;
+		case V4L2_MBUS_FMT_YUYV8_2X8:
+			return ISI_CFG2_YCC_SWAP_MODE_2;
+		case V4L2_MBUS_FMT_YVYU8_2X8:
+			return ISI_CFG2_YCC_SWAP_MODE_3;
+		default:
+			break;
+		}
+	} else {
+		switch (xlate->code) {
+		case V4L2_MBUS_FMT_VYUY8_2X8:
+			return ISI_CFG2_YCC_SWAP_MODE_3;
+		case V4L2_MBUS_FMT_UYVY8_2X8:
+			return ISI_CFG2_YCC_SWAP_MODE_2;
+		case V4L2_MBUS_FMT_YVYU8_2X8:
+			return ISI_CFG2_YCC_SWAP_MODE_1;
+		case V4L2_MBUS_FMT_YUYV8_2X8:
+			return ISI_CFG2_YCC_SWAP_DEFAULT;
+		default:
+			break;
+		}
+	}
+
+	dev_err(isi->icd->parent, "Error: not support format for YCC_SWAP: %s\n",
+		mbus_fmt_string(xlate->code));
+	return 0;
+}
+
 static int configure_geometry(struct atmel_isi *isi, u32 width,
 			u32 height, const struct soc_camera_format_xlate *xlate)
 {
@@ -154,22 +191,17 @@ static int configure_geometry(struct atmel_isi *isi, u32 width,
 
 	/* According to sensor's output format to set cfg2 */
 	switch (xlate->code) {
-	/* YUV, including grey */
+	/* Grey */
 	case V4L2_MBUS_FMT_Y8_1X8:
 		cfg2 = ISI_CFG2_GRAYSCALE;
 		break;
-	case V4L2_MBUS_FMT_VYUY8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_MODE_3;
-		break;
-	case V4L2_MBUS_FMT_UYVY8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_MODE_2;
-		break;
-	case V4L2_MBUS_FMT_YVYU8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_MODE_1;
-		break;
-	case V4L2_MBUS_FMT_YUYV8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_DEFAULT;
-		break;
+	/* YUV */
+ 	case V4L2_MBUS_FMT_UYVY8_2X8:
+ 	case V4L2_MBUS_FMT_VYUY8_2X8:
+ 	case V4L2_MBUS_FMT_YUYV8_2X8:
+ 	case V4L2_MBUS_FMT_YVYU8_2X8:
+		cfg2 = setup_yuv_swap(isi, xlate);
+ 		break;
 	/* RGB */
 	case V4L2_MBUS_FMT_RGB565_2X8_LE:
 		cfg2 = ISI_CFG2_COL_SPACE_RGB | ISI_CFG2_RGB_MODE_565 |
@@ -178,6 +210,9 @@ static int configure_geometry(struct atmel_isi *isi, u32 width,
 	default:
 		return -EINVAL;
 	}
+	dev_dbg(isi->icd->parent, "%s path is enabled with sensor format: %s\n",
+			isi->enable_preview_path ? "Preview" : "Codec",
+			mbus_fmt_string(xlate->code));
 
 	isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
 	/* Set width */
@@ -665,6 +700,14 @@ static const struct soc_mbus_pixelfmt isi_camera_formats[] = {
 		.order			= SOC_MBUS_ORDER_LE,
 		.layout			= SOC_MBUS_LAYOUT_PACKED,
 	},
+	{
+		.fourcc			= V4L2_PIX_FMT_RGB565,
+		.name			= "RGB565",
+		.bits_per_sample	= 8,
+		.packing		= SOC_MBUS_PACKING_2X8_PADHI,
+		.order			= SOC_MBUS_ORDER_LE,
+		.layout			= SOC_MBUS_LAYOUT_PACKED,
+	},
 };
 
 /* This will be corrected as we get more formats */
@@ -756,6 +799,13 @@ static int isi_camera_get_formats(struct soc_camera_device *icd,
 		formats++;
 		if (xlate) {
 			xlate->host_fmt	= &isi_camera_formats[0];
+			xlate->code	= code;
+			dev_dbg(icd->parent, "Providing format %s using code %s\n",
+				xlate->host_fmt->name, mbus_fmt_string(code));
+			xlate++;
+
+			/* Can convert to RGB565 via preview path */
+			xlate->host_fmt	= &isi_camera_formats[1];
 			xlate->code	= code;
 			dev_dbg(icd->parent, "Providing format %s using code %s\n",
 				xlate->host_fmt->name, mbus_fmt_string(code));
