@@ -326,8 +326,7 @@ static int act8865_pmic_probe(struct i2c_client *client,
 		config.driver_data = act8865;
 		config.regmap = act8865->regmap;
 
-		rdev[i] = devm_regulator_register(&client->dev,
-						&act8865_reg[i], &config);
+		rdev[i] = regulator_register(&act8865_reg[i], &config);
 		if (IS_ERR(rdev[i])) {
 			ret = PTR_ERR(rdev[i]);
 			dev_err(dev, "failed to register %s\n",
