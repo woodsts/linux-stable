@@ -289,6 +289,32 @@ static int ksz9021rn_phy_fixup(struct phy_device *phy)
 	return 0;
 }
 
+static void mmd_write_reg(struct phy_device *dev, int device, int reg, int val)
+{
+	phy_write(dev, 0x0d, device);
+	phy_write(dev, 0x0e, reg);
+	phy_write(dev, 0x0d, (1 << 14) | device);
+	phy_write(dev, 0x0e, val);
+}
+
+static int ksz9031rn_phy_fixup(struct phy_device *dev)
+{
+	/*
+	 * min rx data delay, max rx/tx clock delay,
+	 * min rx/tx control delay
+	 */
+	/*
+	mmd_write_reg(dev, 2, 4, 0);
+	mmd_write_reg(dev, 2, 5, 0);
+	mmd_write_reg(dev, 2, 8, 0x003ff);
+	*/
+	mmd_write_reg(dev, 2, 4, 0x84);
+	mmd_write_reg(dev, 2, 5, 0x4444);
+	mmd_write_reg(dev, 2, 8, 0x1ef);
+
+	return 0;
+}
+
 static void __init sama5_dt_device_init(void)
 {
 	struct device_node *np;
@@ -297,6 +323,12 @@ static void __init sama5_dt_device_init(void)
 	    IS_ENABLED(CONFIG_PHYLIB))
 		phy_register_fixup_for_uid(PHY_ID_KSZ9021, MICREL_PHY_ID_MASK,
 			ksz9021rn_phy_fixup);
+	else if (of_machine_is_compatible("atmel,sama5d3-xplained") &&
+	    IS_ENABLED(CONFIG_PHYLIB)) {
+		printk(KERN_CRIT "NFE test ksz9031rn_phy_fixup\n");
+		phy_register_fixup_for_uid(PHY_ID_KSZ9031, MICREL_PHY_ID_MASK,
+			ksz9031rn_phy_fixup);
+	}
 
 	np = of_find_compatible_node(NULL, NULL, "atmel,at91sam9g45-isi");
 	if (np) {
