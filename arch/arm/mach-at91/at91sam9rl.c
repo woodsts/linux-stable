@@ -195,6 +195,7 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_ID("pioB", &pioB_clk),
 	CLKDEV_CON_ID("pioC", &pioC_clk),
 	CLKDEV_CON_ID("pioD", &pioD_clk),
+	CLKDEV_CON_DEV_ID(NULL, "fffc8000.pwm", &pwm_clk),
 };
 
 static struct clk_lookup usart_clocks_lookups[] = {
