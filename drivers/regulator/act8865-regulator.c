@@ -209,6 +209,16 @@ static const struct of_device_id act8865_dt_ids[] = {
 };
 MODULE_DEVICE_TABLE(of, act8865_dt_ids);
 
+static struct of_regulator_match act8865_matches[] = {
+	[ACT8865_DCDC1]	= { .name = "DCDC_REG1"},
+	[ACT8865_DCDC2]	= { .name = "DCDC_REG2"},
+	[ACT8865_DCDC3]	= { .name = "DCDC_REG3"},
+	[ACT8865_LDO1]	= { .name = "LDO_REG1"},
+	[ACT8865_LDO2]	= { .name = "LDO_REG2"},
+	[ACT8865_LDO3]	= { .name = "LDO_REG3"},
+	[ACT8865_LDO4]	= { .name = "LDO_REG4"},
+};
+
 static int act8865_pdata_from_dt(struct device *dev,
 				 struct device_node **of_node,
 				 struct act8865_platform_data *pdata)
@@ -216,7 +226,6 @@ static int act8865_pdata_from_dt(struct device *dev,
 	int matched, i;
 	struct device_node *np;
 	struct act8865_regulator_data *regulator;
-	struct of_regulator_match rmatch[ARRAY_SIZE(act8865_reg)];
 
 	np = of_find_node_by_name(dev->of_node, "regulators");
 	if (!np) {
@@ -224,16 +233,14 @@ static int act8865_pdata_from_dt(struct device *dev,
 		return -EINVAL;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(rmatch); i++)
-		rmatch[i].name = act8865_reg[i].name;
-
-	matched = of_regulator_match(dev, np, rmatch, ARRAY_SIZE(rmatch));
+	matched = of_regulator_match(dev, np,
+				act8865_matches, ARRAY_SIZE(act8865_matches));
 	if (matched <= 0)
 		return matched;
 
 	pdata->regulators = devm_kzalloc(dev,
-				sizeof(struct act8865_regulator_data) * matched,
-				GFP_KERNEL);
+				sizeof(struct act8865_regulator_data) *
+				ARRAY_SIZE(act8865_matches), GFP_KERNEL);
 	if (!pdata->regulators) {
 		dev_err(dev, "%s: failed to allocate act8865 registor\n",
 						__func__);
@@ -243,11 +250,11 @@ static int act8865_pdata_from_dt(struct device *dev,
 	pdata->num_regulators = matched;
 	regulator = pdata->regulators;
 
-	for (i = 0; i < matched; i++) {
+	for (i = 0; i < ARRAY_SIZE(act8865_matches); i++) {
 		regulator->id = i;
-		regulator->name = rmatch[i].name;
-		regulator->platform_data = rmatch[i].init_data;
-		of_node[i] = rmatch[i].of_node;
+		regulator->name = act8865_matches[i].name;
+		regulator->platform_data = act8865_matches[i].init_data;
+		of_node[i] = act8865_matches[i].of_node;
 		regulator++;
 	}
 
@@ -316,7 +323,7 @@ static int act8865_pmic_probe(struct i2c_client *client,
 	}
 
 	/* Finally register devices */
-	for (i = 0; i < pdata->num_regulators; i++) {
+	for (i = 0; i < ARRAY_SIZE(act8865_matches); i++) {
 
 		id = pdata->regulators[i].id;
 
