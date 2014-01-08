@@ -181,6 +181,14 @@
 				status = "disabled";
 			};
 
+			pwm0: pwm@f002c000 {
+				compatible = "atmel,sama5d3-pwm";
+				reg = <0xf002c000 0x300>;
+				interrupts = <28 IRQ_TYPE_LEVEL_HIGH 4>;
+				#pwm-cells = <3>;
+				status = "disabled";
+			};
+
 			lcd_bus@f0030000 {
 				#address-cells = <1>;
 				#size-cells = <1>;
@@ -1064,14 +1072,6 @@
 				reg = <15>;
 				atmel,fifo-size = <1024>;
 				atmel,nb-banks = <2>;
-			};
-
-			pwm0: pwm@f002c000 {
-				compatible = "atmel,sama5d3-pwm";
-				reg = <0xf002c000 0x300>;
-				interrupts = <28 IRQ_TYPE_LEVEL_HIGH 4>;
-				#pwm-cells = <3>;
-				status = "disabled";
 			};
 		};
 
