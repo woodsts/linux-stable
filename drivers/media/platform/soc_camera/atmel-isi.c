@@ -38,6 +38,8 @@
 #define pixfmtstr(x) (x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, \
 	((x) >> 24) & 0xff
 
+static const struct soc_mbus_pixelfmt isi_camera_formats[];
+
 char *mbus_fmt_string(enum v4l2_mbus_pixelcode code)
 {
 	switch (code) {
@@ -148,17 +150,36 @@ static u32 setup_yuv_swap(struct atmel_isi *isi,
 			break;
 		}
 	} else {
-		switch (xlate->code) {
-		case V4L2_MBUS_FMT_VYUY8_2X8:
-			return ISI_CFG2_YCC_SWAP_MODE_3;
-		case V4L2_MBUS_FMT_UYVY8_2X8:
-			return ISI_CFG2_YCC_SWAP_MODE_2;
-		case V4L2_MBUS_FMT_YVYU8_2X8:
-			return ISI_CFG2_YCC_SWAP_MODE_1;
-		case V4L2_MBUS_FMT_YUYV8_2X8:
-			return ISI_CFG2_YCC_SWAP_DEFAULT;
-		default:
-			break;
+		if (xlate->host_fmt == &isi_camera_formats[0]) {
+			/* all convert to YUYV */
+			switch (xlate->code) {
+			case V4L2_MBUS_FMT_VYUY8_2X8:
+				return ISI_CFG2_YCC_SWAP_MODE_3;
+			case V4L2_MBUS_FMT_UYVY8_2X8:
+				return ISI_CFG2_YCC_SWAP_MODE_2;
+			case V4L2_MBUS_FMT_YVYU8_2X8:
+				return ISI_CFG2_YCC_SWAP_MODE_1;
+			case V4L2_MBUS_FMT_YUYV8_2X8:
+				return ISI_CFG2_YCC_SWAP_DEFAULT;
+			default:
+				break;
+			}
+		} else {
+			/* same format and without swap */
+			switch (xlate->code) {
+			case V4L2_MBUS_FMT_UYVY8_2X8:
+			case V4L2_MBUS_FMT_VYUY8_2X8:
+			case V4L2_MBUS_FMT_YUYV8_2X8:
+			case V4L2_MBUS_FMT_YVYU8_2X8:
+				/* No swap for the codec path. Codec output is
+				 * same as sensor's output. For instance, if
+				 * sensor's output is YUYV, then codec output
+				 * in memory is YUYV.
+				 */
+				return ISI_CFG2_YCC_SWAP_DEFAULT;
+			default:
+				break;
+			}
 		}
 	}
 
