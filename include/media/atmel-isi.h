@@ -56,6 +56,7 @@
 #define		ISI_CFG1_FRATE_DIV_6		(5 << 8)
 #define		ISI_CFG1_FRATE_DIV_7		(6 << 8)
 #define		ISI_CFG1_FRATE_DIV_8		(7 << 8)
+#define		ISI_CFG1_FRATE_DIV_MASK		(7 << 8)
 #define ISI_CFG1_DISCR				(1 << 11)
 #define ISI_CFG1_FULL_MODE			(1 << 12)
 
@@ -66,10 +67,24 @@
 #define		ISI_CFG2_YCC_SWAP_MODE_1	(1 << 28)
 #define		ISI_CFG2_YCC_SWAP_MODE_2	(2 << 28)
 #define		ISI_CFG2_YCC_SWAP_MODE_3	(3 << 28)
+#define		ISI_CFG2_YCC_SWAP_MODE_MASK	(3 << 28)
 #define ISI_CFG2_IM_VSIZE_OFFSET		0
 #define ISI_CFG2_IM_HSIZE_OFFSET		16
 #define ISI_CFG2_IM_VSIZE_MASK		(0x7FF << ISI_CFG2_IM_VSIZE_OFFSET)
 #define ISI_CFG2_IM_HSIZE_MASK		(0x7FF << ISI_CFG2_IM_HSIZE_OFFSET)
+#define ISI_CFG2_COL_SPACE_RGB		(1 << 15)
+#define ISI_CFG2_RGB_MODE_565		(1 << 12)
+#define		ISI_CFG2_RGB_CFG_DEFAULT	(0 << 30)
+#define		ISI_CFG2_RGB_CFG_MODE_1		(1 << 30)
+#define		ISI_CFG2_RGB_CFG_MODE_2		(2 << 30)
+#define		ISI_CFG2_RGB_CFG_MODE_3		(3 << 30)
+
+/* Bitfields in PSIZE */
+#define ISI_PSIZE_PREV_VSIZE_OFFSET		0
+#define ISI_PSIZE_PREV_HSIZE_OFFSET		16
+#define ISI_PSIZE_PREV_VSIZE_MASK	(0x3FF << ISI_PSIZE_PREV_VSIZE_OFFSET)
+#define ISI_PSIZE_PREV_HSIZE_MASK	(0x3FF << ISI_PSIZE_PREV_HSIZE_OFFSET)
+
 
 /* Bitfields in CTRL */
 /* Also using in SR(ISI_V2) */
