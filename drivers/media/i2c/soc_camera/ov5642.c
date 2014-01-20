@@ -1180,6 +1180,10 @@ static int ov5642_s_fmt(struct v4l2_subdev *sd,
 	ov5642_try_fmt(sd, mf);
 	priv->fmt = ov5642_find_datafmt(mf->code);
 
+	if (!priv->is_ov5640)
+		return 0;
+
+	/* OV5640 */
 	if (priv->crop_rect.width == 1280)
 		ov5642_write_array(client, ov5640_default_regs_finalise_960p);
 	else
