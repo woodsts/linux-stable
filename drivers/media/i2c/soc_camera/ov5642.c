@@ -5175,6 +5175,93 @@ static int ov5642_write_array(struct i2c_client *client,
 	return 0;
 }
 
+/* 5640 AFC commands
+ */
+#define WAIT_AFC_STATUS_OK_MILLI_SEC	100
+
+#define	AFC_COMMAND_SINGLE_FOCUS	0
+#define	AFC_COMMAND_CONTINUE_FOCUS	1
+#define	AFC_COMMAND_PAUSE_FOCUS		2
+#define	AFC_COMMAND_RELEASE_FOCUS	3
+
+static struct regval_list ov5640_afc_regs_single_focus[] = {
+	{0x3023, 0x1},
+	{0x3022, 0x3},
+	{0xffff, 0xff},
+};
+static struct regval_list ov5640_afc_regs_continue_focus[] = {
+	{0x3024, 0x1},
+	{0x3022, 0x4},
+	{0xffff, 0xff},
+};
+static struct regval_list ov5640_afc_regs_pause_focus[] = {
+	{0x3023, 0x1},
+	{0x3022, 0x6},
+	{0xffff, 0xff},
+};
+static struct regval_list ov5640_afc_regs_release_focus[] = {
+	{0x3023, 0x1},
+	{0x3022, 0x8},
+	{0xffff, 0xff},
+};
+
+static int ov5640_afc_wait_status(struct i2c_client *client)
+{
+	unsigned long timeout;
+	int ret;
+	u8 value;
+
+	timeout = jiffies + WAIT_AFC_STATUS_OK_MILLI_SEC * HZ;
+	/* Wait until the AFC status is ok. */
+	do {
+		ret = reg_read(client, 0x3023, &value);
+		if (ret) {
+			dev_err(&client->dev, "OV5640 AFC: fail to read...\n");
+			return ret;
+		}
+
+		msleep(1);
+	} while (value != 0 && time_before(jiffies, timeout));
+
+	if (value != 0)
+		dev_err(&client->dev, "OV5640 AFC: wait status FAIL\n");
+
+	if (time_after(jiffies, timeout)) {
+		dev_err(&client->dev, "OV5640 AFC: timeout to wait status\n");
+		return -ETIMEDOUT;
+	} else {
+		return 0;
+	}
+}
+
+static int ov5640_afc_send_command(struct i2c_client *client, int afc_command)
+{
+	int ret = 0;
+
+	switch (afc_command) {
+	case AFC_COMMAND_SINGLE_FOCUS:
+		ret = ov5642_write_array(client, ov5640_afc_regs_single_focus);
+		break;
+	case AFC_COMMAND_CONTINUE_FOCUS:
+		ret = ov5642_write_array(client, ov5640_afc_regs_continue_focus);
+		break;
+	case AFC_COMMAND_PAUSE_FOCUS:
+		ret = ov5642_write_array(client, ov5640_afc_regs_pause_focus);
+		break;
+	case AFC_COMMAND_RELEASE_FOCUS:
+		ret = ov5642_write_array(client, ov5640_afc_regs_release_focus);
+		break;
+	default:
+		return -EINVAL;	/* error, then quit */
+	};
+
+	ret = ov5640_afc_wait_status(client);
+	if (ret)
+		dev_err(&client->dev, "OV5640 AFC: fail to wait status, error = %d!\n", ret);
+
+	return ret;
+}
+
 static int ov5642_set_resolution(struct v4l2_subdev *sd)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -5470,6 +5557,9 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 	if (priv->is_ov5640) {
 		ret = ov5642_write_array(client, ov5640_default_regs_init);
 		ret = ov5642_write_array(client, ov5640_default_regs_finalise);
+		/* Setup OV5640 Auto Focus Controller firmware */
+		ret = ov5642_write_array(client, ov5640_afc_regs_init);
+		msleep(10);
 		return ret;
 	}
 
@@ -5483,6 +5573,24 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 	return ret;
 }
 
+static int ov5642_s_steram(struct v4l2_subdev *sd, int enable)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(sd);
+	int ret;
+
+	if (enable)
+		/* Start AFC continue mode */
+		ret = ov5640_afc_send_command(client, AFC_COMMAND_CONTINUE_FOCUS);
+	else
+		/* Rlease AFC */
+		ret = ov5640_afc_send_command(client, AFC_COMMAND_RELEASE_FOCUS);
+
+	if (ret < 0)
+		return -EIO;
+
+	return 0;
+}
+
 static struct v4l2_subdev_video_ops ov5642_subdev_video_ops = {
 	.s_mbus_fmt	= ov5642_s_fmt,
 	.g_mbus_fmt	= ov5642_g_fmt,
@@ -5492,6 +5600,8 @@ static struct v4l2_subdev_video_ops ov5642_subdev_video_ops = {
 	.g_crop		= ov5642_g_crop,
 	.cropcap	= ov5642_cropcap,
 	.g_mbus_config	= ov5642_g_mbus_config,
+
+	.s_stream	= ov5642_s_steram,
 };
 
 static struct v4l2_subdev_core_ops ov5642_subdev_core_ops = {
