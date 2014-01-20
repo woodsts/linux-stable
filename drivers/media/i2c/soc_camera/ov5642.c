@@ -5205,7 +5205,7 @@ static struct regval_list ov5640_afc_regs_release_focus[] = {
 	{0xffff, 0xff},
 };
 
-static int ov5640_afc_wait_status(struct i2c_client *client)
+static int ov5640_afc_wait_status(struct i2c_client *client, u16 addr, u8 val)
 {
 	unsigned long timeout;
 	int ret;
@@ -5214,17 +5214,18 @@ static int ov5640_afc_wait_status(struct i2c_client *client)
 	timeout = jiffies + WAIT_AFC_STATUS_OK_MILLI_SEC * HZ;
 	/* Wait until the AFC status is ok. */
 	do {
-		ret = reg_read(client, 0x3023, &value);
+		ret = reg_read(client, addr, &value);
 		if (ret) {
 			dev_err(&client->dev, "OV5640 AFC: fail to read...\n");
 			return ret;
 		}
 
 		msleep(1);
-	} while (value != 0 && time_before(jiffies, timeout));
+	} while (value != val && time_before(jiffies, timeout));
 
-	if (value != 0)
-		dev_err(&client->dev, "OV5640 AFC: wait status FAIL\n");
+	if (value != val)
+		dev_err(&client->dev, "OV5640 AFC: wait status: 0x%0x failed, get 0x%0x\n",
+				val, value);
 
 	if (time_after(jiffies, timeout)) {
 		dev_err(&client->dev, "OV5640 AFC: timeout to wait status\n");
@@ -5232,6 +5233,16 @@ static int ov5640_afc_wait_status(struct i2c_client *client)
 	} else {
 		return 0;
 	}
+}
+
+static int ov5640_afc_wait_init_done(struct i2c_client *client)
+{
+	return ov5640_afc_wait_status(client, 0x3029, 0x70);
+}
+
+static int ov5640_afc_wait_command_status(struct i2c_client *client)
+{
+	return ov5640_afc_wait_status(client, 0x3023, 0);
 }
 
 static int ov5640_afc_send_command(struct i2c_client *client, int afc_command)
@@ -5255,7 +5266,7 @@ static int ov5640_afc_send_command(struct i2c_client *client, int afc_command)
 		return -EINVAL;	/* error, then quit */
 	};
 
-	ret = ov5640_afc_wait_status(client);
+	ret = ov5640_afc_wait_command_status(client);
 	if (ret)
 		dev_err(&client->dev, "OV5640 AFC: fail to wait status, error = %d!\n", ret);
 
@@ -5560,6 +5571,7 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 		/* Setup OV5640 Auto Focus Controller firmware */
 		ret = ov5642_write_array(client, ov5640_afc_regs_init);
 		msleep(10);
+		ret = ov5640_afc_wait_init_done(client);
 		return ret;
 	}
 
