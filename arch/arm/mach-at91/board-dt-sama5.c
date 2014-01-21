@@ -222,13 +222,23 @@ static struct i2c_board_info i2c_ov2640 = {
 static struct i2c_board_info i2c_ov5642 = {
 	I2C_BOARD_INFO("ov5642", 0x3c),
 };
+static struct i2c_board_info i2c_ov9740 = {
+	I2C_BOARD_INFO("ov9740", 0x10),
+};
+static struct i2c_board_info i2c_ov7740 = {
+	I2C_BOARD_INFO("ov7740", 0x21),
+};
 
 LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0);
 LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3);
 
 static struct platform_device *sensors[] __initdata = {
 	&isi_ov2640,
 	&isi_ov5642,	/* compatible for ov5640 */
+	&isi_ov9740,
+	&isi_ov7740,
 };
 
 struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
