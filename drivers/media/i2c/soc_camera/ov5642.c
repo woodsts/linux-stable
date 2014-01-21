@@ -5265,10 +5265,11 @@ static int ov5640_afc_send_command(struct i2c_client *client, int afc_command)
 	default:
 		return -EINVAL;	/* error, then quit */
 	};
+	if (!ret)
+		ret = ov5640_afc_wait_command_status(client);
 
-	ret = ov5640_afc_wait_command_status(client);
-	if (ret)
-		dev_err(&client->dev, "OV5640 AFC: fail to wait status, error = %d!\n", ret);
+	if (ret < 0)
+		dev_err(&client->dev, "OV5640 AFC: fail to send afc command, error = %d!\n", ret);
 
 	return ret;
 }
@@ -5480,8 +5481,9 @@ static int ov5642_s_crop(struct v4l2_subdev *sd, const struct v4l2_crop *a)
 	/* ov5640 */
 	if (priv->is_ov5640) {
 		ret = ov5642_write_array(client, ov5640_default_regs_init);
-		ret = ov5642_write_array(client, ov5640_default_regs_finalise);
-		if (rect.width == 1280)
+		if (!ret)
+			ret = ov5642_write_array(client, ov5640_default_regs_finalise);
+		if (!ret && rect.width == 1280)
 			ret = ov5642_write_array(client, ov5640_default_regs_finalise_960p);
 		return ret;
 	}
@@ -5567,11 +5569,16 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 	/* ov5640 */
 	if (priv->is_ov5640) {
 		ret = ov5642_write_array(client, ov5640_default_regs_init);
-		ret = ov5642_write_array(client, ov5640_default_regs_finalise);
-		/* Setup OV5640 Auto Focus Controller firmware */
-		ret = ov5642_write_array(client, ov5640_afc_regs_init);
-		msleep(10);
-		ret = ov5640_afc_wait_init_done(client);
+		if (!ret)
+			ret = ov5642_write_array(client, ov5640_default_regs_finalise);
+		if (!ret) {
+			/* Setup OV5640 Auto Focus Controller firmware */
+			ret = ov5642_write_array(client, ov5640_afc_regs_init);
+			msleep(10);
+		}
+		if (!ret)
+			ret = ov5640_afc_wait_init_done(client);
+
 		return ret;
 	}
 
@@ -5597,10 +5604,7 @@ static int ov5642_s_steram(struct v4l2_subdev *sd, int enable)
 		/* Rlease AFC */
 		ret = ov5640_afc_send_command(client, AFC_COMMAND_RELEASE_FOCUS);
 
-	if (ret < 0)
-		return -EIO;
-
-	return 0;
+	return ret;
 }
 
 static struct v4l2_subdev_video_ops ov5642_subdev_video_ops = {
