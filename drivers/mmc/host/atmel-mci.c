@@ -39,6 +39,7 @@
 
 #include <asm/io.h>
 #include <asm/unaligned.h>
+#include <linux/pinctrl/consumer.h>
 
 #include "atmel-mci-regs.h"
 
@@ -219,6 +220,13 @@ struct atmel_mci {
 	u32 (*prepare_data)(struct atmel_mci *host, struct mmc_data *data);
 	void (*submit_data)(struct atmel_mci *host, struct mmc_data *data);
 	void (*stop_transfer)(struct atmel_mci *host);
+
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
 };
 
 /**
@@ -2386,6 +2394,29 @@ static int __init atmci_probe(struct platform_device *pdev)
 	spin_lock_init(&host->lock);
 	INIT_LIST_HEAD(&host->queue);
 
+#ifdef CONFIG_PM
+	host->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(host->pinctrl)) {
+		ret = PTR_ERR(host->pinctrl);
+		goto err_pinctrl;
+	}
+
+	host->pins_default = pinctrl_lookup_state(host->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(host->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		ret = pinctrl_select_state(host->pinctrl, host->pins_default);
+		if (ret)
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
+	}
+
+	host->pins_sleep = pinctrl_lookup_state(host->pinctrl,
+					       PINCTRL_STATE_SLEEP);
+	if (IS_ERR(host->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
+
 	host->mck = clk_get(&pdev->dev, "mci_clk");
 	if (IS_ERR(host->mck)) {
 		ret = PTR_ERR(host->mck);
@@ -2485,6 +2516,7 @@ err_request_irq:
 err_ioremap:
 	clk_put(host->mck);
 err_clk_get:
+err_pinctrl:
 	kfree(host);
 	return ret;
 }
@@ -2528,6 +2560,13 @@ static int atmci_suspend(struct device *dev)
 {
 	struct atmel_mci *host = dev_get_drvdata(dev);
 	int i;
+	int ret;
+
+	if (!IS_ERR(host->pins_sleep)) {
+		ret = pinctrl_select_state(host->pinctrl, host->pins_sleep);
+		if (ret)
+			dev_err(dev, "could not set pins to sleep state\n");
+	}
 
 	 for (i = 0; i < ATMCI_MAX_NR_SLOTS; i++) {
 		struct atmel_mci_slot *slot = host->slot[i];
@@ -2559,6 +2598,13 @@ static int atmci_resume(struct device *dev)
 	struct atmel_mci *host = dev_get_drvdata(dev);
 	int i;
 	int ret = 0;
+
+	/* First go to the default state */
+	if (!IS_ERR(host->pins_default)) {
+		ret = pinctrl_select_state(host->pinctrl, host->pins_default);
+		if (ret)
+			dev_err(dev, "could not set pins to default state\n");
+	}
 
 	for (i = 0; i < ATMCI_MAX_NR_SLOTS; i++) {
 		struct atmel_mci_slot *slot = host->slot[i];
