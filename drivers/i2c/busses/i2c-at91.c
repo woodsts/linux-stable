@@ -32,6 +32,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/platform_data/dma-atmel.h>
+#include <linux/pinctrl/consumer.h>
 
 #define TWI_CLK_HZ		100000			/* max 400 Kbits/s */
 #define AT91_I2C_TIMEOUT	msecs_to_jiffies(100)	/* transfer timeout */
@@ -103,6 +104,13 @@ struct at91_twi_dev {
 	struct at91_twi_pdata *pdata;
 	bool use_dma;
 	struct at91_twi_dma dma;
+
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
 };
 
 static unsigned at91_twi_read(struct at91_twi_dev *dev, unsigned reg)
@@ -716,6 +724,26 @@ static int at91_twi_probe(struct platform_device *pdev)
 	init_completion(&dev->cmd_complete);
 	dev->dev = &pdev->dev;
 
+#ifdef CONFIG_PM
+	dev->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(dev->pinctrl))
+		return PTR_ERR(dev->pinctrl);
+
+	dev->pins_default = pinctrl_lookup_state(dev->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(dev->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		if (pinctrl_select_state(dev->pinctrl, dev->pins_default))
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
+	}
+
+	dev->pins_sleep = pinctrl_lookup_state(dev->pinctrl,
+					       PINCTRL_STATE_SLEEP);
+	if (IS_ERR(dev->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
+
 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!mem)
 		return -ENODEV;
@@ -796,6 +824,14 @@ static int at91_twi_remove(struct platform_device *pdev)
 static int at91_twi_runtime_suspend(struct device *dev)
 {
 	struct at91_twi_dev *twi_dev = dev_get_drvdata(dev);
+	int ret;
+
+	if (!IS_ERR(twi_dev->pins_sleep)) {
+		ret = pinctrl_select_state(twi_dev->pinctrl,
+						twi_dev->pins_sleep);
+		if (ret)
+			dev_err(dev, "could not set pins to sleep state\n");
+	}
 
 	clk_disable_unprepare(twi_dev->clk);
 
@@ -805,6 +841,15 @@ static int at91_twi_runtime_suspend(struct device *dev)
 static int at91_twi_runtime_resume(struct device *dev)
 {
 	struct at91_twi_dev *twi_dev = dev_get_drvdata(dev);
+	int ret;
+
+	/* First go to the default state */
+	if (!IS_ERR(twi_dev->pins_default)) {
+		ret = pinctrl_select_state(twi_dev->pinctrl,
+						twi_dev->pins_default);
+		if (ret)
+			dev_err(dev, "could not set pins to default state\n");
+	}
 
 	return clk_prepare_enable(twi_dev->clk);
 }
