@@ -1402,6 +1402,9 @@ static int at91sam9x5_video_register(struct at91sam9x5_video_priv *priv,
 
 	ret = video_register_device(priv->video_dev,
 			/* XXX: really grabber? */ VFL_TYPE_GRABBER, -1);
+
+	priv->video_dev->vfl_dir = (VFL_DIR_TX | VFL_DIR_RX);
+
 	if (ret) {
 		dev_err(&pdev->dev, "failed to register video device (%d)\n",
 				ret);
