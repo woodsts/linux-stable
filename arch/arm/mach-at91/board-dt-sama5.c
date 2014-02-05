@@ -325,7 +325,6 @@ static void __init sama5_dt_device_init(void)
 			ksz9021rn_phy_fixup);
 	else if (of_machine_is_compatible("atmel,sama5d3-xplained") &&
 	    IS_ENABLED(CONFIG_PHYLIB)) {
-		printk(KERN_CRIT "NFE test ksz9031rn_phy_fixup\n");
 		phy_register_fixup_for_uid(PHY_ID_KSZ9031, MICREL_PHY_ID_MASK,
 			ksz9031rn_phy_fixup);
 	}
