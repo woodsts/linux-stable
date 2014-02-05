@@ -36,6 +36,9 @@ dtb-$(CONFIG_ARCH_AT91) += at91sam9g35ek.dtb
 dtb-$(CONFIG_ARCH_AT91) += at91sam9x25ek.dtb
 dtb-$(CONFIG_ARCH_AT91) += at91sam9x35ek.dtb
 # sama5d3
+dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d3_xplained.dtb
+dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d3_xplained_pda4.dtb
+dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d3_xplained_pda7.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d31ek.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d31ek_pda4.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d31ek_pda7.dtb
@@ -49,9 +52,6 @@ dtb-$(CONFIG_ARCH_AT91)	+= sama5d35ek.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_pda4.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_pda7.dtb
-dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d3_xplained.dtb
-dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d3_xplained_pda4.dtb
-dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d3_xplained_pda7.dtb
 
 dtb-$(CONFIG_ARCH_BCM2835) += bcm2835-rpi-b.dtb
 dtb-$(CONFIG_ARCH_BCM) += bcm11351-brt.dtb
