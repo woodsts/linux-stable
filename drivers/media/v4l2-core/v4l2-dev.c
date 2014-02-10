@@ -554,8 +554,8 @@ static void determine_valid_ioctls(struct video_device *vdev)
 	bool is_vid = vdev->vfl_type == VFL_TYPE_GRABBER;
 	bool is_vbi = vdev->vfl_type == VFL_TYPE_VBI;
 	bool is_radio = vdev->vfl_type == VFL_TYPE_RADIO;
-	bool is_rx = vdev->vfl_dir != VFL_DIR_TX;
-	bool is_tx = vdev->vfl_dir != VFL_DIR_RX;
+	bool is_rx = ((vdev->vfl_dir & VFL_DIR_RX) == VFL_DIR_RX);
+	bool is_tx = ((vdev->vfl_dir & VFL_DIR_TX) == VFL_DIR_TX);
 
 	bitmap_zero(valid_ioctls, BASE_VIDIOC_PRIVATE);
 
@@ -777,6 +777,12 @@ int __video_register_device(struct video_device *vdev, int type, int nr,
 	/* the release callback MUST be present */
 	if (WARN_ON(!vdev->release))
 		return -EINVAL;
+
+	/* set VFL_DIR_RX as the default value.
+	 * if vdev->vfl_dir is 0 means use default VFL_DIR_RX
+	 */
+	if (!vdev->vfl_dir)
+		vdev->vfl_dir = VFL_DIR_RX;
 
 	/* v4l2_fh support */
 	spin_lock_init(&vdev->fh_lock);
