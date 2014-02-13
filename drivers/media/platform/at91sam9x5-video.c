@@ -107,6 +107,8 @@
 #define REG_HEOCFG1_CLUTEN		0x00000001
 #define REG_HEOCFG1_YUVEN		0x00000002
 #define REG_HEOCFG1_YUVMODE_12YCBCRP	0x00008000
+#define REG_HEOCFG1_YUVMODE_16YCBCR_0	0x00001000
+#define REG_HEOCFG1_YUVMODE_16YCBCR_1	0x00001000
 
 #define REG_HEOCFG2		0x54
 #define REG_HEOCFG2_XPOS		0x000007ff
@@ -224,6 +226,32 @@ u32 heo_upscaling_coef[] = {
 	0x000c6f05,
 	0x00205907,
 };
+
+struct atmel_vout_fmt {
+	u32		pfmt;
+	char		*desc;
+	unsigned char	bpp;
+};
+
+/* Further pixel formats can be added */
+static struct atmel_vout_fmt vout_fmt[] = {
+	{
+		.pfmt	= V4L2_PIX_FMT_YUV420,
+		.bpp	= 12,
+		.desc	= "YVU420 planar",
+	},
+	{
+		.pfmt	= V4L2_PIX_FMT_YUYV,
+		.bpp	= 16,
+		.desc	= "YVYU 422",
+	},
+	{
+		.pfmt	= V4L2_PIX_FMT_UYVY,
+		.bpp	= 16,
+		.desc	= "YVYU 422",
+	}
+};
+
 
 struct at91sam9x5_video_pdata {
 	u16 base_width;
@@ -653,6 +681,7 @@ static void at91sam9x5_video_update_config_real(
 	struct v4l2_pix_format *pix = &priv->fmt_vid_out_cur;
 	struct v4l2_window *win = &priv->fmt_vid_overlay;
 	struct v4l2_rect *rect = &win->w;
+
 	/* XXX: check for overflow? */
 	s32 right = rect->left + rect->width, bottom = rect->top + rect->height;
 
@@ -701,12 +730,30 @@ static void at91sam9x5_video_update_config_real(
 			valtomask(hwxsize - 1, REG_HEOCFG3_XSIZE) |
 			valtomask(hwysize - 1, REG_HEOCFG3_YSIZE));
 
+	switch(pix->pixelformat) {
+		case V4L2_PIX_FMT_YUYV:
+			at91sam9x5_video_write32(priv, REG_HEOCFG1,
+			REG_HEOCFG1_YUVMODE_16YCBCR_1 |
+			REG_HEOCFG1_YUVEN);
+		case V4L2_PIX_FMT_UYVY:
+			at91sam9x5_video_write32(priv, REG_HEOCFG1,
+			REG_HEOCFG1_YUVMODE_16YCBCR_0 |
+			REG_HEOCFG1_YUVEN);
+			break;
+		case V4L2_PIX_FMT_YUV420:
+			at91sam9x5_video_write32(priv, REG_HEOCFG1,
+			REG_HEOCFG1_YUVMODE_12YCBCRP |
+			REG_HEOCFG1_YUVEN);
+		default:
+			at91sam9x5_video_write32(priv, REG_HEOCFG1,
+			REG_HEOCFG1_YUVMODE_12YCBCRP |
+			REG_HEOCFG1_YUVEN);
+			break;
+	}
+
 	/* XXX:
 	 *  - clipping
 	 */
-	at91sam9x5_video_write32(priv, REG_HEOCFG1,
-			REG_HEOCFG1_YUVMODE_12YCBCRP |
-			REG_HEOCFG1_YUVEN);
 	at91sam9x5_video_write32(priv, REG_HEOCFG12,
 			REG_HEOCFG12_GAEN |
 			REG_HEOCFG12_OVR |
@@ -866,9 +913,22 @@ static int at91sam9x5_video_vb_queue_setup(struct vb2_queue *q,
 	 * XXX: is that allowed and done right?
 	 * XXX: format-dependant
 	 */
-	sizes[0] = pix->width * pix->height +
-		ALIGN(pix->width, 2) * ALIGN(pix->height, 2) / 2 +
-		9 * 32 + 128;
+	switch(pix->pixelformat) {
+		case V4L2_PIX_FMT_YUV420:
+			sizes[0] = pix->width * pix->height +
+				ALIGN(pix->width, 2) * ALIGN(pix->height, 2) / 2 +
+				9 * 32 + 128;
+			break;
+		case V4L2_PIX_FMT_UYVY:
+		case V4L2_PIX_FMT_YUYV:
+			sizes[0] = pix->width * pix->height +
+			ALIGN(pix->width, 2) * ALIGN(pix->height, 2) +
+			9 * 32 + 128;
+			break;
+		default:
+			return -EINVAL;
+	}
+
 	priv->plane_size[0] = sizes[0];
 
 	alloc_ctxs[0] = priv->alloc_ctx;
@@ -1022,8 +1082,14 @@ static int at91sam9x5_video_vidioc_s_fmt_vid_out(struct file *filp,
 	if (f->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
 		return -EINVAL;
 
-	if (pix->pixelformat != V4L2_PIX_FMT_YUV420)
-		return -EINVAL;
+	switch(pix->pixelformat) {
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_UYVY:
+		case V4L2_PIX_FMT_YUYV:
+			break;
+		default:
+			return -EINVAL;
+	}
 
 	debug("vout=%ux%u\n", pix->width, pix->height);
 
@@ -1085,11 +1151,14 @@ static int at91sam9x5_video_vidioc_s_fmt_vid_overlay(struct file *filp,
 static int at91sam9x5_video_vidioc_enum_fmt_vid_out(struct file *filp,
 		void *fh, struct v4l2_fmtdesc *f)
 {
-	/* XXX: support more formats */
-	if (f->index > 0)
+	if (f->index >= ARRAY_SIZE(vout_fmt))
 		return -EINVAL;
 
-	f->pixelformat = V4L2_PIX_FMT_YUV420;
+	f->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+	strlcpy(f->description, vout_fmt[f->index].desc,
+		sizeof(f->description));
+	f->pixelformat = vout_fmt[f->index].pfmt;
+
 	return 0;
 }
 
