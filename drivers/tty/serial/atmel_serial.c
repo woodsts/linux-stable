@@ -155,6 +155,13 @@ struct atmel_uart_port {
 
 	struct serial_rs485	rs485;		/* rs485 settings */
 	unsigned int		tx_done_mask;
+
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
 };
 
 static struct atmel_uart_port atmel_ports[ATMEL_MAX_UART];
@@ -1717,6 +1724,7 @@ static int atmel_serial_suspend(struct platform_device *pdev,
 {
 	struct uart_port *port = platform_get_drvdata(pdev);
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+	int ret;
 
 	if (atmel_is_console_port(port) && console_suspend_enabled) {
 		/* Drain the TX shifter */
@@ -1731,6 +1739,13 @@ static int atmel_serial_suspend(struct platform_device *pdev,
 
 	uart_suspend_port(&atmel_uart, port);
 
+	if (!IS_ERR(atmel_port->pins_sleep)) {
+		ret = pinctrl_select_state(atmel_port->pinctrl,
+						atmel_port->pins_sleep);
+		if (ret)
+			dev_err(&pdev->dev, "could not set pins to sleep state\n");
+	}
+
 	return 0;
 }
 
@@ -1738,6 +1753,15 @@ static int atmel_serial_resume(struct platform_device *pdev)
 {
 	struct uart_port *port = platform_get_drvdata(pdev);
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+	int ret;
+
+	/* First go to the default state */
+	if (!IS_ERR(atmel_port->pins_default)) {
+		ret = pinctrl_select_state(atmel_port->pinctrl,
+						atmel_port->pins_default);
+		if (ret)
+			dev_err(&pdev->dev, "could not set pins to default state\n");
+	}
 
 	uart_resume_port(&atmel_uart, port);
 	device_set_wakeup_enable(&pdev->dev, atmel_port->may_wakeup);
@@ -1756,7 +1780,6 @@ static int atmel_serial_probe(struct platform_device *pdev)
 	struct atmel_uart_data *pdata = pdev->dev.platform_data;
 	void *data;
 	int ret = -ENODEV;
-	struct pinctrl *pinctrl;
 
 	BUILD_BUG_ON(ATMEL_SERIAL_RINGSIZE & (ATMEL_SERIAL_RINGSIZE - 1));
 
@@ -1788,11 +1811,27 @@ static int atmel_serial_probe(struct platform_device *pdev)
 
 	atmel_init_port(port, pdev);
 
-	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
-	if (IS_ERR(pinctrl)) {
-		ret = PTR_ERR(pinctrl);
+#ifdef CONFIG_PM
+	port->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(port->pinctrl)) {
+		ret = PTR_ERR(port->pinctrl);
 		goto err;
 	}
+
+	port->pins_default = pinctrl_lookup_state(port->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(port->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		if (pinctrl_select_state(port->pinctrl, port->pins_default))
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
+	}
+
+	port->pins_sleep = pinctrl_lookup_state(port->pinctrl,
+					       PINCTRL_STATE_SLEEP);
+	if (IS_ERR(port->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
 
 	if (!atmel_use_dma_rx(&port->uart)) {
 		ret = -ENOMEM;
