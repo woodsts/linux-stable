@@ -193,11 +193,11 @@ EXPORT_SYMBOL(at91_suspend_entering_slow_clock);
 
 
 static void (*slow_clock)(void __iomem *pmc, void __iomem *ramc0,
-			  void __iomem *ramc1, int memctrl);
+			  void __iomem *ramc1, unsigned int memctrl);
 
 #ifdef CONFIG_AT91_SLOW_CLOCK
 extern void at91_slow_clock(void __iomem *pmc, void __iomem *ramc0,
-			    void __iomem *ramc1, int memctrl);
+			    void __iomem *ramc1, unsigned int memctrl);
 extern u32 at91_slow_clock_sz;
 #endif
 
@@ -218,8 +218,38 @@ static void print_peripherals_pwr_status_for_pm(void)
 static void print_peripherals_pwr_status_for_pm(void) {}
 #endif
 
+static unsigned int at91_get_memc_id(void)
+{
+	unsigned int sdramcid = 0;
+
+	if (cpu_is_sama5d3())
+		sdramcid = SAMA5D3_ID_MPDDRC;
+	else if (cpu_is_sama5d4())
+		sdramcid = SAMA5D4_ID_MPDDRC;
+
+	return sdramcid;
+}
+
+static unsigned int at91_get_mem_type(void)
+{
+	int memtype = AT91_MEMCTRL_SDRAMC;
+
+	if (cpu_is_at91rm9200())
+		memtype = AT91_MEMCTRL_MC;
+	else if (cpu_is_at91sam9g45() || cpu_is_at91sam9x5()
+					|| cpu_is_at91sam9n12())
+		memtype = AT91_MEMCTRL_DDRSDR;
+	else if (cpu_is_sama5d3() || cpu_is_sama5d4())
+		memtype = AT91_MEMCTRL_DDRSDR;
+
+	return memtype;
+}
+
 static int at91_pm_enter(suspend_state_t state)
 {
+	unsigned int memctrl = (at91_get_memc_id() << AT91_MEMCTRL_ID_SHIFT)
+				| at91_get_mem_type();
+
 	if (of_have_populated_dt())
 		at91_pinctrl_gpio_suspend();
 	else
@@ -255,16 +285,6 @@ static int at91_pm_enter(suspend_state_t state)
 			 * turning off the main oscillator; reverse on wakeup.
 			 */
 			if (slow_clock) {
-				int memctrl = AT91_MEMCTRL_SDRAMC;
-
-				if (cpu_is_at91rm9200())
-					memctrl = AT91_MEMCTRL_MC;
-				else if (cpu_is_at91sam9g45()
-					|| cpu_is_at91sam9x5()
-					|| cpu_is_at91sam9n12()
-					|| cpu_is_sama5d3()
-					|| cpu_is_sama5d4())
-					memctrl = AT91_MEMCTRL_DDRSDR;
 #ifdef CONFIG_AT91_SLOW_CLOCK
 				/* copy slow_clock handler to SRAM, and call it */
 				memcpy(slow_clock, at91_slow_clock, at91_slow_clock_sz);

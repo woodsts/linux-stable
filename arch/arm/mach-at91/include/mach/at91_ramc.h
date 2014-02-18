@@ -21,6 +21,10 @@ extern void __iomem *at91_ramc_base[];
 .extern at91_ramc_base
 #endif
 
+#define	AT91_MEMCTRL_ID_SHIFT	4
+#define	AT91_MEMCTRL_ID_MASK	(0xff << 4)
+#define	AT91_MEMCTRL_MASK	0x0f
+
 #define AT91_MEMCTRL_MC		0
 #define AT91_MEMCTRL_SDRAMC	1
 #define AT91_MEMCTRL_DDRSDR	2

@@ -17,7 +17,6 @@
 #include <mach/at91_pmc.h>
 #include <mach/at91_ramc.h>
 
-
 #ifdef CONFIG_SOC_AT91SAM9263
 /*
  * FIXME either or both the SDRAM controllers (EB0, EB1) might be in use;
@@ -46,6 +45,7 @@ ramc1	.req	r2
 memctrl	.req	r3
 tmp1	.req	r4
 tmp2	.req	r5
+ddrcid	.req	r6
 
 /*
  * Wait until master clock is ready (after switching master clock source)
@@ -145,14 +145,19 @@ ENTRY(at91_slow_clock)
 	 *  R0 = Base address of AT91_PMC
 	 *  R1 = Base address of RAM Controller (SDRAM, DDRSDR, or AT91_SYS)
 	 *  R2 = Base address of second RAM Controller or 0 if not present
-	 *  R3 = Memory controller
+	 *  R3 = Memory controller related info
 	 *  R4 = temporary register
 	 *  R5 = temporary register
+	 *  R6 = Memory controller's peripherial ID
 	 */
 
 	/* Drain write buffer */
 	mov	tmp1, #0
 	mcr	p15, 0, tmp1, c7, c10, 4
+
+	and	ddrcid, memctrl, #AT91_MEMCTRL_ID_MASK
+	lsr	ddrcid, #AT91_MEMCTRL_ID_SHIFT
+	and	memctrl, memctrl, #AT91_MEMCTRL_MASK
 
 	cmp	memctrl, #AT91_MEMCTRL_MC
 	bne	ddr_sr_enable
@@ -204,6 +209,25 @@ sdr_sr_enable:
 	str	tmp1, [sdramc, #AT91_SDRAMC_LPR]
 
 sdr_sr_done:
+	/* Disable DDR Clock */
+	mov 	tmp1, #AT91_PMC_SYS_DDR
+	str	tmp1, [pmc, #AT91_PMC_SCDR]
+
+	/* Disable MPDDRC Clock*/
+	cmp	ddrcid, #0
+	beq	2f
+	bic	tmp2, ddrcid, #0xe0 /* fetch lowest 5 bits */
+	mov	tmp1, #0x01
+	mov	tmp1, tmp1, lsl tmp2
+
+	tst	ddrcid, #0x20	/* > 32 ? */
+	beq	1f
+	str	tmp1, [pmc, #AT91_PMC_PCDR1]
+	b	2f
+1:
+	str	tmp1, [pmc, #AT91_PMC_PCDR]
+2:
+
 	/* Save Master clock setting */
 	ldr	tmp1, [pmc, #AT91_PMC_MCKR]
 	str	tmp1, .saved_mckr
@@ -235,10 +259,6 @@ sdr_sr_done:
 	mov	tmp1, #AT91_PMC_PLLCOUNT
 	orr	tmp1, tmp1, #(1 << 29)		/* bit 29 always set */
 	str	tmp1, [pmc, #AT91_CKGR_PLLAR]
-
-	/* Disable DDR Clock */
-	mov 	tmp1, #AT91_PMC_SYS_DDR
-	str	tmp1, [pmc, #AT91_PMC_SCDR]
 
 	/* Save PLLB setting and disable it */
 	ldr	tmp1, [pmc, #AT91_CKGR_PLLBR]
@@ -288,10 +308,6 @@ sdr_sr_done:
 	wait_pllblock
 2:
 
-	/* Enable DDR clock */
-	mov 	tmp1, #AT91_PMC_SYS_DDR
-	str	tmp1, [pmc, #AT91_PMC_SCER]
-
 	/* Restore PLLA setting */
 	ldr	tmp1, .saved_pllar
 	str	tmp1, [pmc, #AT91_CKGR_PLLAR]
@@ -327,6 +343,25 @@ sdr_sr_done:
 	str	tmp1, [pmc, #AT91_PMC_MCKR]
 
 	wait_mckrdy
+
+	/* Enable MPDDRC Clock*/
+	cmp	ddrcid, #0
+	beq	4f
+	bic	tmp2, ddrcid, #0xe0 /* fetch lowest 5 bits */
+	mov	tmp1, #0x01
+	mov	tmp1, tmp1, lsl tmp2
+
+	tst	ddrcid, #0x20	/* > 32 ? */
+	beq	3f
+	str	tmp1, [pmc, #AT91_PMC_PCER1]
+	b	4f
+3:
+	str	tmp1, [pmc, #AT91_PMC_PCER]
+4:
+
+	/* Enable DDR clock */
+	mov 	tmp1, #AT91_PMC_SYS_DDR
+	str	tmp1, [pmc, #AT91_PMC_SCER]
 
 	/*
 	 * at91rm9200 Memory controller
