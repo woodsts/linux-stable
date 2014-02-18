@@ -20,6 +20,13 @@ struct ssc_device {
 	int			user;
 	int			irq;
 	bool			clk_from_rk_pin;
+
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
 };
 
 struct ssc_device * __must_check ssc_request(unsigned int ssc_num);
