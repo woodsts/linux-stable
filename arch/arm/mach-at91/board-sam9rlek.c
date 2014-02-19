@@ -56,6 +56,16 @@ static struct usba_platform_data __initdata ek_usba_udc_data = {
 
 
 /*
+ * MCI (SD/MMC) (AT91_MCI Legacy Driver)
+ */
+static struct at91_mmc_data __initdata at91_mci0_data = {
+	.wire4		= 1,
+	.det_pin	= AT91_PIN_PA15,
+	.wp_pin		= -1,
+	.vcc_pin	= -1,
+};
+
+/*
  * MCI (SD/MMC)
  */
 static struct mci_platform_data __initdata mci0_data = {
@@ -305,6 +315,8 @@ static void __init ek_board_init(void)
 	ek_add_device_nand();
 	/* SPI */
 	at91_add_device_spi(ek_spi_devices, ARRAY_SIZE(ek_spi_devices));
+	/* MMC (AT91_MCI Legacy Driver */
+	at91_add_device_mmc(0, &at91_mci0_data);
 	/* MMC */
 	at91_add_device_mci(0, &mci0_data);
 	/* LCD Controller */

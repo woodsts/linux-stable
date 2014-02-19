@@ -157,6 +157,74 @@ void __init at91_add_device_usba(struct usba_platform_data *data)
 void __init at91_add_device_usba(struct usba_platform_data *data) {}
 #endif
 
+/* --------------------------------------------------------------------
+ *  MMC / SD (AT91_MCI Legacy driver)
+ * -------------------------------------------------------------------- */
+
+#if defined(CONFIG_MMC_AT91) || defined(CONFIG_MMC_AT91_MODULE)
+static u64 mmc_dmamask = DMA_BIT_MASK(32);
+static struct at91_mmc_data mmc_data;
+
+static struct resource mmc_resources[] = {
+	[0] = {
+		.start	= AT91SAM9RL_BASE_MCI,
+		.end	= AT91SAM9RL_BASE_MCI + SZ_16K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	[1] = {
+		.start	= NR_IRQS_LEGACY + AT91SAM9RL_ID_MCI,
+		.end	= NR_IRQS_LEGACY + AT91SAM9RL_ID_MCI,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device at91sam9rl_mmc_device = {
+	.name		= "at91_mci",
+	.id		= -1,
+	.dev		= {
+				.dma_mask		= &mmc_dmamask,
+				.coherent_dma_mask	= DMA_BIT_MASK(32),
+				.platform_data		= &mmc_data,
+	},
+	.resource	= mmc_resources,
+	.num_resources	= ARRAY_SIZE(mmc_resources),
+};
+
+void __init at91_add_device_mmc(short mmc_id, struct at91_mmc_data *data)
+{
+	if (!data)
+		return;
+
+	/* input/irq */
+	if (data->det_pin) {
+		at91_set_gpio_input(data->det_pin, 1);
+		at91_set_deglitch(data->det_pin, 1);
+	}
+	if (data->wp_pin)
+		at91_set_gpio_input(data->wp_pin, 1);
+	if (data->vcc_pin)
+		at91_set_gpio_output(data->vcc_pin, 0);
+
+	/* CLK */
+	at91_set_A_periph(AT91_PIN_PA2, 0);
+
+	/* CMD */
+	at91_set_A_periph(AT91_PIN_PA1, 0);
+
+	/* DAT0, maybe DAT1..DAT3 */
+	at91_set_A_periph(AT91_PIN_PA0, 0);
+	if (data->wire4) {
+		at91_set_A_periph(AT91_PIN_PA3, 0);
+		at91_set_A_periph(AT91_PIN_PA4, 0);
+		at91_set_A_periph(AT91_PIN_PA5, 0);
+	}
+
+	mmc_data = *data;
+	platform_device_register(&at91sam9rl_mmc_device);
+}
+#else
+void __init at91_add_device_mmc(short mmc_id, struct at91_mmc_data *data) {}
+#endif
 
 /* --------------------------------------------------------------------
  *  MMC / SD
