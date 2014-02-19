@@ -58,4 +58,4 @@
 	};
 };
 
-/include/ "sama5d3xmb_isi.dtsi"
+/include/ "sama5d3xmb_revc_isi.dtsi"
