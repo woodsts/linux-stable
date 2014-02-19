@@ -32,7 +32,12 @@
 				};
 			};
 
-			i2c1: i2c@f0018000 {
+			/*
+			 * i2c0 conflicts with ISI:
+			 * disable it to allow the use of ISI
+			 * can not enable audio when i2c0 disabled
+			 */
+			i2c0: i2c@f0014000 {
 				wm8904: wm8904@1a {
 					compatible = "wm8904";
 					reg = <0x1a>;
