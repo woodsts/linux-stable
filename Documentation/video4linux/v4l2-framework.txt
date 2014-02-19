@@ -581,9 +581,10 @@ You should also set these fields:
 
 - name: set to something descriptive and unique.
 
-- vfl_dir: set this to VFL_DIR_RX for capture devices (VFL_DIR_RX has value 0,
-  so this is normally already the default), set to VFL_DIR_TX for output
-  devices and VFL_DIR_M2M for mem2mem (codec) devices.
+- vfl_dir: set this to VFL_DIR_RX for capture devices (VFL_DIR_RX
+  is the default value. So if vfl_dir is 0, we will set it to
+  the default VFL_DIR_RX), set to VFL_DIR_TX for output devices
+  and VFL_DIR_M2M for mem2mem (codec) devices.
 
 - fops: set to the v4l2_file_operations struct.
 
