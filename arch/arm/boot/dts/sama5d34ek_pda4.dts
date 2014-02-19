@@ -29,7 +29,7 @@
 			};
 
 			i2c0: i2c@f0014000 {
-				status = "okay";
+				status = "disabled";
 			};
 
 			i2c1: i2c@f0018000 {
@@ -42,6 +42,11 @@
 				};
 			};
 
+			/* ISI VSYNC/HSYNC Conflict with i2c0 */
+			isi: isi@f0034000 {
+				status = "okay";
+			};
+
 			macb0: ethernet@f0028000 {
 				status = "okay";
 			};
@@ -52,6 +57,8 @@
 		d3 {
 			label = "d3";
 			gpios = <&pioE 24 GPIO_ACTIVE_HIGH>;
+			/* Conflict with ISI module's reset pin */
+			status = "disabled";
 		};
 	};
 
