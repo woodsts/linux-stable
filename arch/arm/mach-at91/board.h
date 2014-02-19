@@ -45,6 +45,8 @@ extern void __init at91_add_device_cf(struct at91_cf_data *data);
  /* MMC / SD */
   /* atmel-mci platform config */
 extern void __init at91_add_device_mci(short mmc_id, struct mci_platform_data *data);
+  /* at91_mci legacy driver config */
+ extern void __init at91_add_device_mmc(short mmc_id, struct at91_mmc_data *data);
 
 extern void __init at91_add_device_eth(struct macb_platform_data *data);
 

@@ -98,6 +98,15 @@ struct at91_can_data {
 	void (*transceiver_switch)(int on);
 };
 
+/* AT91 MCI (Legacy) */
+struct at91_mmc_data {
+	int             det_pin;        /* card detect IRQ */
+	unsigned        slot_b:1;       /* uses Slot B */
+	unsigned        wire4:1;        /* (SD) supports DAT0..DAT3 */
+	int             wp_pin;         /* (SD) writeprotect detect */
+	int             vcc_pin;        /* power switching (high == on) */
+};
+
 /* FIXME: this needs a better location, but gets stuff building again */
 extern int at91_suspend_entering_slow_clock(void);
 
