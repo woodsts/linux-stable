@@ -67,6 +67,12 @@
 				status = "okay";
 			};
 
+			pwm0: pwm@f002c000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_pwm0_pwml0>;
+				status = "okay";
+			};
+
 			usart0: serial@f001c000 {
 				status = "okay";
 			};
@@ -135,6 +141,11 @@
 					pinctrl_mmc1_cd: mmc1_cd {
 						atmel,pins =
 							<AT91_PIOE 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
+					};
+
+					pinctrl_pwm0_pwml0: pwm0_pwml0 {
+						atmel,pins =
+							<AT91_PIOA 21 AT91_PERIPH_B AT91_PINCTRL_NONE>;
 					};
 
 					pinctrl_usba_vbus: usba_vbus {
