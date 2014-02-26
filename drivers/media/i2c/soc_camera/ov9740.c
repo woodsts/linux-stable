@@ -305,9 +305,9 @@ static const struct ov9740_reg ov9740_defaults[] = {
 	/* Output Select */
 	{ OV9740_IO_OUTPUT_SEL01,	0x00 },
 	{ OV9740_IO_OUTPUT_SEL02,	0x00 },
-	{ OV9740_IO_CREL00,		0x00 },
-	{ OV9740_IO_CREL01,		0x00 },
-	{ OV9740_IO_CREL02,		0x00 },
+	{ OV9740_IO_CREL00,		0xe8 },
+	{ OV9740_IO_CREL01,		0x03 },
+	{ OV9740_IO_CREL02,		0xff },
 
 	/* AWB Control */
 	{ OV9740_AWB_MANUAL_CTRL,	0x00 },
@@ -378,18 +378,36 @@ static const struct ov9740_reg ov9740_defaults[] = {
 	{ OV9740_LN_LENGTH_PCK_HI,	0x06 },
 	{ OV9740_LN_LENGTH_PCK_LO,	0x62 },
 
-	/* MIPI Control */
-	{ OV9740_MIPI_CTRL00,		0x44 }, /* 0x64 for discontinuous clk */
-	{ OV9740_MIPI_3837,		0x01 },
-	{ OV9740_MIPI_CTRL01,		0x0f },
-	{ OV9740_MIPI_CTRL03,		0x05 },
-	{ OV9740_MIPI_CTRL05,		0x10 },
-	{ OV9740_VFIFO_RD_CTRL,		0x16 },
-	{ OV9740_MIPI_CTRL_3012,	0x70 },
-	{ OV9740_SC_CMMM_MIPI_CTR,	0x01 },
+	{ OV9740_ISP_CTRL00,		0xff},
+	{ OV9740_ISP_CTRL01,		0xef},
+	{ OV9740_ISP_CTRL03,		0xff},
+};
 
-	/* YUYV order */
-	{ OV9740_ISP_CTRL19,		0x02 },
+static const struct ov9740_reg ov9740_hvgaw_setting[] = {
+	/* Binning Enable */
+	{0x381a, 0x44},
+
+	/* Resolution */
+	/* X/Y_ADDR_START is empty */
+	{ OV9740_Y_ADDR_END_HI,		0x02},
+	{ OV9740_Y_ADDR_END_LO,		0xd3},
+	{ OV9740_X_OUTPUT_SIZE_HI,	0x02},
+	{ OV9740_X_OUTPUT_SIZE_LO,	0x80},
+	{ OV9740_Y_OUTPUT_SIZE_HI,	0x01},
+	{ OV9740_Y_OUTPUT_SIZE_LO,	0x68},
+
+	{OV9740_MODE_SELECT,		0x01},
+};
+
+static const struct ov9740_reg ov9740_sxga_setting[] = {
+	/* X/Y_ADDR_START is empty */
+	{OV9740_Y_ADDR_END_LO,		0xd1},
+	{OV9740_X_OUTPUT_SIZE_HI,	0x05},
+	{OV9740_X_OUTPUT_SIZE_LO,	0x00},
+	{OV9740_Y_OUTPUT_SIZE_HI,	0x02},
+	{OV9740_Y_OUTPUT_SIZE_LO,	0xd0},
+
+	{OV9740_MODE_SELECT,		0x01},
 };
 
 static u32 ov9740_codes[] = {
