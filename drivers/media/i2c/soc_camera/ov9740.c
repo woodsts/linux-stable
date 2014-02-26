@@ -897,7 +897,7 @@ static int ov9740_probe(struct i2c_client *client,
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
 			V4L2_CID_VFLIP, 0, 1, 1, 0);
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
-			V4L2_CID_HFLIP, 0, 1, 1, 0);
+			V4L2_CID_HFLIP, 0, 1, 1, 1);
 	priv->subdev.ctrl_handler = &priv->hdl;
 	if (priv->hdl.error)
 		return priv->hdl.error;
