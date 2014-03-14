@@ -187,6 +187,9 @@
 #define OV9740_MAX_WIDTH		1280
 #define OV9740_MAX_HEIGHT		720
 
+#define OV9740_DEFAULT_WIDTH		640
+#define OV9740_DEFAULT_HEIGHT		360
+
 /* Misc. structures */
 struct ov9740_reg {
 	u16				reg;
@@ -305,9 +308,9 @@ static const struct ov9740_reg ov9740_defaults[] = {
 	/* Output Select */
 	{ OV9740_IO_OUTPUT_SEL01,	0x00 },
 	{ OV9740_IO_OUTPUT_SEL02,	0x00 },
-	{ OV9740_IO_CREL00,		0x00 },
-	{ OV9740_IO_CREL01,		0x00 },
-	{ OV9740_IO_CREL02,		0x00 },
+	{ OV9740_IO_CREL00,		0xe8 },
+	{ OV9740_IO_CREL01,		0x03 },
+	{ OV9740_IO_CREL02,		0xff },
 
 	/* AWB Control */
 	{ OV9740_AWB_MANUAL_CTRL,	0x00 },
@@ -378,18 +381,36 @@ static const struct ov9740_reg ov9740_defaults[] = {
 	{ OV9740_LN_LENGTH_PCK_HI,	0x06 },
 	{ OV9740_LN_LENGTH_PCK_LO,	0x62 },
 
-	/* MIPI Control */
-	{ OV9740_MIPI_CTRL00,		0x44 }, /* 0x64 for discontinuous clk */
-	{ OV9740_MIPI_3837,		0x01 },
-	{ OV9740_MIPI_CTRL01,		0x0f },
-	{ OV9740_MIPI_CTRL03,		0x05 },
-	{ OV9740_MIPI_CTRL05,		0x10 },
-	{ OV9740_VFIFO_RD_CTRL,		0x16 },
-	{ OV9740_MIPI_CTRL_3012,	0x70 },
-	{ OV9740_SC_CMMM_MIPI_CTR,	0x01 },
+	{ OV9740_ISP_CTRL00,		0xff},
+	{ OV9740_ISP_CTRL01,		0xef},
+	{ OV9740_ISP_CTRL03,		0xff},
+};
 
-	/* YUYV order */
-	{ OV9740_ISP_CTRL19,		0x02 },
+static const struct ov9740_reg ov9740_hvgaw_setting[] = {
+	/* Binning Enable */
+	{0x381a, 0x44},
+
+	/* Resolution */
+	/* X/Y_ADDR_START is empty */
+	{ OV9740_Y_ADDR_END_HI,		0x02},
+	{ OV9740_Y_ADDR_END_LO,		0xd3},
+	{ OV9740_X_OUTPUT_SIZE_HI,	0x02},
+	{ OV9740_X_OUTPUT_SIZE_LO,	0x80},
+	{ OV9740_Y_OUTPUT_SIZE_HI,	0x01},
+	{ OV9740_Y_OUTPUT_SIZE_LO,	0x68},
+
+	{OV9740_MODE_SELECT,		0x01},
+};
+
+static const struct ov9740_reg ov9740_sxga_setting[] = {
+	/* X/Y_ADDR_START is empty */
+	{OV9740_Y_ADDR_END_LO,		0xd1},
+	{OV9740_X_OUTPUT_SIZE_HI,	0x05},
+	{OV9740_X_OUTPUT_SIZE_LO,	0x00},
+	{OV9740_Y_OUTPUT_SIZE_HI,	0x02},
+	{OV9740_Y_OUTPUT_SIZE_LO,	0xd0},
+
+	{OV9740_MODE_SELECT,		0x01},
 };
 
 static enum v4l2_mbus_pixelcode ov9740_codes[] = {
@@ -550,121 +571,13 @@ static void ov9740_res_roundup(u32 *width, u32 *height)
 	*width = ALIGN(*width, 4);
 
 	/* Max resolution is 1280x720 (720p). */
-	if (*width > OV9740_MAX_WIDTH)
-		*width = OV9740_MAX_WIDTH;
-
-	if (*height > OV9740_MAX_HEIGHT)
-		*height = OV9740_MAX_HEIGHT;
-}
-
-/* Setup registers according to resolution and color encoding */
-static int ov9740_set_res(struct i2c_client *client, u32 width, u32 height)
-{
-	u32 x_start;
-	u32 y_start;
-	u32 x_end;
-	u32 y_end;
-	bool scaling = 0;
-	u32 scale_input_x;
-	u32 scale_input_y;
-	int ret;
-
-	if ((width != OV9740_MAX_WIDTH) || (height != OV9740_MAX_HEIGHT))
-		scaling = 1;
-
-	/*
-	 * Try to use as much of the sensor area as possible when supporting
-	 * smaller resolutions.  Depending on the aspect ratio of the
-	 * chosen resolution, we can either use the full width of the sensor,
-	 * or the full height of the sensor (or both if the aspect ratio is
-	 * the same as 1280x720.
-	 */
-	if ((OV9740_MAX_WIDTH * height) > (OV9740_MAX_HEIGHT * width)) {
-		scale_input_x = (OV9740_MAX_HEIGHT * width) / height;
-		scale_input_y = OV9740_MAX_HEIGHT;
+	if (*width <= OV9740_DEFAULT_WIDTH) {
+		*width = OV9740_DEFAULT_WIDTH;
+		*height = OV9740_DEFAULT_HEIGHT;
 	} else {
-		scale_input_x = OV9740_MAX_WIDTH;
-		scale_input_y = (OV9740_MAX_WIDTH * height) / width;
+		*width = OV9740_MAX_WIDTH;
+		*height = OV9740_MAX_HEIGHT;
 	}
-
-	/* These describe the area of the sensor to use. */
-	x_start = (OV9740_MAX_WIDTH - scale_input_x) / 2;
-	y_start = (OV9740_MAX_HEIGHT - scale_input_y) / 2;
-	x_end = x_start + scale_input_x - 1;
-	y_end = y_start + scale_input_y - 1;
-
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_START_HI, x_start >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_START_LO, x_start & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_START_HI, y_start >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_START_LO, y_start & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_END_HI, x_end >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_END_LO, x_end & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_END_HI, y_end >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_END_LO, y_end & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_X_OUTPUT_SIZE_HI, width >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_X_OUTPUT_SIZE_LO, width & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_OUTPUT_SIZE_HI, height >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_OUTPUT_SIZE_LO, height & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL1E, scale_input_x >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL1F, scale_input_x & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL20, scale_input_y >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL21, scale_input_y & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_VFIFO_READ_START_HI,
-			       (scale_input_x - width) >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_VFIFO_READ_START_LO,
-			       (scale_input_x - width) & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL00, 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL01, 0xef |
-							  (scaling << 4));
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL03, 0xff);
-
-done:
-	return ret;
 }
 
 /* set the format we will capture in */
@@ -692,7 +605,13 @@ static int ov9740_s_fmt(struct v4l2_subdev *sd,
 	if (ret < 0)
 		return ret;
 
-	ret = ov9740_set_res(client, mf->width, mf->height);
+	/* Set Registers by Resolution */
+	if (mf->width == OV9740_MAX_WIDTH && mf->height == OV9740_MAX_HEIGHT)
+		ret = ov9740_reg_write_array(client, ov9740_sxga_setting,
+				     ARRAY_SIZE(ov9740_sxga_setting));
+	else
+		ret = ov9740_reg_write_array(client, ov9740_hvgaw_setting,
+				     ARRAY_SIZE(ov9740_hvgaw_setting));
 	if (ret < 0)
 		return ret;
 
@@ -715,6 +634,28 @@ static int ov9740_try_fmt(struct v4l2_subdev *sd,
 
 	return 0;
 }
+
+static int ov9740_g_fmt(struct v4l2_subdev *sd,
+			struct v4l2_mbus_framefmt *mf)
+{
+	static int first_time = 1;
+
+	mf->code	= ov9740_codes[0];
+	mf->colorspace = V4L2_COLORSPACE_SRGB;
+	mf->field	= V4L2_FIELD_NONE;
+
+	if (first_time) {
+		/* Initial setting is 640x360 */
+		mf->width = OV9740_DEFAULT_WIDTH;
+		mf->height = OV9740_DEFAULT_HEIGHT;
+		first_time = 0;
+	} else {
+		ov9740_res_roundup(&mf->width, &mf->height);
+	}
+
+	return 0;
+}
+
 
 static int ov9740_enum_fmt(struct v4l2_subdev *sd, unsigned int index,
 			   enum v4l2_mbus_pixelcode *code)
@@ -919,6 +860,7 @@ static int ov9740_g_mbus_config(struct v4l2_subdev *sd,
 static struct v4l2_subdev_video_ops ov9740_video_ops = {
 	.s_stream	= ov9740_s_stream,
 	.s_mbus_fmt	= ov9740_s_fmt,
+	.g_mbus_fmt	= ov9740_g_fmt,
 	.try_mbus_fmt	= ov9740_try_fmt,
 	.enum_mbus_fmt	= ov9740_enum_fmt,
 	.cropcap	= ov9740_cropcap,
@@ -970,7 +912,7 @@ static int ov9740_probe(struct i2c_client *client,
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
 			V4L2_CID_VFLIP, 0, 1, 1, 0);
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
-			V4L2_CID_HFLIP, 0, 1, 1, 0);
+			V4L2_CID_HFLIP, 0, 1, 1, 1);
 	priv->subdev.ctrl_handler = &priv->hdl;
 	if (priv->hdl.error)
 		return priv->hdl.error;
