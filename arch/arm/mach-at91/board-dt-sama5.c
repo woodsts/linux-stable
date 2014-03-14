@@ -38,6 +38,26 @@
 #include <media/soc_camera.h>
 #include <media/atmel-isi.h>
 
+#define LINK_SENSOR_MODULE_TO_SOC_CAMERA(_sensor_name, _soc_camera_id)	\
+	static struct soc_camera_desc iclink_##_sensor_name = {		\
+		.subdev_desc = {					\
+			.power = i2c_camera_power,			\
+			.query_bus_param = isi_camera_query_bus_param,	\
+		},							\
+		.host_desc = {						\
+			.bus_id		= -1,				\
+			.board_info	= &i2c_##_sensor_name,		\
+			.i2c_adapter_id	= 1,				\
+		},							\
+	};								\
+	static struct platform_device isi_##_sensor_name = {		\
+		.name	= "soc-camera-pdrv",				\
+		.id	= _soc_camera_id,				\
+		.dev	= {						\
+			.platform_data = &iclink_##_sensor_name,	\
+		},							\
+	};
+
 /*
  * LCD Controller
  */
@@ -199,51 +219,26 @@ out:
 static struct i2c_board_info i2c_ov2640 = {
 	I2C_BOARD_INFO("ov2640", 0x30),
 };
-static struct i2c_board_info i2c_ov5640 = {
+static struct i2c_board_info i2c_ov5642 = {
 	I2C_BOARD_INFO("ov5642", 0x3c),
 };
-
-static struct soc_camera_desc iclink_ov2640 = {
-	.subdev_desc = {
-		.power 		= i2c_camera_power,
-		.query_bus_param	= isi_camera_query_bus_param,
-	},
-	.host_desc = {
-		.bus_id		= -1,
-		.board_info	= &i2c_ov2640,
-		.i2c_adapter_id	= 1,
-	},
+static struct i2c_board_info i2c_ov9740 = {
+	I2C_BOARD_INFO("ov9740", 0x10),
 };
-static struct soc_camera_desc iclink_ov5640 = {
-	.subdev_desc = {
-		.power		= i2c_camera_power,
-		.query_bus_param	= isi_camera_query_bus_param,
-	},
-	.host_desc = {
-		.bus_id			= -1,
-		.board_info		= &i2c_ov5640,
-		.i2c_adapter_id		= 1,
-	},
+static struct i2c_board_info i2c_ov7740 = {
+	I2C_BOARD_INFO("ov7740", 0x21),
 };
 
-static struct platform_device isi_ov2640 = {
-	.name	= "soc-camera-pdrv",
-	.id	= 0,
-	.dev	= {
-		.platform_data = &iclink_ov2640,
-	},
-};
-static struct platform_device isi_ov5640 = {
-	.name	= "soc-camera-pdrv",
-	.id	= 1,
-	.dev	= {
-		.platform_data = &iclink_ov5640,
-	},
-};
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3);
 
 static struct platform_device *sensors[] __initdata = {
 	&isi_ov2640,
-	&isi_ov5640,
+	&isi_ov5642,	/* compatible for ov5640 */
+	&isi_ov9740,
+	&isi_ov7740,
 };
 
 struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
