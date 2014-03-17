@@ -32,6 +32,10 @@
 				};
 			};
 
+			ssc0: ssc@f0008000 {
+				atmel,clk-from-rk-pin;
+			};
+
 			i2c1: i2c@f0018000 {
 				wm8904: wm8904@1a {
 					compatible = "wm8904";
