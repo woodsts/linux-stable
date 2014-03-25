@@ -31,6 +31,8 @@
 #define MAX_BUFFER_NUM			32
 #define MAX_SUPPORT_WIDTH		2048
 #define MAX_SUPPORT_HEIGHT		2048
+#define MAX_PREVIEW_SUPPORT_WIDTH	640
+#define MAX_PREVIEW_SUPPORT_HEIGHT	480
 #define VID_LIMIT_BYTES			(16 * 1024 * 1024)
 #define MIN_FRAME_RATE			15
 #define FRAME_INTERVAL_MILLI_SEC	(1000 / MIN_FRAME_RATE)
@@ -188,21 +190,27 @@ static u32 setup_yuv_swap(struct atmel_isi *isi,
 	return 0;
 }
 
+static bool is_output_rgb565(const struct soc_camera_format_xlate *xlate)
+{
+	return xlate->host_fmt->fourcc == V4L2_PIX_FMT_RGB565;
+}
+
 static int configure_geometry(struct atmel_isi *isi, u32 width,
 			u32 height, const struct soc_camera_format_xlate *xlate)
 {
 	u32 cfg2;
 
-	/* According to the memory output, enable codec or preview path */
+	/*
+	 * Check the output format, if it's RGB565 then use preview channel,
+	 * otherwise use codec channel.
+	 */ 
 	switch (xlate->host_fmt->fourcc) {
 	case V4L2_PIX_FMT_RGB565:
-		isi->enable_preview_path = true;
-		break;
 	case V4L2_PIX_FMT_YUYV:
 	case V4L2_PIX_FMT_UYVY:
 	case V4L2_PIX_FMT_YVYU:
 	case V4L2_PIX_FMT_VYUY:
-		isi->enable_preview_path = false;
+		isi->enable_preview_path = is_output_rgb565(xlate);
 		break;
 	default:
 		dev_err(isi->icd->parent, "not support output memory v4l2 format: %d\n",
@@ -244,7 +252,6 @@ static int configure_geometry(struct atmel_isi *isi, u32 width,
 			& ISI_CFG2_IM_VSIZE_MASK;
 	isi_writel(isi, ISI_CFG2, cfg2);
 
-	/* TODO: max preview is 640x480 */
 	cfg2 = ((width - 1) << ISI_PSIZE_PREV_HSIZE_OFFSET) &
 		ISI_PSIZE_PREV_HSIZE_MASK;
 	cfg2 |= ((height - 1) << ISI_PSIZE_PREV_VSIZE_OFFSET)
@@ -668,6 +675,8 @@ static int isi_camera_try_fmt(struct soc_camera_device *icd,
 	struct v4l2_pix_format *pix = &f->fmt.pix;
 	struct v4l2_mbus_framefmt mf;
 	u32 pixfmt = pix->pixelformat;
+	int max_width = MAX_SUPPORT_WIDTH;
+	int max_height = MAX_SUPPORT_HEIGHT;
 	int ret;
 
 	xlate = soc_camera_xlate_by_fourcc(icd, pixfmt);
@@ -676,11 +685,17 @@ static int isi_camera_try_fmt(struct soc_camera_device *icd,
 		return -EINVAL;
 	}
 
+	/* Preview channel support max size is VGA */
+	if (is_output_rgb565(xlate)) {
+		max_width = MAX_PREVIEW_SUPPORT_WIDTH;
+		max_height = MAX_PREVIEW_SUPPORT_HEIGHT;
+	}
+
 	/* limit to Atmel ISI hardware capabilities */
-	if (pix->height > MAX_SUPPORT_HEIGHT)
-		pix->height = MAX_SUPPORT_HEIGHT;
-	if (pix->width > MAX_SUPPORT_WIDTH)
-		pix->width = MAX_SUPPORT_WIDTH;
+	if (pix->height > max_height)
+		pix->height = max_height;
+	if (pix->width > max_width)
+		pix->width = max_width;
 
 	/* limit to sensor capabilities */
 	mf.width	= pix->width;
