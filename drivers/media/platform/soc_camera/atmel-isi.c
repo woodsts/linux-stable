@@ -196,9 +196,12 @@ static bool is_output_rgb565(const struct soc_camera_format_xlate *xlate)
 }
 
 static int configure_geometry(struct atmel_isi *isi, u32 width,
-			u32 height, const struct soc_camera_format_xlate *xlate)
+			u32 height, const struct soc_camera_format_xlate *xlate,
+			u32 preview_width, u32 preview_height)
 {
 	u32 cfg2;
+	u32 factor = min(width * 16 / preview_width,
+			height * 16 / preview_height);
 
 	/*
 	 * Check the output format, if it's RGB565 then use preview channel,
@@ -252,12 +255,15 @@ static int configure_geometry(struct atmel_isi *isi, u32 width,
 			& ISI_CFG2_IM_VSIZE_MASK;
 	isi_writel(isi, ISI_CFG2, cfg2);
 
-	cfg2 = ((width - 1) << ISI_PSIZE_PREV_HSIZE_OFFSET) &
+	cfg2 = ((preview_width - 1) << ISI_PSIZE_PREV_HSIZE_OFFSET) &
 		ISI_PSIZE_PREV_HSIZE_MASK;
-	cfg2 |= ((height - 1) << ISI_PSIZE_PREV_VSIZE_OFFSET)
+	cfg2 |= ((preview_height - 1) << ISI_PSIZE_PREV_VSIZE_OFFSET)
 		& ISI_PSIZE_PREV_VSIZE_MASK;
 	isi_writel(isi, ISI_PSIZE, cfg2);
-	isi_writel(isi, ISI_PDECF, 16);	/* no down sample */
+	isi_writel(isi, ISI_PDECF, factor & ISI_PDECF_DEC_FACTOR_MASK);
+	if (isi->enable_preview_path && factor > 16)
+		dev_dbg(isi->icd->parent, "Down sampling is enabled, defactor is: %d\n",
+			factor);
 
 	return 0;
 }
@@ -651,12 +657,18 @@ static int isi_camera_set_fmt(struct soc_camera_device *icd,
 	if (mf.code != xlate->code)
 		return -EINVAL;
 
-	ret = configure_geometry(isi, pix->width, pix->height, xlate);
+	ret = configure_geometry(isi, mf.width, mf.height, xlate,
+					pix->width, pix->height);
 	if (ret < 0)
 		return ret;
 
-	pix->width		= mf.width;
-	pix->height		= mf.height;
+	if (!is_output_rgb565(xlate) ||
+		(pix->width > mf.width || pix->height > mf.height)) {
+		/* Use the sensor output size, no down scaling */
+		pix->width		= mf.width;
+		pix->height		= mf.height;
+	}
+
 	pix->field		= mf.field;
 	pix->colorspace		= mf.colorspace;
 	icd->current_fmt	= xlate;
@@ -708,8 +720,12 @@ static int isi_camera_try_fmt(struct soc_camera_device *icd,
 	if (ret < 0)
 		return ret;
 
-	pix->width	= mf.width;
-	pix->height	= mf.height;
+	if (!is_output_rgb565(xlate) ||
+		(pix->width > mf.width || pix->height > mf.height)) {
+		/* Use the sensor output size, no down scaling */
+		pix->width		= mf.width;
+		pix->height		= mf.height;
+	}
 	pix->colorspace	= mf.colorspace;
 
 	switch (mf.field) {
