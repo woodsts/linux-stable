@@ -591,13 +591,13 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 	sinfo->info = info;
 	sinfo->pdev = pdev;
 
-	strcpy(info->fix.id, sinfo->pdev->name);
 	info->flags = dev_data->fbinfo_flags;
 	info->pseudo_palette = sinfo->pseudo_palette;
 	info->fbops = &atmel_lcdfb_ops;
 
 	memcpy(&info->monspecs, sinfo->default_monspecs, sizeof(info->monspecs));
 	info->fix = atmel_lcdfb_fix;
+	strcpy(info->fix.id, sinfo->pdev->name);
 
 	/* Enable LCDC Clocks */
 	if (cpu_is_at91sam9261() || cpu_is_at91sam9g10()
