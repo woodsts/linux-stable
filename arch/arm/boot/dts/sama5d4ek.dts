@@ -80,6 +80,18 @@
 
 			i2c0: i2c@f8014000 {
 				status = "okay";
+
+				wm8904: codec@1a {
+					compatible = "wm8904";
+					reg = <0x1a>;
+
+					DCVDD-supply = <&vdd_1v8_reg>;
+					DBVDD-supply = <&vdd_3v3_reg>;
+					AVDD-supply = <&vdd_1v8_reg>;
+					CPVDD-supply = <&vdd_1v8_reg>;
+					MICVDD-supply = <&vdd_3v3_reg>;
+				};
+
 				pmic: act8865@5b {
 					compatible = "active-semi,act8865";
 					reg = <0x5b>;
