@@ -29,6 +29,10 @@
 #define SMC_CMD_WDT_SET_COUNTER		0x60
 #define SMC_CMD_WDT_RELOAD_COUNTER	0x61
 
+/* watchdog */
+#define SMC_CMD_WDT_SET_COUNTER		0x60
+#define SMC_CMD_WDT_RELOAD_COUNTER	0x61
+
 #ifndef __ASSEMBLY__
 
 extern int atmel_smc(u32 cmd, u32 arg1, u32 arg2, u32 arg3);
