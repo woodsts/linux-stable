@@ -182,6 +182,12 @@
 			};
 		};
 
+		vdec0: vdec@00300000 {
+			compatible = "on2,g1";
+			reg = <0x00300000 0x1000>;
+			interrupts = <19 IRQ_TYPE_LEVEL_HIGH 4>;
+		};
+
 		usb0: gadget@00400000 {
 			atmel,vbus-gpio = <&pioE 31 GPIO_ACTIVE_HIGH>;
 			pinctrl-names = "default";
