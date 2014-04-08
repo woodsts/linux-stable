@@ -23,7 +23,7 @@ obj-$(CONFIG_SOC_AT91SAM9N12)	+= at91sam9n12.o
 obj-$(CONFIG_SOC_AT91SAM9X5)	+= at91sam9x5.o
 obj-$(CONFIG_SOC_AT91SAM9RL)	+= at91sam9rl.o
 obj-$(CONFIG_SOC_SAMA5D3)	+= sama5d3.o
-obj-$(CONFIG_SOC_SAMA5D4)	+= sama5d4.o atmel-firmware.o atmel-firmware-smc.o memalloc.o
+obj-$(CONFIG_SOC_SAMA5D4)	+= sama5d4.o atmel-firmware.o atmel-firmware-smc.o memalloc.o vdec_g1.o
 
 plus_sec := $(call as-instr,.arch_extension sec,+sec)
 AFLAGS_atmel-firmware-smc.o	:=-Wa,-march=armv7-a$(plus_sec)
