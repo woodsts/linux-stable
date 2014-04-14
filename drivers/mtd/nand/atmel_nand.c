@@ -1318,6 +1318,11 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 		 * So the index offset just set as 0.
 		 */
 		host->pmecc_lookup_table_offset = 0;
+	} else {
+		/* Make sure lookup table offset is valid as we'll use it */
+		if (!host->pmecc_lookup_table_offset)
+			err_no = -EINVAL;
+			goto err;
 	}
 
 	/* ECC is calculated for the whole page (1 step) */
@@ -1652,7 +1657,7 @@ static int atmel_of_init_port(struct atmel_nand_host *host,
 	if (of_property_read_u32_array(np, "atmel,pmecc-lookup-table-offset",
 			offset, 2) != 0) {
 		dev_err(host->dev, "Cannot get PMECC lookup table offset\n");
-		return -EINVAL;
+		return 0;	/* we can live with it as no table in rom code */
 	}
 	if (!offset[0] && !offset[1]) {
 		dev_err(host->dev, "Invalid PMECC lookup table offset\n");
