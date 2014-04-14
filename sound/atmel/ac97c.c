@@ -775,8 +775,9 @@ static int atmel_ac97c_pcm_new(struct atmel_ac97c *chip)
 		if (err)
 			return err;
 	}
+
 	retval = snd_pcm_new(chip->card, chip->card->shortname,
-			chip->pdev->id, playback, capture, &pcm);
+			     0, playback, capture, &pcm);
 	if (retval)
 		return retval;
 
