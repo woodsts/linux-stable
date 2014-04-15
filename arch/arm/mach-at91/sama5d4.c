@@ -172,6 +172,27 @@ static struct clk *periph_clocks[] __initdata = {
 	&smd_clk,
 };
 
+static struct clk pck0 = {
+	.name		= "pck0",
+	.pmc_mask	= AT91_PMC_PCK0,
+	.type		= CLK_TYPE_PROGRAMMABLE,
+	.id		= 0,
+};
+
+static struct clk pck1 = {
+	.name		= "pck1",
+	.pmc_mask	= AT91_PMC_PCK1,
+	.type		= CLK_TYPE_PROGRAMMABLE,
+	.id		= 1,
+};
+
+static struct clk pck2 = {
+	.name		= "pck2",
+	.pmc_mask	= AT91_PMC_PCK2,
+	.type		= CLK_TYPE_PROGRAMMABLE,
+	.id		= 2,
+};
+
 static struct clk_lookup periph_clocks_lookups[] = {
 	/* lookup table for DT entries */
 	CLKDEV_CON_DEV_ID("pclk", "400000.gadget", &udphs_clk),
@@ -211,6 +232,10 @@ static void __init sama5d4_register_clocks(void)
 
 	clkdev_add_table(periph_clocks_lookups,
 			 ARRAY_SIZE(periph_clocks_lookups));
+
+	clk_register(&pck0);
+	clk_register(&pck1);
+	clk_register(&pck2);
 }
 
 /* --------------------------------------------------------------------
