@@ -19,6 +19,7 @@ config BRCMSMAC
 config BRCMFMAC
 	tristate "Broadcom IEEE802.11n embedded FullMAC WLAN driver"
 	depends on CFG80211
+	select WIRELESS_EXT
 	select BRCMUTIL
 	---help---
 	  This module adds support for embedded wireless adapters based on
