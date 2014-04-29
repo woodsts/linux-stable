@@ -1047,7 +1047,7 @@ static int at91sam9x5_video_vidioc_querycap(struct file *filp,
 
 	/* XXX */
 	cap->version = 0;
-	cap->card[0] = '\0';
+	strcpy(cap->card, "Atmel HEO Layer");
 	cap->bus_info[0] = '\0';
 
 	return 0;
