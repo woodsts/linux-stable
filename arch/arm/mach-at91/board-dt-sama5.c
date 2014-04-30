@@ -250,6 +250,7 @@ struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf0034000, "atmel_isi", &isi_data),
+	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf0008000, "atmel_isi", &isi_data),
 	/* SAMA5D4 */
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000000, "atmel_hlcdfb_base", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
@@ -376,8 +377,13 @@ static void __init sama5_dt_device_init(void)
 	np = of_find_compatible_node(NULL, NULL, "atmel,at91sam9g45-isi");
 	if (np) {
 		if (of_device_is_available(np)) {
-			camera_set_gpio_pins(AT91_PIN_PE24, AT91_PIN_PE29);
-			at91_config_isi(true, "pck1");
+			if (of_machine_is_compatible("atmel,sama5d3xmb")) {
+				camera_set_gpio_pins(AT91_PIN_PE24, AT91_PIN_PE29);
+				at91_config_isi(true, "pck1");
+			} else if (of_machine_is_compatible("atmel,sama5d4ek")) {
+				camera_set_gpio_pins(AT91_PIN_PB11, AT91_PIN_PB5);
+				at91_config_isi(true, "pck1");
+			}
 		}
 	}
 
