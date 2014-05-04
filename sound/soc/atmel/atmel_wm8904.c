@@ -178,7 +178,11 @@ static int atmel_asoc_wm8904_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+#ifdef CONFIG_SOC_SAMA5D4
+	mclk = clk_get(NULL, "pck2");
+#else
 	mclk = clk_get(NULL, "pck0");
+#endif
 	if (IS_ERR(mclk)) {
 		dev_err(&pdev->dev, "failed to get pck0\n");
 		ret = PTR_ERR(mclk);
