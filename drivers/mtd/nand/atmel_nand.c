@@ -1744,7 +1744,7 @@ static irqreturn_t hsmc_interrupt(int irq, void *dev_id)
 {
 	struct atmel_nand_host *host = dev_id;
 	u32 status, mask, pending;
-	irqreturn_t ret = IRQ_HANDLED;
+	irqreturn_t ret = IRQ_NONE;
 
 	status = nfc_readl(host->nfc->hsmc_regs, SR);
 	mask = nfc_readl(host->nfc->hsmc_regs, IMR);
@@ -1753,14 +1753,17 @@ static irqreturn_t hsmc_interrupt(int irq, void *dev_id)
 	if (pending & NFC_SR_XFR_DONE) {
 		complete(&host->nfc->comp_xfer_done);
 		nfc_writel(host->nfc->hsmc_regs, IDR, NFC_SR_XFR_DONE);
-	} else if (pending & NFC_SR_RB_EDGE) {
+		ret = IRQ_HANDLED;
+	}
+	if (pending & NFC_SR_RB_EDGE) {
 		complete(&host->nfc->comp_ready);
 		nfc_writel(host->nfc->hsmc_regs, IDR, NFC_SR_RB_EDGE);
-	} else if (pending & NFC_SR_CMD_DONE) {
+		ret = IRQ_HANDLED;
+	}
+	if (pending & NFC_SR_CMD_DONE) {
 		complete(&host->nfc->comp_cmd_done);
 		nfc_writel(host->nfc->hsmc_regs, IDR, NFC_SR_CMD_DONE);
-	} else {
-		ret = IRQ_NONE;
+		ret = IRQ_HANDLED;
 	}
 
 	return ret;
@@ -1770,29 +1773,40 @@ static irqreturn_t hsmc_interrupt(int irq, void *dev_id)
 static int nfc_wait_interrupt(struct atmel_nand_host *host, u32 flag)
 {
 	unsigned long timeout;
-	struct completion *comp;
+	struct completion *comp[3];	/* Support 3 interrupt completion */
+	int i, index = 0;
 
-	if (flag & NFC_SR_XFR_DONE) {
-		comp = &host->nfc->comp_xfer_done;
-	} else if (flag & NFC_SR_RB_EDGE) {
-		comp = &host->nfc->comp_ready;
-	} else if (flag & NFC_SR_CMD_DONE) {
-		comp = &host->nfc->comp_cmd_done;
-	} else {
+	if (flag & NFC_SR_XFR_DONE)
+		comp[index++] = &host->nfc->comp_xfer_done;
+
+	if (flag & NFC_SR_RB_EDGE)
+		comp[index++] = &host->nfc->comp_ready;
+
+	if (flag & NFC_SR_CMD_DONE)
+		comp[index++] = &host->nfc->comp_cmd_done;
+
+	if (index == 0) {
 		dev_err(host->dev, "Unkown interrupt flag: 0x%08x\n", flag);
 		return -EINVAL;
 	}
 
-	init_completion(comp);
+	for (i = 0; i < index; i++)
+		init_completion(comp[i]);
 
 	/* Enable interrupt that need to wait for */
 	nfc_writel(host->nfc->hsmc_regs, IER, flag);
 
-	timeout = wait_for_completion_timeout(comp,
-			msecs_to_jiffies(NFC_TIME_OUT_MS));
-	if (timeout)
-		return 0;
+	for (i = 0; i < index; i++) {
+		timeout = wait_for_completion_timeout(comp[i],
+				msecs_to_jiffies(NFC_TIME_OUT_MS));
+		if (timeout)
+			continue;
+		else
+			goto err_timeout;
+	}
+	return 0;
 
+err_timeout:
 	/* Time out to wait for the interrupt */
 	dev_err(host->dev, "Time out to wait for interrupt: 0x%08x\n", flag);
 	return -ETIMEDOUT;
@@ -1817,7 +1831,8 @@ static int nfc_send_command(struct atmel_nand_host *host,
 	}
 	nfc_writel(host->nfc->hsmc_regs, CYCLE0, cycle0);
 	nfc_cmd_addr1234_writel(cmd, addr, host->nfc->base_cmd_regs);
-	return nfc_wait_interrupt(host, NFC_SR_CMD_DONE);
+	return nfc_wait_interrupt(host, NFC_SR_CMD_DONE |
+			(cmd & NFCADDR_CMD_DATAEN ? NFC_SR_XFR_DONE : 0));
 }
 
 static int nfc_device_ready(struct mtd_info *mtd)
@@ -1973,10 +1988,6 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 
 	nfc_addr_cmd = cmd1 | cmd2 | vcmd2 | acycle | csid | dataen | nfcwr;
 	nfc_send_command(host, nfc_addr_cmd, addr1234, cycle0);
-
-	if (dataen == NFCADDR_CMD_DATAEN)
-		if (nfc_wait_interrupt(host, NFC_SR_XFR_DONE))
-			dev_err(host->dev, "something wrong, No XFR_DONE interrupt comes.\n");
 
 	/*
 	 * Program and erase have their own busy handlers status, sequential
