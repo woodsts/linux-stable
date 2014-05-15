@@ -1320,9 +1320,10 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 		host->pmecc_lookup_table_offset = 0;
 	} else {
 		/* Make sure lookup table offset is valid as we'll use it */
-		if (!host->pmecc_lookup_table_offset)
+		if (!host->pmecc_lookup_table_offset) {
 			err_no = -EINVAL;
 			goto err;
+		}
 	}
 
 	/* ECC is calculated for the whole page (1 step) */
