@@ -13,4 +13,24 @@
 / {
 	model = "Atmel AT91SAM9G15-EK";
 	compatible = "atmel,at91sam9g15ek", "atmel,at91sam9x5ek", "atmel,at91sam9x5", "atmel,at91sam9";
+
+	ahb {
+		apb {
+			lcd_bus@f8038000 {
+				status = "okay";
+
+				lcd@f8038000 {
+					status = "okay";
+				};
+
+				lcdovl1@f8038100 {
+					status = "okay";
+				};
+
+				lcdheo1@f8038280 {
+					status = "okay";
+				};
+			};
+		};
+	};
 };
