@@ -32,6 +32,8 @@
 #include "generic.h"
 #include "pm.h"
 
+#define	SAMA5D4_PM_DEBUG
+
 /*
  * Show the reason for the previous system reset.
  */
@@ -199,6 +201,23 @@ extern void at91_slow_clock(void __iomem *pmc, void __iomem *ramc0,
 extern u32 at91_slow_clock_sz;
 #endif
 
+#ifdef SAMA5D4_PM_DEBUG
+static void print_peripherals_pwr_status_for_pm(void)
+{
+	pr_info("\n");
+	pr_info("The Peripheral Power State for PM:\n");
+	pr_info("PMC_SCSR: 0x%x\n",
+				__raw_readl(at91_pmc_base + AT91_PMC_SCSR));
+	pr_info("PMC_PCSR: 0x%x\n",
+				__raw_readl(at91_pmc_base + AT91_PMC_PCSR));
+	pr_info("PMC_PCSR1: 0x%x\n",
+				__raw_readl(at91_pmc_base + AT91_PMC_PCSR1));
+	pr_info("\n");
+}
+#else
+static void print_peripherals_pwr_status_for_pm(void) {}
+#endif
+
 static int at91_pm_enter(suspend_state_t state)
 {
 	if (of_have_populated_dt())
@@ -228,6 +247,8 @@ static int at91_pm_enter(suspend_state_t state)
 			 */
 			if (!at91_pm_verify_clocks())
 				goto error;
+
+			print_peripherals_pwr_status_for_pm();
 
 			/*
 			 * Enter slow clock mode by switching over to clk32k and
