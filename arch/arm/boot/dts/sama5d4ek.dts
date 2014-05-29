@@ -142,7 +142,10 @@
 				};
 			};
 
-			usart2: serial@fc008000 {
+			/* USART2 has conflict with ISI in ISI_VSYNC(PB3) & ISI_HSYNC(PB4).
+			 * So disable USART2 and enable ISI
+			 */
+			isi: isi@f0008000 {
 				status = "okay";
 			};
 
