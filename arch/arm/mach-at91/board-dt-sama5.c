@@ -40,7 +40,7 @@
 #include <media/soc_camera.h>
 #include <media/atmel-isi.h>
 
-#define LINK_SENSOR_MODULE_TO_SOC_CAMERA(_sensor_name, _soc_camera_id)	\
+#define LINK_SENSOR_MODULE_TO_SOC_CAMERA(_sensor_name, _soc_camera_id, _i2c_adapter_id)	\
 	static struct soc_camera_desc iclink_##_sensor_name = {		\
 		.subdev_desc = {					\
 			.power = i2c_camera_power,			\
@@ -49,7 +49,7 @@
 		.host_desc = {						\
 			.bus_id		= -1,				\
 			.board_info	= &i2c_##_sensor_name,		\
-			.i2c_adapter_id	= 1,				\
+			.i2c_adapter_id	= _i2c_adapter_id,		\
 		},							\
 	};								\
 	static struct platform_device isi_##_sensor_name = {		\
@@ -231,10 +231,10 @@ static struct i2c_board_info i2c_ov7740 = {
 	I2C_BOARD_INFO("ov7740", 0x21),
 };
 
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3, 1);
 
 static struct platform_device *sensors[] __initdata = {
 	&isi_ov2640,
