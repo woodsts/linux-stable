@@ -113,17 +113,17 @@
 				reg = <0xf0018000 0x120>;
 			};
 
-			dma0: dma-controller@f0014000 {
-				compatible = "atmel,sama5d4-dma";
-				reg = <0xf0014000 0x200>;
-				interrupts = <8 IRQ_TYPE_LEVEL_HIGH 0>;
-				#dma-cells = <2>;
-			};
-
 			dma1: dma-controller@f0004000 {
 				compatible = "atmel,sama5d4-dma";
 				reg = <0xf0004000 0x200>;
 				interrupts = <50 IRQ_TYPE_LEVEL_HIGH 0>;
+				#dma-cells = <2>;
+			};
+
+			dma0: dma-controller@f0014000 {
+				compatible = "atmel,sama5d4-dma";
+				reg = <0xf0014000 0x200>;
+				interrupts = <8 IRQ_TYPE_LEVEL_HIGH 0>;
 				#dma-cells = <2>;
 			};
 
