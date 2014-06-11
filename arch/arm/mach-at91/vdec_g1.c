@@ -408,7 +408,7 @@ static int __init vdec_probe(struct platform_device *pdev)
 			p->mmio_base, p->irq, vdec_misc_device.minor);
 
 	/* Reset Asic (just in case..) */
-	vdec_writel(p, VDEC_IDR, VDEC_DIR_ID | VDEC_DIR_ABORT);
+	vdec_writel(p, VDEC_DIR, VDEC_DIR_ID | VDEC_DIR_ABORT);
 	vdec_writel(p, VDEC_PPIR, VDEC_PPIR_ID);
 
 	hwid = vdec_readl(p, VDEC_IDR);
