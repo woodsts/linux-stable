@@ -19,6 +19,8 @@
 
 #include <asm/setup.h>
 #include <asm/irq.h>
+#include <asm/firmware.h>
+#include <asm/hardware/cache-l2x0.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
@@ -248,6 +250,10 @@ struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf0034000, "atmel_isi", &isi_data),
+	/* SAMA5D4 */
+	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000000, "atmel_hlcdfb_base", &ek_lcdc_data),
+	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
+	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
 	{ /* sentinel */ }
 };
 
@@ -310,18 +316,60 @@ static int ksz9031rn_phy_fixup(struct phy_device *dev)
 	return 0;
 }
 
+static int ksz8081_phy_reset(struct phy_device *phy)
+{
+	int value;
+
+	/*
+	 * As disconnect the hardware reset, so use software reset
+	 *
+	 * The basic control (register 0) bit 15 is software reset
+	 */
+	value = phy_read(phy, 0);
+	value |= (1 << 15);
+	phy_write(phy, 0, value);
+
+	return 0;
+}
+
+#ifdef CONFIG_CACHE_L2X0
+static void __init at91_init_l2cache(void)
+{
+	struct device_node *np;
+
+	np = of_find_compatible_node(NULL, NULL, "arm,pl310-cache");
+	if (!np)
+		return;
+	of_node_put(np);
+
+	call_firmware_op(l2x0_init);
+
+	outer_cache.disable = firmware_ops->l2x0_disable;
+
+	l2x0_of_init(0, ~0UL);
+}
+#else
+static inline void at91_init_l2cache(void) {}
+#endif
+
 static void __init sama5_dt_device_init(void)
 {
 	struct device_node *np;
 
+	at91_init_l2cache();
+
 	if (of_machine_is_compatible("atmel,sama5d3xcm") &&
-	    IS_ENABLED(CONFIG_PHYLIB))
+	    IS_ENABLED(CONFIG_PHYLIB)) {
 		phy_register_fixup_for_uid(PHY_ID_KSZ9021, MICREL_PHY_ID_MASK,
 			ksz9021rn_phy_fixup);
-	else if (of_machine_is_compatible("atmel,sama5d3-xplained") &&
+	} else if (of_machine_is_compatible("atmel,sama5d3-xplained") &&
 	    IS_ENABLED(CONFIG_PHYLIB)) {
 		phy_register_fixup_for_uid(PHY_ID_KSZ9031, MICREL_PHY_ID_MASK,
 			ksz9031rn_phy_fixup);
+	} else if (of_machine_is_compatible("atmel,sama5d4ek") &&
+	    IS_ENABLED(CONFIG_PHYLIB)) {
+		phy_register_fixup_for_uid(PHY_ID_KSZ8081, MICREL_PHY_ID_MASK,
+			ksz8081_phy_reset);
 	}
 
 	np = of_find_compatible_node(NULL, NULL, "atmel,at91sam9g45-isi");
