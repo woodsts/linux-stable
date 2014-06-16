@@ -205,8 +205,6 @@
 			nand-ecc-mode = "hw";
 			nand-on-flash-bbt;
 			atmel,has-pmecc;
-			atmel,pmecc-cap = <4>;
-			atmel,pmecc-sector-size = <512>;
 			status = "okay";
 
 			at91bootstrap@0 {
