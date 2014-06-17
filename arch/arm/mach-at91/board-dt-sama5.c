@@ -259,7 +259,8 @@ struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 
 static const struct of_device_id irq_of_match[] __initconst = {
 
-	{ .compatible = "atmel,sama5d3-aic", .data = at91_aic5_of_init },
+	{ .compatible = "atmel,sama5d3-aic", .data = sama5d3_aic5_of_init },
+	{ .compatible = "atmel,sama5d4-aic", .data = sama5d4_aic5_of_init },
 	{ /*sentinel*/ }
 };
 

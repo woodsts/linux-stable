@@ -479,13 +479,12 @@ int __init at91_aic_of_init(struct device_node *node,
 	return 0;
 }
 
-int __init at91_aic5_of_init(struct device_node *node,
+static int __init at91_aic5_of_init(struct device_node *node,
 				     struct device_node *parent)
 {
 	int err;
 
 	at91_aic_caps |= AT91_AIC_CAP_AIC5;
-	n_irqs = NR_AIC5_IRQS;
 	at91_aic_chip.irq_ack           = at91_aic5_mask_irq;
 	at91_aic_chip.irq_mask		= at91_aic5_mask_irq;
 	at91_aic_chip.irq_unmask	= at91_aic5_unmask_irq;
@@ -499,6 +498,22 @@ int __init at91_aic5_of_init(struct device_node *node,
 	at91_aic5_hw_init(n_irqs);
 
 	return 0;
+}
+
+int __init sama5d3_aic5_of_init(struct device_node *node,
+				     struct device_node *parent)
+{
+	n_irqs = NR_SAMA5D3_IRQS;
+
+	return at91_aic5_of_init(node, parent);
+}
+
+int __init sama5d4_aic5_of_init(struct device_node *node,
+				     struct device_node *parent)
+{
+	n_irqs = NR_SAMA5D4_IRQS;
+
+	return at91_aic5_of_init(node, parent);
 }
 #endif
 
