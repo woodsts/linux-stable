@@ -735,6 +735,7 @@ static void at91sam9x5_video_update_config_real(
 			at91sam9x5_video_write32(priv, REG_HEOCFG1,
 			REG_HEOCFG1_YUVMODE_16YCBCR_0 |
 			REG_HEOCFG1_YUVEN);
+			break;
 		case V4L2_PIX_FMT_UYVY:
 			at91sam9x5_video_write32(priv, REG_HEOCFG1,
 			REG_HEOCFG1_YUVMODE_16YCBCR_1 |
