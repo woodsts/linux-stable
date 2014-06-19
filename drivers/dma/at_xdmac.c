@@ -298,6 +298,7 @@ at_xdmac_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
 		mem = sg_dma_address(sg);
 		if (unlikely(!len)) {
 			dev_err(chan2dev(chan), "sg data length is zero\n");
+			spin_unlock(&atchan->lock);
 			return NULL;
 		}
 		dev_dbg(chan2dev(chan), "%s: * sg%d len=%u, mem=0x%08x\n",
@@ -308,6 +309,7 @@ at_xdmac_prep_slave_sg(struct dma_chan *chan, struct scatterlist *sgl,
 			dev_err(chan2dev(chan), "can't get descriptor\n");
 			if (first)
 				list_splice_init(&first->descs_list, &atchan->free_descs_list);
+			spin_unlock(&atchan->lock);
 			return NULL;
 		}
 
