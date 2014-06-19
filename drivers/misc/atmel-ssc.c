@@ -201,6 +201,29 @@ static int ssc_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM
+static int atmel_ssc_suspend(struct platform_device *pdev, pm_message_t mesg)
+{
+	struct ssc_device *ssc = platform_get_drvdata(pdev);
+
+	clk_disable_unprepare(ssc->clk);
+
+	return 0;
+}
+
+static int atmel_ssc_resume(struct platform_device *pdev)
+{
+	struct ssc_device *ssc = platform_get_drvdata(pdev);
+
+	clk_prepare_enable(ssc->clk);
+
+	return 0;
+}
+#else
+#define	atmel_ssc_suspend	NULL
+#define	atmel_ssc_resume	NULL
+#endif
+
 static struct platform_driver ssc_driver = {
 	.driver		= {
 		.name		= "ssc",
@@ -210,6 +233,8 @@ static struct platform_driver ssc_driver = {
 	.id_table	= atmel_ssc_devtypes,
 	.probe		= ssc_probe,
 	.remove		= ssc_remove,
+	.suspend	= atmel_ssc_suspend,
+	.resume		= atmel_ssc_resume,
 };
 module_platform_driver(ssc_driver);
 
