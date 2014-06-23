@@ -52,6 +52,7 @@ extern void at91x40_timer_init(void);
 #ifdef CONFIG_AT91_PMC_UNIT
 extern int __init at91_clock_init(unsigned long main_clock);
 extern int __init at91_dt_clock_init(void);
+extern int __init at91_alt_dt_clock_init(void);
 #else
 static int inline at91_clock_init(unsigned long main_clock) { return 0; }
 #endif
