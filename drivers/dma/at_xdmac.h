@@ -176,6 +176,7 @@
 
 enum atc_status {
 	AT_XDMAC_CHAN_IS_CYCLIC = 0,
+	AT_XDMAC_CHAN_IS_PAUSED,
 };
 
 /* ----- Channels ----- */
@@ -188,6 +189,9 @@ struct at_xdmac_chan {
 	u8			dwidth;		/* Data Width */
 	u8			perif;		/* Peripheral Interface */
 	u8			memif;		/* Memory Interface */
+	u32			save_cim;
+	u32			save_cnda;
+	u32			save_cndc;
 	unsigned long		status;
 	struct tasklet_struct	tasklet;
 	struct dma_slave_config	dma_sconfig;
@@ -205,6 +209,8 @@ struct at_xdmac {
 	void __iomem		*regs;
 	int			irq;
 	struct clk		*clk;
+	u32			save_gim;
+	u32			save_gs;
 	struct dma_pool		*at_xdmac_desc_pool;
 	struct at_xdmac_chan	chan[0];
 };
@@ -269,6 +275,11 @@ static inline struct at_xdmac_desc *txd_to_at_desc(struct dma_async_tx_descripto
 static inline int at_xdmac_chan_is_cyclic(struct at_xdmac_chan *atchan)
 {
 	return test_bit(AT_XDMAC_CHAN_IS_CYCLIC, &atchan->status);
+}
+
+static inline int at_xdmac_chan_is_paused(struct at_xdmac_chan *atchan)
+{
+	return test_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
 }
 
 #endif /* __AT_XDMAC_H__ */
