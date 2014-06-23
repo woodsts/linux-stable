@@ -599,6 +599,8 @@ void __init at91_dt_initialize(void)
 
 void __init at91_alt_dt_initialize(void)
 {
+	atmel_firmware_init();
+
 	at91_dt_ramc();
 	at91_dt_rstc();
 	at91_dt_shdwc();
