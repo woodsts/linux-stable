@@ -814,9 +814,14 @@ static int at_xdmac_control(struct dma_chan *chan, enum dma_ctrl_cmd cmd,
 	switch (cmd) {
 	case DMA_PAUSE:
 		at_xdmac_write(atxdmac, AT_XDMAC_GRWS, atchan->mask);
+		set_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
 		break;
 	case DMA_RESUME:
+		if (!at_xdmac_chan_is_paused(atchan))
+			break;
+
 		at_xdmac_write(atxdmac, AT_XDMAC_GRWR, atchan->mask);
+		clear_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
 		break;
 	case DMA_TERMINATE_ALL:
 		at_xdmac_write(atxdmac, AT_XDMAC_GIE, atchan->mask);
@@ -900,6 +905,76 @@ static void at_xdmac_free_chan_resources(struct dma_chan *chan)
 	}
 
 	return;
+}
+
+static int atmel_xdmac_prepare(struct device *dev)
+{
+	struct platform_device	*pdev = to_platform_device(dev);
+	struct at_xdmac		*atxdmac = platform_get_drvdata(pdev);
+	struct dma_chan		*chan, *_chan;
+
+	list_for_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) {
+		struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+
+		/* Wait for transfer completion, except in cyclic case. */
+		if (at_xdmac_chan_is_enabled(atchan) && !at_xdmac_chan_is_cyclic(atchan))
+			return -EAGAIN;
+	}
+	return 0;
+}
+
+static int atmel_xdmac_suspend_noirq(struct device *dev)
+{
+	struct platform_device	*pdev = to_platform_device(dev);
+	struct at_xdmac		*atxdmac = platform_get_drvdata(pdev);
+	struct dma_chan		*chan, *_chan;
+
+	list_for_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) {
+		struct at_xdmac_chan	*atchan = to_at_xdmac_chan(chan);
+
+		if (at_xdmac_chan_is_cyclic(atchan)) {
+			if (!at_xdmac_chan_is_paused(atchan))
+				at_xdmac_control(chan, DMA_PAUSE, 0);
+			atchan->save_cim = at_xdmac_chan_read(atchan, AT_XDMAC_CIM);
+			atchan->save_cnda = at_xdmac_chan_read(atchan, AT_XDMAC_CNDA);
+			atchan->save_cndc = at_xdmac_chan_read(atchan, AT_XDMAC_CNDC);
+		}
+	}
+	atxdmac->save_gim = at_xdmac_read(atxdmac, AT_XDMAC_GIM);
+
+	at_xdmac_off(atxdmac);
+	clk_disable_unprepare(atxdmac->clk);
+	return 0;
+}
+
+static int atmel_xdmac_resume_noirq(struct device *dev)
+{
+	struct platform_device	*pdev = to_platform_device(dev);
+	struct at_xdmac		*atxdmac = platform_get_drvdata(pdev);
+	struct at_xdmac_chan	*atchan;
+	struct dma_chan		*chan, *_chan;
+	int			i;
+
+	clk_prepare_enable(atxdmac->clk);
+
+	/* Clear pending interrupts. */
+	for (i = 0; i < atxdmac->dma.chancnt; i++)
+		while (at_xdmac_chan_read(atchan, AT_XDMAC_CIS))
+			cpu_relax();
+
+	at_xdmac_write(atxdmac, AT_XDMAC_GIE, atxdmac->save_gim);
+	at_xdmac_write(atxdmac, AT_XDMAC_GE, atxdmac->save_gs);
+	list_for_each_entry_safe(chan, _chan, &atxdmac->dma.channels, device_node) {
+		atchan = to_at_xdmac_chan(chan);
+		at_xdmac_chan_write(atchan, AT_XDMAC_CC, atchan->cfg);
+		if (at_xdmac_chan_is_cyclic(atchan)) {
+			at_xdmac_chan_write(atchan, AT_XDMAC_CNDA, atchan->save_cnda);
+			at_xdmac_chan_write(atchan, AT_XDMAC_CNDC, atchan->save_cndc);
+			at_xdmac_chan_write(atchan, AT_XDMAC_CIE, atchan->save_cim);
+			at_xdmac_write(atxdmac, AT_XDMAC_GE, atchan->mask);
+		}
+	}
+	return 0;
 }
 
 static int at_xdmac_probe(struct platform_device *pdev)
@@ -1062,6 +1137,12 @@ static int at_xdmac_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static const struct dev_pm_ops atmel_xdmac_dev_pm_ops = {
+	.prepare	= atmel_xdmac_prepare,
+	.suspend_noirq	= atmel_xdmac_suspend_noirq,
+	.resume_noirq	= atmel_xdmac_resume_noirq,
+};
+
 static const struct of_device_id atmel_xdmac_dt_ids[] = {
 	{
 		.compatible = "atmel,sama5d4-dma",
@@ -1078,6 +1159,7 @@ static struct platform_driver at_xdmac_driver = {
 		.name		= "at_xdmac",
 		.owner		= THIS_MODULE,
 		.of_match_table	= of_match_ptr(atmel_xdmac_dt_ids),
+		.pm		= &atmel_xdmac_dev_pm_ops,
 	}
 };
 
