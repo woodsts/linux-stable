@@ -13,6 +13,7 @@
 
  /* Map io */
 extern void __init at91_map_io(void);
+extern void __init at91_alt_map_io(void);
 extern void __init at91_init_sram(int bank, unsigned long base,
 				  unsigned int length);
 
@@ -22,6 +23,7 @@ extern void __init at91_initialize(unsigned long main_clock);
 extern void __init at91x40_initialize(unsigned long main_clock);
 extern void __init at91rm9200_dt_initialize(void);
 extern void __init at91_dt_initialize(void);
+extern void __init at91_alt_dt_initialize(void);
 
  /* Interrupts */
 extern void __init at91_init_irq_default(void);
