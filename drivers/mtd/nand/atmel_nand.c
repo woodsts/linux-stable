@@ -91,6 +91,7 @@ static struct nand_ecclayout atmel_oobinfo_small = {
 
 struct atmel_nfc {
 	void __iomem		*base_cmd_regs;
+	void __iomem		*busy_cmd_regs;
 	void __iomem		*hsmc_regs;
 	void __iomem		*sram_bank0;
 	dma_addr_t		sram_bank0_phys;
@@ -1821,7 +1822,7 @@ static int nfc_send_command(struct atmel_nand_host *host,
 		cmd, addr, cycle0);
 
 	timeout = jiffies + msecs_to_jiffies(NFC_TIME_OUT_MS);
-	while (nfc_cmd_readl(NFCADDR_CMD_NFCBUSY, host->nfc->base_cmd_regs)
+	while (nfc_busy_cmd_regs_readl(host->nfc)
 			& NFCADDR_CMD_NFCBUSY) {
 		if (time_after(jiffies, timeout)) {
 			dev_err(host->dev,
@@ -2393,12 +2394,17 @@ static int atmel_nand_nfc_probe(struct platform_device *pdev)
 	if (IS_ERR(nfc->base_cmd_regs))
 		return PTR_ERR(nfc->base_cmd_regs);
 
-	nfc_hsmc_regs = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	nfc_cmd_regs = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	nfc->busy_cmd_regs = devm_ioremap_resource(&pdev->dev, nfc_cmd_regs);
+	if (IS_ERR(nfc->busy_cmd_regs))
+		return PTR_ERR(nfc->busy_cmd_regs);
+
+	nfc_hsmc_regs = platform_get_resource(pdev, IORESOURCE_MEM, 2);
 	nfc->hsmc_regs = devm_ioremap_resource(&pdev->dev, nfc_hsmc_regs);
 	if (IS_ERR(nfc->hsmc_regs))
 		return PTR_ERR(nfc->hsmc_regs);
 
-	nfc_sram = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+	nfc_sram = platform_get_resource(pdev, IORESOURCE_MEM, 3);
 	if (nfc_sram) {
 		nfc->sram_bank0 = devm_ioremap_resource(&pdev->dev, nfc_sram);
 		if (IS_ERR(nfc->sram_bank0)) {
