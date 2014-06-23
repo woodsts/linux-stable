@@ -601,9 +601,11 @@ void __init at91_alt_dt_initialize(void)
 {
 	atmel_firmware_init();
 
-	at91_dt_ramc();
-	at91_dt_rstc();
-	at91_dt_shdwc();
+	if (!atmel_firmware_is_registered()) {
+		at91_dt_ramc();
+		at91_dt_rstc();
+		at91_dt_shdwc();
+	}
 
 	/* Init clock subsystem */
 	at91_alt_dt_clock_init();
