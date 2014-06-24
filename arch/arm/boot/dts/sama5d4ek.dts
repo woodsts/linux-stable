@@ -57,7 +57,7 @@
 			adc0: adc@fc034000 {
 				/* The vref depends on JP22 of EK. If connect 1-2 then use 3.3V. connect 2-3 use 3.0V */
 				atmel,adc-vref = <3300>;
-				atmel,adc-ts-wires = <4>;	/* Set up ADC touch screen */
+				/*atmel,adc-ts-wires = <4>;*/	/* Set up ADC touch screen */
 				status = "okay";		/* Enable ADC IIO support */
 			};
 
