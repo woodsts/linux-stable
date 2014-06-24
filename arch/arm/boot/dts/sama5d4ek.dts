@@ -54,6 +54,13 @@
 				};
 			};
 
+			adc0: adc@fc034000 {
+				/* The vref depends on JP22 of EK. If connect 1-2 then use 3.3V. connect 2-3 use 3.0V */
+				atmel,adc-vref = <3300>;
+				/*atmel,adc-ts-wires = <4>;*/	/* Set up ADC touch screen */
+				status = "okay";		/* Enable ADC IIO support */
+			};
+
 			mmc0: mmc@f8000000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_mmc0_clk_cmd_dat0 &pinctrl_mmc0_dat1_3 &pinctrl_mmc0_cd>;
