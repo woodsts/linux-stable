@@ -71,6 +71,10 @@
 				};
 			};
 
+			ssc0: ssc@f8008000 {
+				status = "okay";
+			};
+
 			spi0: spi@f8010000 {
 				cs-gpios = <&pioC 3 0>, <0>, <0>, <0>;
 				status = "okay";
@@ -83,6 +87,18 @@
 
 			i2c0: i2c@f8014000 {
 				status = "okay";
+
+				wm8904: codec@1a {
+					compatible = "wm8904";
+					reg = <0x1a>;
+
+					DCVDD-supply = <&vdd_1v8_reg>;
+					DBVDD-supply = <&vdd_3v3_reg>;
+					AVDD-supply = <&vdd_1v8_reg>;
+					CPVDD-supply = <&vdd_1v8_reg>;
+					MICVDD-supply = <&vdd_3v3_reg>;
+				};
+
 				pmic: act8865@5b {
 					compatible = "active-semi,act8865";
 					reg = <0x5b>;
@@ -183,6 +199,10 @@
 						atmel,pins =
 							<AT91_PIOE 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>; /* PE13 gpio */
 					};
+					pinctrl_pck0_as_audio_mck: pck2_as_audio_mck {
+						atmel,pins =
+							<AT91_PIOB 10 AT91_PERIPH_B AT91_PINCTRL_NONE>;
+					};
 				};
 			};
 		};
@@ -260,5 +280,21 @@
 			linux,code = <0x100>;
 			gpio-key,wakeup;
 		};
+	};
+
+	sound {
+		compatible = "atmel,asoc-wm8904";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pck0_as_audio_mck>;
+
+		atmel,model = "wm8904 @ SAMA5D4EK";
+		atmel,audio-routing =
+			"Headphone Jack", "HPOUTL",
+			"Headphone Jack", "HPOUTR",
+			"IN1L", "Line In Jack",
+			"IN1R", "Line In Jack";
+
+		atmel,ssc-controller = <&ssc0>;
+		atmel,audio-codec = <&wm8904>;
 	};
 };

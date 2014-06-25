@@ -150,6 +150,16 @@ static struct clk smd_clk = {
 	.pid		= SAMA5D4_ID_SMD,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
+static struct clk ssc0_clk = {
+	.name		= "ssc0_clk",
+	.pid		= SAMA5D4_ID_SSC0,
+	.type		= CLK_TYPE_PERIPHERAL,
+};
+static struct clk ssc1_clk = {
+	.name		= "ssc1_clk",
+	.pid		= SAMA5D4_ID_SSC1,
+	.type		= CLK_TYPE_PERIPHERAL,
+};
 
 static struct clk *periph_clocks[] __initdata = {
 	&pioA_clk,
@@ -176,6 +186,29 @@ static struct clk *periph_clocks[] __initdata = {
 	&twi2_clk,
 	&spi0_clk,
 	&smd_clk,
+	&ssc0_clk,
+	&ssc1_clk,
+};
+
+static struct clk pck0 = {
+	.name		= "pck0",
+	.pmc_mask	= AT91_PMC_PCK0,
+	.type		= CLK_TYPE_PROGRAMMABLE,
+	.id		= 0,
+};
+
+static struct clk pck1 = {
+	.name		= "pck1",
+	.pmc_mask	= AT91_PMC_PCK1,
+	.type		= CLK_TYPE_PROGRAMMABLE,
+	.id		= 1,
+};
+
+static struct clk pck2 = {
+	.name		= "pck2",
+	.pmc_mask	= AT91_PMC_PCK2,
+	.type		= CLK_TYPE_PROGRAMMABLE,
+	.id		= 2,
 };
 
 static struct clk_lookup periph_clocks_lookups[] = {
@@ -207,6 +240,8 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_DEV_ID(NULL, "fc06b000.gpio", &pioB_clk),
 	CLKDEV_CON_DEV_ID(NULL, "fc06c000.gpio", &pioC_clk),
 	CLKDEV_CON_DEV_ID(NULL, "fc06d000.gpio", &pioE_clk),
+	CLKDEV_CON_DEV_ID(NULL, "f8008000.ssc", &ssc0_clk),
+	CLKDEV_CON_DEV_ID(NULL, "fc014000.ssc", &ssc1_clk),
 };
 
 static void __init sama5d4_register_clocks(void)
@@ -218,6 +253,10 @@ static void __init sama5d4_register_clocks(void)
 
 	clkdev_add_table(periph_clocks_lookups,
 			 ARRAY_SIZE(periph_clocks_lookups));
+
+	clk_register(&pck0);
+	clk_register(&pck1);
+	clk_register(&pck2);
 }
 
 /* --------------------------------------------------------------------
