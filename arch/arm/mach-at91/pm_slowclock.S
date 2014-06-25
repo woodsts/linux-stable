@@ -221,6 +221,10 @@ sdr_sr_done:
 	orr	tmp1, tmp1, #(1 << 29)		/* bit 29 always set */
 	str	tmp1, [pmc, #AT91_CKGR_PLLAR]
 
+	/* Disable DDR Clock */
+	mov 	tmp1, #AT91_PMC_SYS_DDR
+	str	tmp1, [pmc, #AT91_PMC_SCDR]
+
 	/* Save PLLB setting and disable it */
 	ldr	tmp1, [pmc, #AT91_CKGR_PLLBR]
 	str	tmp1, .saved_pllbr
@@ -256,6 +260,10 @@ sdr_sr_done:
 1:
 	wait_pllblock
 2:
+
+	/* Enable DDR clock */
+	mov 	tmp1, #AT91_PMC_SYS_DDR
+	str	tmp1, [pmc, #AT91_PMC_SCER]
 
 	/* Restore PLLA setting */
 	ldr	tmp1, .saved_pllar
