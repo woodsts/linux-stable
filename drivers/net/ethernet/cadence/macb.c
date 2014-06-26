@@ -1292,7 +1292,7 @@ static void macb_configure_dma(struct macb *bp)
 static void macb_configure_caps(struct macb *bp)
 {
 	if (macb_is_gem(bp)) {
-		if (GEM_BF(IRQCOR, gem_readl(bp, DCFG1)) == 0)
+		if (GEM_BFEXT(IRQCOR, gem_readl(bp, DCFG1)) == 0)
 			bp->caps |= MACB_CAPS_ISR_CLEAR_ON_WRITE;
 	}
 }
@@ -1863,6 +1863,7 @@ static int __init macb_probe(struct platform_device *pdev)
 
 	netif_carrier_off(dev);
 
+	netdev_info(dev, "Cadence rev 0x%08x\n", macb_readl(bp, MID));
 	netdev_info(dev, "Cadence %s at 0x%08lx irq %d (%pM)\n",
 		    macb_is_gem(bp) ? "GEM" : "MACB", dev->base_addr,
 		    dev->irq, dev->dev_addr);
