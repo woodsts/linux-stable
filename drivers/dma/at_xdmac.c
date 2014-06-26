@@ -958,9 +958,11 @@ static int atmel_xdmac_resume_noirq(struct device *dev)
 	clk_prepare_enable(atxdmac->clk);
 
 	/* Clear pending interrupts. */
-	for (i = 0; i < atxdmac->dma.chancnt; i++)
+	for (i = 0; i < atxdmac->dma.chancnt; i++) {
+		atchan = &atxdmac->chan[i];
 		while (at_xdmac_chan_read(atchan, AT_XDMAC_CIS))
 			cpu_relax();
+	}
 
 	at_xdmac_write(atxdmac, AT_XDMAC_GIE, atxdmac->save_gim);
 	at_xdmac_write(atxdmac, AT_XDMAC_GE, atxdmac->save_gs);
