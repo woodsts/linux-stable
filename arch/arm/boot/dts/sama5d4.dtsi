@@ -190,7 +190,7 @@
 			};
 
 			macb0: ethernet@f8020000 {
-				compatible = "cdns,pc302-gem", "cdns,gem";
+				compatible = "atmel,sama5d4-gem";
 				reg = <0xf8020000 0x100>;
 				interrupts = <54 IRQ_TYPE_LEVEL_HIGH 3>;
 				pinctrl-names = "default";

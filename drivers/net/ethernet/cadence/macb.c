@@ -226,7 +226,8 @@ static void macb_handle_link_change(struct net_device *dev)
 				reg |= MACB_BIT(FD);
 			if (phydev->speed == SPEED_100)
 				reg |= MACB_BIT(SPD);
-			if (phydev->speed == SPEED_1000)
+			if (phydev->speed == SPEED_1000
+			 && bp->caps & MACB_CAPS_GIGABIT_MODE_AVAILABLE)
 				reg |= GEM_BIT(GBE);
 
 			macb_or_gem_writel(bp, NCFGR, reg);
@@ -296,7 +297,7 @@ static int macb_mii_probe(struct net_device *dev)
 	}
 
 	/* mask with MAC supported features */
-	if (macb_is_gem(bp))
+	if (macb_is_gem(bp) && bp->caps & MACB_CAPS_GIGABIT_MODE_AVAILABLE)
 		phydev->supported &= PHY_GBIT_FEATURES;
 	else
 		phydev->supported &= PHY_BASIC_FEATURES;
@@ -1253,13 +1254,18 @@ static u32 macb_dbw(struct macb *bp)
 	if (!macb_is_gem(bp))
 		return 0;
 
+	netdev_dbg(bp->dev, "Cadence DCFG1 0x%08x\n", gem_readl(bp, DCFG1));
+
 	switch (GEM_BFEXT(DBWDEF, gem_readl(bp, DCFG1))) {
 	case 4:
+		netdev_dbg(bp->dev, "Cadence DBW 128\n");
 		return GEM_BF(DBW, GEM_DBW128);
 	case 2:
+		netdev_dbg(bp->dev, "Cadence DBW 64\n");
 		return GEM_BF(DBW, GEM_DBW64);
 	case 1:
 	default:
+		netdev_dbg(bp->dev, "Cadence DBW 32\n");
 		return GEM_BF(DBW, GEM_DBW32);
 	}
 }
@@ -1267,7 +1273,7 @@ static u32 macb_dbw(struct macb *bp)
 /*
  * Configure the receive DMA engine
  * - use the correct receive buffer size
- * - set the possibility to use INCR16 bursts
+ * - set best burst length for DMA operations
  *   (if not supported by FIFO, it will fallback to default)
  * - set both rx/tx packet buffers to full memory size
  * These are configurable parameters for GEM.
@@ -1279,21 +1285,12 @@ static void macb_configure_dma(struct macb *bp)
 	if (macb_is_gem(bp)) {
 		dmacfg = gem_readl(bp, DMACFG) & ~GEM_BF(RXBS, -1L);
 		dmacfg |= GEM_BF(RXBS, bp->rx_buffer_size / RX_BUFFER_MULTIPLE);
-		dmacfg |= GEM_BF(FBLDO, 16);
+		if (bp->dma_burst_length)
+			dmacfg |= GEM_BF(FBLDO, bp->dma_burst_length);
 		dmacfg |= GEM_BIT(TXPBMS) | GEM_BF(RXBMS, -1L);
 		dmacfg &= ~GEM_BIT(ENDIA);
+		netdev_dbg(bp->dev, "Cadence configure DMA with 0x%08x\n", dmacfg);
 		gem_writel(bp, DMACFG, dmacfg);
-	}
-}
-
-/*
- * Configure peripheral capacities according to integration options used
- */
-static void macb_configure_caps(struct macb *bp)
-{
-	if (macb_is_gem(bp)) {
-		if (GEM_BFEXT(IRQCOR, gem_readl(bp, DCFG1)) == 0)
-			bp->caps |= MACB_CAPS_ISR_CLEAR_ON_WRITE;
 	}
 }
 
@@ -1319,7 +1316,6 @@ static void macb_init_hw(struct macb *bp)
 	bp->duplex = DUPLEX_HALF;
 
 	macb_configure_dma(bp);
-	macb_configure_caps(bp);
 
 	/* Initialize TX and RX buffers */
 	macb_writel(bp, RBQP, bp->rx_ring_dma);
@@ -1708,16 +1704,64 @@ static const struct net_device_ops macb_netdev_ops = {
 };
 
 #if defined(CONFIG_OF)
+static struct macb_config pc302gem_config = {
+	.caps = MACB_CAPS_GIGABIT_MODE_AVAILABLE,
+	.dma_burst_length = 16,
+};
+
+static struct macb_config sama5d4_config = {
+	.caps = 0,
+	.dma_burst_length = 4,
+};
+
 static const struct of_device_id macb_dt_ids[] = {
 	{ .compatible = "cdns,at32ap7000-macb" },
 	{ .compatible = "cdns,at91sam9260-macb" },
 	{ .compatible = "cdns,macb" },
-	{ .compatible = "cdns,pc302-gem" },
-	{ .compatible = "cdns,gem" },
+	{ .compatible = "cdns,pc302-gem", .data = &pc302gem_config },
+	{ .compatible = "cdns,gem", .data = &pc302gem_config },
+	{ .compatible = "atmel,sama5d4-gem", .data = &sama5d4_config },
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, macb_dt_ids);
 #endif
+
+/*
+ * Configure peripheral capacities according to device tree
+ * and integration options used
+ */
+static void macb_configure_caps(struct macb *bp)
+{
+	u32 dcfg;
+	const struct of_device_id *match;
+
+	if (bp->pdev->dev.of_node) {
+		match = of_match_node(macb_dt_ids, bp->pdev->dev.of_node);
+		if (match && match->data) {
+			bp->caps = ((struct macb_config *)match->data)->caps;
+			/*
+			 * As we have access to the matching node, configure
+			 * DMA burst length as well
+			 */
+			bp->dma_burst_length =
+				((struct macb_config *)match->data)->dma_burst_length;
+		}
+	}
+
+	if (MACB_BFEXT(IDNUM, macb_readl(bp, MID)) == 0x2)
+		bp->caps |= MACB_CAPS_MACB_IS_GEM;
+
+	if (macb_is_gem(bp)) {
+		dcfg = gem_readl(bp, DCFG1);
+		if (GEM_BFEXT(IRQCOR, dcfg) == 0)
+			bp->caps |= MACB_CAPS_ISR_CLEAR_ON_WRITE;
+		dcfg = gem_readl(bp, DCFG2);
+		if ((dcfg & (GEM_BIT(RX_PKT_BUFF) | GEM_BIT(TX_PKT_BUFF))) == 0)
+			bp->caps |= MACB_CAPS_FIFO_MODE;
+	}
+
+	netdev_dbg(bp->dev, "Cadence caps 0x%08x\n", bp->caps);
+}
 
 static int __init macb_probe(struct platform_device *pdev)
 {
@@ -1797,6 +1841,9 @@ static int __init macb_probe(struct platform_device *pdev)
 	dev->ethtool_ops = &macb_ethtool_ops;
 
 	dev->base_addr = regs->start;
+
+	/* setup capacities */
+	macb_configure_caps(bp);
 
 	/* setup appropriated routines according to adapter type */
 	if (macb_is_gem(bp)) {
