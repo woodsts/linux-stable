@@ -475,7 +475,10 @@ at_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 	if (unlikely(!len))
 		return NULL;
 
-	/* check address alignment to select the greater data width we can use */
+	/* Check address alignment to select the greater data width we can use.
+	 * Some XDMAC implementations don't provide dword transfer, in this
+	 * case selecting dword has the same behavior as selecting word transfers.
+	 */
 	if (!((src_addr | dst_addr) & 7)) {
 		dwidth = AT_XDMAC_CC_DWIDTH_DWORD;
 		dev_dbg(chan2dev(chan), "%s: dwidth: double word\n", __func__);
