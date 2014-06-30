@@ -224,7 +224,7 @@ static struct dma_chan *at_xdmac_xlate(struct of_phandle_args *dma_spec,
 static int at_xdmac_set_slave_config(struct dma_chan *chan,
 				      struct dma_slave_config *sconfig)
 {
-	struct at_xdmac_chan *atchan = to_at_xdmac_chan(chan);
+	struct at_xdmac_chan 	*atchan = to_at_xdmac_chan(chan);
 
 	atchan->cfg = AT91_XDMAC_DT_PERID(atchan->perid)
 		      |	AT_XDMAC_CC_SWREQ_HWR_CONNECTED
@@ -238,7 +238,7 @@ static int at_xdmac_set_slave_config(struct dma_chan *chan,
 			       | AT_XDMAC_CC_DSYNC_PER2MEM;
 		atchan->dwidth = ffs(sconfig->src_addr_width) - 1;
 		atchan->cfg |= AT91_XDMAC_DT_DWIDTH(atchan->dwidth);
-		atchan->cfg |= AT91_XDMAC_DT_CSIZE(ffs(sconfig->src_maxburst) - 1);
+		atchan->cfg |= at_xdmac_csize(sconfig->src_maxburst);
 	} else if (sconfig->direction == DMA_MEM_TO_DEV) {
 		atchan->cfg |= AT_XDMAC_CC_DAM_FIXED_AM
 			       | AT_XDMAC_CC_SAM_INCREMENTED_AM
@@ -247,7 +247,7 @@ static int at_xdmac_set_slave_config(struct dma_chan *chan,
 			       | AT_XDMAC_CC_DSYNC_MEM2PER;
 		atchan->dwidth = ffs(sconfig->dst_addr_width) - 1;
 		atchan->cfg |= AT91_XDMAC_DT_DWIDTH(atchan->dwidth);
-		atchan->cfg |= AT91_XDMAC_DT_CSIZE(ffs(sconfig->dst_maxburst) - 1);
+		atchan->cfg |= at_xdmac_csize(sconfig->dst_maxburst);
 	} else
 		return -EINVAL;
 
