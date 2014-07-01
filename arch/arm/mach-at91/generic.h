@@ -95,5 +95,8 @@ extern int  __init at91_gpio_of_irq_setup(struct device_node *node,
 extern u32 at91_get_extern_irq(void);
 
 /* Firmware */
-extern void atmel_firmware_init(void);
-extern bool atmel_firmware_is_registered(void);
+void __weak atmel_firmware_init(void) {}
+bool __weak atmel_firmware_is_registered(void)
+{
+	return false;
+}
