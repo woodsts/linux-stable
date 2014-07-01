@@ -231,17 +231,10 @@ static struct i2c_board_info i2c_ov7740 = {
 	I2C_BOARD_INFO("ov7740", 0x21),
 };
 
-#if !defined(CONFIG_SOC_SAMA5D4)
 LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0, 1);
 LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1, 1);
 LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2, 1);
 LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3, 1);
-#else
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0, 0);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1, 0);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2, 0);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3, 0);
-#endif
 
 static struct platform_device *sensors[] __initdata = {
 	&isi_ov2640,
@@ -249,6 +242,25 @@ static struct platform_device *sensors[] __initdata = {
 	&isi_ov9740,
 	&isi_ov7740,
 };
+
+static void at91_fixup_isi_sensor_bus(struct platform_device **sensors,
+		unsigned int sensors_nbr, unsigned int fixed_i2c_id)
+{
+	int i;
+	struct platform_device **s;
+	struct soc_camera_desc *scd;
+
+	s = sensors;
+	for (i = 0; i < sensors_nbr; i++) {
+		if (s[i]) {
+			scd = s[i]->dev.platform_data;
+			if (scd)
+				scd->host_desc.i2c_adapter_id = fixed_i2c_id;
+		} else {
+			break;
+		}
+	}
+}
 
 struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf8038000, "atmel_hlcdfb_base", &ek_lcdc_data),
@@ -388,6 +400,7 @@ static void __init sama5_dt_device_init(void)
 				camera_set_gpio_pins(AT91_PIN_PE24, AT91_PIN_PE29);
 				at91_config_isi(true, "pck1");
 			} else if (of_machine_is_compatible("atmel,sama5d4ek")) {
+				at91_fixup_isi_sensor_bus(sensors, ARRAY_SIZE(sensors), 0);
 				camera_set_gpio_pins(AT91_PIN_PB11, AT91_PIN_PB5);
 				at91_config_isi(true, "pck1");
 			}
