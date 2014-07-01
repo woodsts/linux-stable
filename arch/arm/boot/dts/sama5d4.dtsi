@@ -129,6 +129,15 @@
 				#dma-cells = <2>;
 			};
 
+			isi: isi@f0008000 {
+				compatible = "atmel,at91sam9g45-isi";
+				reg = <0xf0008000 0x4000>;
+				interrupts = <52 IRQ_TYPE_LEVEL_HIGH 5>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_isi &pinctrl_isi_mck &pinctrl_isi_power &pinctrl_isi_reset>;
+				status = "disabled";
+			};
+
 			ramc0: ramc@f0010000 {
 				compatible = "atmel,at91sam9g45-ddramc";
 				reg = <0xf0010000 0x200>;
@@ -497,6 +506,36 @@
 						atmel,pins =
 							<AT91_PIOB 29 AT91_PERIPH_A AT91_PINCTRL_NONE	/* TWD2, conflicts with RD0 and PWML1 */
 							 AT91_PIOB 30 AT91_PERIPH_A AT91_PINCTRL_NONE>; /* TWCK2, conflicts with RF0 */
+					};
+				};
+
+				isi {
+					pinctrl_isi: isi-0 {
+						atmel,pins =
+							<AT91_PIOC 19 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D0 */
+							 AT91_PIOC 20 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D1 */
+							 AT91_PIOC 21 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D2 */
+							 AT91_PIOC 22 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D3 */
+							 AT91_PIOC 23 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D4 */
+							 AT91_PIOC 24 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D5 */
+							 AT91_PIOC 25 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D6 */
+							 AT91_PIOC 26 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D7 */
+							 AT91_PIOB  1 AT91_PERIPH_C AT91_PINCTRL_NONE	/* ISI_PCK, conflict with G0_RXCK */
+							 AT91_PIOB  3 AT91_PERIPH_C AT91_PINCTRL_NONE	/* ISI_VSYNC */
+							 AT91_PIOB  4 AT91_PERIPH_C AT91_PINCTRL_NONE>;	/* ISI_HSYNC */
+					};
+					pinctrl_isi_mck: isi_mck-0 {
+						atmel,pins =
+							<AT91_PIOC 4 AT91_PERIPH_C AT91_PINCTRL_NONE>;	/* ISI_MCK(PCK1), conflict with MCI0_CK, SPI0_NPCS1 */
+					};
+					pinctrl_isi_reset: isi_reset-0 {
+						atmel,pins =
+							<AT91_PIOB 11 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;   /* PB11 gpio ISI_RST */
+					};
+
+					pinctrl_isi_power: isi_power-0 {
+						atmel,pins =
+							<AT91_PIOB 5 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>; /* PB5 gpio ISI_PWD */
 					};
 				};
 
