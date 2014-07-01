@@ -121,6 +121,8 @@ EXPORT_SYMBOL_GPL(at91_pmc_base);
 				|| cpu_is_sama5d3() \
 				|| cpu_is_sama5d4())
 
+#define cpu_has_dual_matrix()	(cpu_is_sama5d4())
+
 static LIST_HEAD(clocks);
 static DEFINE_SPINLOCK(clk_lock);
 
@@ -648,7 +650,7 @@ int __init clk_register(struct clk *clk)
 {
 	if (clk_is_peripheral(clk)) {
 		if (!clk->parent) {
-			if (clk_is_periph_h64mx(clk))
+			if (!cpu_has_dual_matrix() || clk_is_periph_h64mx(clk))
 				clk->parent = &mck;
 			else
 				clk->parent = &h32mx_clk;
