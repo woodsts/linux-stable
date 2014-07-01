@@ -173,6 +173,7 @@
 #define AT_XDMAC_MBR_UBC_NDV3		(0x3 << 27)	/* Next Descriptor View 3 */
 
 #define AT_XDMAC_MAX_CHAN	0x20
+#define AT_XDMAC_MAX_CSIZE	16
 
 enum atc_status {
 	AT_XDMAC_CHAN_IS_CYCLIC = 0,
@@ -282,4 +283,11 @@ static inline int at_xdmac_chan_is_paused(struct at_xdmac_chan *atchan)
 	return test_bit(AT_XDMAC_CHAN_IS_PAUSED, &atchan->status);
 }
 
+static inline u32 at_xdmac_csize(u32 maxburst)
+{
+	if (maxburst > AT_XDMAC_MAX_CSIZE)
+		return (ffs(AT_XDMAC_MAX_CSIZE) - 1) << AT91_XDMAC_DT_CSIZE_OFFSET;
+	else
+		return (ffs(maxburst) - 1) << AT91_XDMAC_DT_CSIZE_OFFSET;
+};
 #endif /* __AT_XDMAC_H__ */
