@@ -19,6 +19,7 @@
 #ifndef __ASSEMBLY__
 extern void __iomem *at91_pmc_base;
 
+struct clk;
 extern int clk_set_smd_parent(struct clk *clk, struct clk *parent);
 
 #define at91_pmc_read(field) \
