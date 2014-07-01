@@ -766,8 +766,6 @@ static struct clk *const standard_pmc_clocks[] __initconst = {
 
 	/* MCK */
 	&mck,
-	/* Matrix clock */
-	&h32mx_clk,
 };
 
 /* PLLB generated USB full speed clock init */
@@ -1101,8 +1099,11 @@ int __init at91_alt_dt_clock_init(void)
 		mck.id = 4;
 	}
 
-	h32mx_clk.rate_hz = h32mx_clk.parent->rate_hz;
-	h32mx_clk.rate_hz /= (1 << ((mckr & AT91_PMC_H32MXDIV) >> 24));	/* H32MX divisor by 2 */
+	if (cpu_has_dual_matrix()) {
+		at91_clk_add(&h32mx_clk);
+		h32mx_clk.rate_hz = h32mx_clk.parent->rate_hz;
+		h32mx_clk.rate_hz /= (1 << ((mckr & AT91_PMC_H32MXDIV) >> 24));	/* H32MX divisor by 2 */
+	}
 
 	/* Register the PMC's standard clocks */
 	for (i = 0; i < ARRAY_SIZE(standard_pmc_clocks); i++)
@@ -1119,7 +1120,8 @@ int __init at91_alt_dt_clock_init(void)
 
 	/* MCK and CPU clock are "always on" */
 	clk_enable(&mck);
-	clk_enable(&h32mx_clk);
+	if (cpu_has_dual_matrix())
+		clk_enable(&h32mx_clk);
 
 	printk("Clocks: CPU %u MHz, master %u MHz, h32mx %u MHz\n",
 		freq / 1000000, (unsigned) mck.rate_hz / 1000000,
