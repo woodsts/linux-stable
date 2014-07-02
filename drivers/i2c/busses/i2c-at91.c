@@ -797,7 +797,7 @@ static int at91_twi_runtime_suspend(struct device *dev)
 {
 	struct at91_twi_dev *twi_dev = dev_get_drvdata(dev);
 
-	clk_disable(twi_dev->clk);
+	clk_disable_unprepare(twi_dev->clk);
 
 	return 0;
 }
@@ -806,10 +806,12 @@ static int at91_twi_runtime_resume(struct device *dev)
 {
 	struct at91_twi_dev *twi_dev = dev_get_drvdata(dev);
 
-	return clk_enable(twi_dev->clk);
+	return clk_prepare_enable(twi_dev->clk);
 }
 
 static const struct dev_pm_ops at91_twi_pm = {
+	.suspend	= at91_twi_runtime_suspend,
+	.resume		= at91_twi_runtime_resume,
 	.runtime_suspend	= at91_twi_runtime_suspend,
 	.runtime_resume		= at91_twi_runtime_resume,
 };
