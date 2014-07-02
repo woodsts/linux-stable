@@ -1102,6 +1102,37 @@ static int at91_adc_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM_SLEEP
+static int at91_adc_suspend(struct device *dev)
+{
+	struct iio_dev *idev = platform_get_drvdata(to_platform_device(dev));
+	struct at91_adc_state *st = iio_priv(idev);
+
+	clk_disable_unprepare(st->clk);
+
+	return 0;
+}
+
+static int at91_adc_resume(struct device *dev)
+{
+	struct iio_dev *idev = platform_get_drvdata(to_platform_device(dev));
+	struct at91_adc_state *st = iio_priv(idev);
+
+	clk_prepare_enable(st->clk);
+
+	return 0;
+}
+
+static const struct dev_pm_ops at91_adc_pm_ops = {
+	.suspend = at91_adc_suspend,
+	.resume = at91_adc_resume,
+};
+
+#define AT91_ADC_PM_OPS (&at91_adc_pm_ops)
+#else
+#define AT91_ADC_PM_OPS NULL
+#endif
+
 #ifdef CONFIG_OF
 static struct at91_adc_caps at91sam9260_caps = {
 	.calc_startup_ticks = calc_startup_ticks_9260,
@@ -1163,6 +1194,7 @@ static struct platform_driver at91_adc_driver = {
 	.driver = {
 		   .name = DRIVER_NAME,
 		   .of_match_table = of_match_ptr(at91_adc_dt_ids),
+		.pm = AT91_ADC_PM_OPS,
 	},
 };
 
