@@ -56,6 +56,7 @@ struct at91_usbh_data {
 	u8              vbus_pin_active_low[AT91_MAX_USBH_PORTS];
 	u8              overcurrent_status[AT91_MAX_USBH_PORTS];
 	u8              overcurrent_changed[AT91_MAX_USBH_PORTS];
+	bool		wake_up_source;
 };
 
  /* NAND / SmartMedia */

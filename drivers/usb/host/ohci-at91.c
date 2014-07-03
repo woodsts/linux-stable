@@ -543,6 +543,9 @@ static int ohci_at91_of_init(struct platform_device *pdev)
 		pdata->overcurrent_pin[i] =
 			of_get_named_gpio_flags(np, "atmel,oc-gpio", i, &flags);
 
+	if (of_get_property(np, "wakeup-source", NULL))
+		pdata->wake_up_source = true;
+
 	pdev->dev.platform_data = pdata;
 
 	return 0;
@@ -635,9 +638,11 @@ static int ohci_hcd_at91_drv_probe(struct platform_device *pdev)
 					"can't get gpio IRQ for overcurrent\n");
 			}
 		}
+
+		if (pdata->wake_up_source)
+			device_init_wakeup(&pdev->dev, 1);
 	}
 
-	device_init_wakeup(&pdev->dev, 1);
 	return usb_hcd_at91_probe(&ohci_at91_hc_driver, pdev);
 }
 
@@ -660,9 +665,11 @@ static int ohci_hcd_at91_drv_remove(struct platform_device *pdev)
 			free_irq(gpio_to_irq(pdata->overcurrent_pin[i]), pdev);
 			gpio_free(pdata->overcurrent_pin[i]);
 		}
+
+		if (pdata->wake_up_source)
+			device_init_wakeup(&pdev->dev, 0);
 	}
 
-	device_init_wakeup(&pdev->dev, 0);
 	usb_hcd_at91_remove(platform_get_drvdata(pdev), pdev);
 	return 0;
 }
