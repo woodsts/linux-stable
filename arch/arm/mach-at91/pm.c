@@ -297,6 +297,11 @@ static int at91_pm_enter(suspend_state_t state)
 				at91sam9g45_standby();
 			else if (cpu_is_at91sam9263())
 				at91sam9263_standby();
+			else if (cpu_is_at91sam9x5()
+				|| cpu_is_at91sam9n12()
+				|| cpu_is_sama5d3()
+				|| cpu_is_sama5d4())
+				at91sam_ddrc_standby();
 			else
 				at91sam9_standby();
 			break;
