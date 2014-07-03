@@ -11,6 +11,9 @@ Required properties:
  - atmel,oc-gpio: If present, specifies a gpio that needs to be
    activated for the overcurrent detection.
 
+Option properties:
+ - wakeup-source: with this protery, the ohci can wake up system.
+
 usb0: ohci@00500000 {
 	compatible = "atmel,at91rm9200-ohci", "usb-ohci";
 	reg = <0x00500000 0x100000>;
