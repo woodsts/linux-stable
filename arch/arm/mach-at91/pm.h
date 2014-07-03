@@ -111,4 +111,18 @@ static inline void at91sam9_standby(void)
 	at91_ramc_write(0, AT91_SDRAMC_LPR, saved_lpr);
 }
 
+static inline void at91sam_ddrc_standby(void)
+{
+	u32 saved_lpr;
+
+	saved_lpr = at91_ramc_read(0, AT91_DDRSDRC_LPR);
+
+	at91_ramc_write(0, AT91_DDRSDRC_LPR, (saved_lpr & ~AT91_DDRSDRC_LPCB)
+					| AT91_DDRSDRC_LPCB_SELF_REFRESH);
+
+	cpu_do_idle();
+
+	at91_ramc_write(0, AT91_DDRSDRC_LPR, saved_lpr);
+}
+
 #endif
