@@ -48,14 +48,14 @@ static void at_xdmac_off(struct at_xdmac *atxdmac)
 {
 	at_xdmac_write(atxdmac, AT_XDMAC_GD, -1L);
 
-	/* Wait that all chans are disabled */
+	/* Wait that all chans are disabled. */
 	while (at_xdmac_read(atxdmac, AT_XDMAC_GS))
 		cpu_relax();
 
 	at_xdmac_write(atxdmac, AT_XDMAC_GID, -1L);
 }
 
-/* Call with lock hold */
+/* Call with lock hold. */
 static void at_xdmac_start_xfer(struct at_xdmac_chan *atchan,
 				struct at_xdmac_desc *first)
 {
@@ -168,7 +168,7 @@ static struct at_xdmac_desc *at_xdmac_alloc_desc(struct dma_chan *chan,
 	return desc;
 }
 
-/* Call must be protected by lock */
+/* Call must be protected by lock. */
 static struct at_xdmac_desc *at_xdmac_get_desc(struct at_xdmac_chan *atchan)
 {
 	struct at_xdmac_desc *desc;
@@ -228,6 +228,7 @@ static int at_xdmac_set_slave_config(struct dma_chan *chan,
 
 	atchan->cfg = AT91_XDMAC_DT_PERID(atchan->perid)
 		      |	AT_XDMAC_CC_SWREQ_HWR_CONNECTED
+		      | AT_XDMAC_CC_MBSIZE_SIXTEEN
 		      | AT_XDMAC_CC_TYPE_PER_TRAN;
 
 	if (sconfig->direction == DMA_DEV_TO_MEM) {
@@ -237,7 +238,7 @@ static int at_xdmac_set_slave_config(struct dma_chan *chan,
 			       | AT_XDMAC_CC_SIF(atchan->perif)
 			       | AT_XDMAC_CC_DSYNC_PER2MEM;
 		atchan->dwidth = ffs(sconfig->src_addr_width) - 1;
-		atchan->cfg |= AT91_XDMAC_DT_DWIDTH(atchan->dwidth);
+		atchan->cfg |= AT_XDMAC_CC_DWIDTH(atchan->dwidth);
 		atchan->cfg |= at_xdmac_csize(sconfig->src_maxburst);
 	} else if (sconfig->direction == DMA_MEM_TO_DEV) {
 		atchan->cfg |= AT_XDMAC_CC_DAM_FIXED_AM
@@ -246,7 +247,7 @@ static int at_xdmac_set_slave_config(struct dma_chan *chan,
 			       | AT_XDMAC_CC_SIF(atchan->memif)
 			       | AT_XDMAC_CC_DSYNC_MEM2PER;
 		atchan->dwidth = ffs(sconfig->dst_addr_width) - 1;
-		atchan->cfg |= AT91_XDMAC_DT_DWIDTH(atchan->dwidth);
+		atchan->cfg |= AT_XDMAC_CC_DWIDTH(atchan->dwidth);
 		atchan->cfg |= at_xdmac_csize(sconfig->dst_maxburst);
 	} else
 		return -EINVAL;
@@ -467,6 +468,7 @@ at_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 					| AT_XDMAC_CC_SAM_INCREMENTED_AM
 					| AT_XDMAC_CC_DIF(0)
 					| AT_XDMAC_CC_SIF(0)
+					| AT_XDMAC_CC_MBSIZE_SIXTEEN
 					| AT_XDMAC_CC_TYPE_MEM_TRAN;
 
 	dev_dbg(chan2dev(chan), "%s: src=0x%08x, dest=0x%08x, len=%d, flags=0x%lx\n",
@@ -495,7 +497,7 @@ at_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 
 	atchan->cfg = chan_cc | AT_XDMAC_CC_DWIDTH(dwidth);
 
-	/* prepare descriptors */
+	/* Prepare descriptors. */
 	while (remaining_size) {
 		struct at_xdmac_desc	*desc = NULL;
 
@@ -511,7 +513,7 @@ at_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 			return NULL;
 		}
 
-		/* Update src and dest addresses */
+		/* Update src and dest addresses. */
 		src_addr += xfer_size;
 		dst_addr += xfer_size;
 
@@ -522,7 +524,7 @@ at_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 
 		dev_dbg(chan2dev(chan), "%s: xfer_size=%u\n", __func__, xfer_size);
 
-		/* Check remaining length and change data width if needed */
+		/* Check remaining length and change data width if needed. */
 		if (!((src_addr | dst_addr | xfer_size) & 7)) {
 			dwidth = AT_XDMAC_CC_DWIDTH_DWORD;
 			dev_dbg(chan2dev(chan), "%s: dwidth: double word\n", __func__);
@@ -554,7 +556,7 @@ at_xdmac_prep_dma_memcpy(struct dma_chan *chan, dma_addr_t dest, dma_addr_t src,
 			 "%s: lld: mbr_sa=0x%08x, mbr_da=0x%08x, mbr_ubc=0x%08x, mbr_cfg=0x%08x\n",
 			 __func__, desc->lld.mbr_sa, desc->lld.mbr_da, desc->lld.mbr_ubc, desc->lld.mbr_cfg);
 
-		/* chain lld */
+		/* Chain lld. */
 		if (prev) {
 			prev->lld.mbr_nda = desc->tx_dma_desc.phys;
 			dev_dbg(chan2dev(chan),
