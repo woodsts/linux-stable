@@ -705,6 +705,8 @@ static int gem_rx(struct macb *bp, int budget)
 
 		skb->protocol = eth_type_trans(skb, bp->dev);
 		skb_checksum_none_assert(skb);
+		if (bp->dev->features & NETIF_F_RXCSUM)
+			skb->ip_summed = CHECKSUM_UNNECESSARY;
 
 		bp->stats.rx_packets++;
 		bp->stats.rx_bytes += skb->len;
@@ -1441,6 +1443,18 @@ static u32 macb_dbw(struct macb *bp)
 }
 
 /*
+ * Configure the RX checksum offload
+ */
+static u32 macb_rxcsum(struct macb *bp)
+{
+	if (macb_is_gem(bp) &&
+	    (bp->dev->features & NETIF_F_RXCSUM))
+		return GEM_BIT(RXCOEN);
+
+	return 0;
+}
+
+/*
  * Configure the receive DMA engine
  * - use the correct receive buffer size
  * - set best burst length for DMA operations
@@ -1485,6 +1499,7 @@ static void macb_init_hw(struct macb *bp)
 	if (!(bp->dev->flags & IFF_BROADCAST))
 		config |= MACB_BIT(NBC);	/* No BroadCast */
 	config |= macb_dbw(bp);
+	config |= macb_rxcsum(bp);
 	macb_writel(bp, NCFGR, config);
 	bp->speed = SPEED_10;
 	bp->duplex = DUPLEX_HALF;
@@ -1880,6 +1895,18 @@ static int macb_set_features(struct net_device *netdev,
 		gem_writel(bp, DMACFG, dmacfg);
 	}
 
+	/* RX checksum offload */
+	if ((changed & NETIF_F_RXCSUM) && macb_is_gem(bp)) {
+		u32 netcfg;
+
+		netcfg = gem_readl(bp, NCFGR);
+		if (features & NETIF_F_RXCSUM)
+			netcfg |= GEM_BIT(RXCOEN);
+		else
+			netcfg &= ~GEM_BIT(RXCOEN);
+		gem_writel(bp, NCFGR, netcfg);
+	}
+
 	return 0;
 }
 
@@ -2063,7 +2090,7 @@ static int __init macb_probe(struct platform_device *pdev)
 	dev->hw_features = NETIF_F_SG;
 	if (macb_is_gem(bp) && !(bp->caps & MACB_CAPS_FIFO_MODE)) {
 		/* Checksum offload is only available on packet buffer design */
-		dev->hw_features |= NETIF_F_HW_CSUM;
+		dev->hw_features |= NETIF_F_HW_CSUM | NETIF_F_RXCSUM;
 	}
 	if (bp->caps & MACB_CAPS_SG_DISABLED)
 		dev->hw_features &= ~NETIF_F_SG;

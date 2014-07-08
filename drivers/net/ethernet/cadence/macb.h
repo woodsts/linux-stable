@@ -164,6 +164,8 @@
 #define GEM_CLK_SIZE				3
 #define GEM_DBW_OFFSET				21
 #define GEM_DBW_SIZE				2
+#define GEM_RXCOEN_OFFSET			24
+#define GEM_RXCOEN_SIZE				1
 
 /* Constants for data bus width. */
 #define GEM_DBW32				0
