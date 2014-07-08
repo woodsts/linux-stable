@@ -166,6 +166,22 @@ static struct clk ssc1_clk = {
 	.type		= CLK_TYPE_PERIPHERAL,
 };
 
+static struct clk sha_clk = {
+	.name		= "sha_clk",
+	.pid		= SAMA5D4_ID_SHA,
+	.type		= CLK_TYPE_PERIPHERAL,
+};
+static struct clk aes_clk = {
+	.name		= "aes_clk",
+	.pid		= SAMA5D4_ID_AES,
+	.type		= CLK_TYPE_PERIPHERAL,
+};
+static struct clk tdes_clk = {
+	.name		= "tdes_clk",
+	.pid		= SAMA5D4_ID_TDES,
+	.type		= CLK_TYPE_PERIPHERAL,
+};
+
 static struct clk *periph_clocks[] __initdata = {
 	&pioA_clk,
 	&pioB_clk,
@@ -194,6 +210,9 @@ static struct clk *periph_clocks[] __initdata = {
 	&smd_clk,
 	&ssc0_clk,
 	&ssc1_clk,
+	&sha_clk,
+	&aes_clk,
+	&tdes_clk,
 };
 
 static struct clk pck0 = {
@@ -240,6 +259,9 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_DEV_ID("usart", "fc010000.serial", &usart4_clk),
 	CLKDEV_CON_DEV_ID("t0_clk", "fc020000.timer", &tcb1_clk),
 	CLKDEV_CON_DEV_ID("adc_clk", "fc034000.adc", &adc_clk),
+	CLKDEV_CON_DEV_ID("aes_clk", "fc044000.aes", &aes_clk),
+	CLKDEV_CON_DEV_ID("tdes_clk", "fc04c000.tdes", &tdes_clk),
+	CLKDEV_CON_DEV_ID("sha_clk", "fc050000.sha", &sha_clk),
 	CLKDEV_CON_DEV_ID(NULL, "fc068000.gpio", &pioD_clk),
 	CLKDEV_CON_DEV_ID("usart", "fc069000.serial", &mck),
 	CLKDEV_CON_DEV_ID(NULL, "fc06a000.gpio", &pioA_clk),

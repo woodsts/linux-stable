@@ -167,8 +167,19 @@ static size_t atmel_sha_append_sg(struct atmel_sha_reqctx *ctx)
 		count = min(ctx->sg->length - ctx->offset, ctx->total);
 		count = min(count, ctx->buflen - ctx->bufcnt);
 
-		if (count <= 0)
-			break;
+		if (count <= 0) {
+			/*
+			 * Check if count <= 0 because the buffer is full or
+			 * because the sg length is 0. In the latest case,
+			 * check if there is another sg in the list, a 0 length
+			 * sg doesn't necessarily mean the end of the sg list.
+			 */
+			if ((ctx->sg->length == 0) && !sg_is_last(ctx->sg)) {
+				ctx->sg = sg_next(ctx->sg);
+				continue;
+			} else
+				break;
+		}
 
 		scatterwalk_map_and_copy(ctx->buffer + ctx->bufcnt, ctx->sg,
 			ctx->offset, count, 0);
@@ -533,7 +544,7 @@ static int atmel_sha_update_dma_slow(struct atmel_sha_dev *dd)
 	if (final)
 		atmel_sha_fill_padding(ctx, 0);
 
-	if (final || (ctx->bufcnt == ctx->buflen && ctx->total)) {
+	if (final || (ctx->bufcnt == ctx->buflen)) {
 		count = ctx->bufcnt;
 		ctx->bufcnt = 0;
 		return atmel_sha_xmit_dma_map(dd, ctx, count, final);
@@ -1304,6 +1315,12 @@ static void atmel_sha_get_cap(struct atmel_sha_dev *dd)
 
 	/* keep only major version number */
 	switch (dd->hw_version & 0xff0) {
+	case 0x420:
+		dd->caps.has_dma = 1;
+		dd->caps.has_dualbuff = 1;
+		dd->caps.has_sha224 = 1;
+		dd->caps.has_sha_384_512 = 1;
+		break;
 	case 0x410:
 		dd->caps.has_dma = 1;
 		dd->caps.has_dualbuff = 1;
