@@ -31,6 +31,7 @@
 		i2c2 = &i2c2;
 		ssc0 = &ssc0;
 		ssc1 = &ssc1;
+		pwm0 = &pwm0;
 	};
 	cpus {
 		#address-cells = <1>;
@@ -223,6 +224,14 @@
 				interrupts = <54 IRQ_TYPE_LEVEL_HIGH 3>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_macb0_rmii>;
+				status = "disabled";
+			};
+
+			pwm0: pwm@f800c000 {
+				compatible = "atmel,sama5d3-pwm";
+				reg = <0xf800c000 0x300>;
+				interrupts = <43 IRQ_TYPE_LEVEL_HIGH 4>;
+				#pwm-cells = <3>;
 				status = "disabled";
 			};
 
