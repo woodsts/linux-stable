@@ -181,6 +181,11 @@ static struct clk tdes_clk = {
 	.pid		= SAMA5D4_ID_TDES,
 	.type		= CLK_TYPE_PERIPHERAL,
 };
+static struct clk pwm_clk = {
+	.name		= "pwm_clk",
+	.pid		= SAMA5D4_ID_PWM,
+	.type		= CLK_TYPE_PERIPHERAL,
+};
 
 static struct clk *periph_clocks[] __initdata = {
 	&pioA_clk,
@@ -213,6 +218,7 @@ static struct clk *periph_clocks[] __initdata = {
 	&sha_clk,
 	&aes_clk,
 	&tdes_clk,
+	&pwm_clk,
 };
 
 static struct clk pck0 = {
@@ -270,6 +276,7 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_DEV_ID(NULL, "fc06d000.gpio", &pioE_clk),
 	CLKDEV_CON_DEV_ID(NULL, "f8008000.ssc", &ssc0_clk),
 	CLKDEV_CON_DEV_ID(NULL, "fc014000.ssc", &ssc1_clk),
+	CLKDEV_CON_DEV_ID(NULL, "f800c000.pwm", &pwm_clk),
 };
 
 static void __init sama5d4_register_clocks(void)
