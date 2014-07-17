@@ -810,10 +810,11 @@ static int at91_twi_runtime_resume(struct device *dev)
 }
 
 static const struct dev_pm_ops at91_twi_pm = {
-	.suspend	= at91_twi_runtime_suspend,
-	.resume		= at91_twi_runtime_resume,
 	.runtime_suspend	= at91_twi_runtime_suspend,
 	.runtime_resume		= at91_twi_runtime_resume,
+
+	.suspend_noirq		= at91_twi_runtime_suspend,
+	.resume_noirq		= at91_twi_runtime_resume,
 };
 
 #define at91_twi_pm_ops (&at91_twi_pm)
