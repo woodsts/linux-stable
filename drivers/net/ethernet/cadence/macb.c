@@ -1286,7 +1286,7 @@ static void macb_configure_dma(struct macb *bp)
 		dmacfg = gem_readl(bp, DMACFG) & ~GEM_BF(RXBS, -1L);
 		dmacfg |= GEM_BF(RXBS, bp->rx_buffer_size / RX_BUFFER_MULTIPLE);
 		if (bp->dma_burst_length)
-			dmacfg |= GEM_BF(FBLDO, bp->dma_burst_length);
+			dmacfg = GEM_BFINS(FBLDO, bp->dma_burst_length, dmacfg);
 		dmacfg |= GEM_BIT(TXPBMS) | GEM_BF(RXBMS, -1L);
 		dmacfg &= ~GEM_BIT(ENDIA);
 		netdev_dbg(bp->dev, "Cadence configure DMA with 0x%08x\n", dmacfg);
