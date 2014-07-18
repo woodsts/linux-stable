@@ -24,6 +24,7 @@
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
+#include <linux/of_address.h>
 
 #include "at91_aic.h"
 #include "generic.h"
@@ -357,17 +358,51 @@ static int ksz8081_phy_reset(struct phy_device *phy)
 static void __init at91_init_l2cache(void)
 {
 	struct device_node *np;
+	void __iomem *l2cc_base;
+	u32 reg;
+	int ret;
 
 	np = of_find_compatible_node(NULL, NULL, "arm,pl310-cache");
 	if (!np)
 		return;
+
+	l2cc_base = of_iomap(np, 0);
+	if (!l2cc_base)
+		panic("unable to map l2cc cpu registers\n");
+
 	of_node_put(np);
 
-	call_firmware_op(l2x0_init);
+	ret = call_firmware_op(l2x0_init);
+	if (ret == -ENOSYS) {
+		/* Disable cache if it hasn't been done yet */
+		if (readl_relaxed(l2cc_base + L2X0_CTRL) & L2X0_CTRL_EN)
+			writel_relaxed(~L2X0_CTRL_EN, l2cc_base + L2X0_CTRL);
 
-	outer_cache.disable = firmware_ops->l2x0_disable;
+		/* Prefetch Control */
+		reg = readl_relaxed(l2cc_base + L2X0_PREFETCH_CTRL);
+		reg &= ~L2X0_PCR_OFFSET_MASK;
+		reg |= L2X0_PCR_OFFSET_(0x01);
+		reg |= L2X0_PCR_IDLEN;
+		reg |= L2X0_PCR_PDEN;
+		reg |= L2X0_PCR_DATPEN;
+		reg |= L2X0_PCR_INSPEN;
+		reg |= L2X0_PCR_DLEN;
+		writel_relaxed(reg, l2cc_base + L2X0_PREFETCH_CTRL);
 
-	l2x0_of_init(0, ~0UL);
+		/* Power Control */
+		reg = readl_relaxed(l2cc_base + L2X0_POWER_CTRL);
+		reg |= L2X0_STNDBY_MODE_EN;
+		reg |= L2X0_DYNAMIC_CLK_GATING_EN;
+		writel_relaxed(reg, l2cc_base + L2X0_POWER_CTRL);
+
+		/* Disable interrupts */
+		writel_relaxed(0x00, l2cc_base + L2X0_INTR_MASK);
+		writel_relaxed(0x01ff, l2cc_base + L2X0_INTR_CLEAR);
+
+		l2x0_of_init(0, ~0UL);
+	} else {
+		outer_cache.disable = firmware_ops->l2x0_disable;
+	}
 }
 #else
 static inline void at91_init_l2cache(void) {}

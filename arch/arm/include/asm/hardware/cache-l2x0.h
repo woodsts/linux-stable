@@ -106,6 +106,16 @@
 
 #define L2X0_WAY_SIZE_SHIFT		3
 
+#define	L2X0_PCR_OFFSET_MASK		(0x1f << 0)
+#define	L2X0_PCR_OFFSET_(x)		((x & 0x1f) << 0)
+#define	L2X0_PCR_NSIDEN			(0x01 << 21)
+#define	L2X0_PCR_IDLEN			(0x01 << 23)
+#define	L2X0_PCR_PDEN			(0x01 << 24)
+#define	L2X0_PCR_DLFWRDIS		(0x01 << 27)
+#define	L2X0_PCR_DATPEN			(0x01 << 28)
+#define	L2X0_PCR_INSPEN			(0x01 << 29)
+#define	L2X0_PCR_DLEN			(0x01 << 30)
+
 #ifndef __ASSEMBLY__
 extern void __init l2x0_init(void __iomem *base, u32 aux_val, u32 aux_mask);
 #if defined(CONFIG_CACHE_L2X0) && defined(CONFIG_OF)
