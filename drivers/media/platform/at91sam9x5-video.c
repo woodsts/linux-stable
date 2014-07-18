@@ -108,7 +108,7 @@
 #define REG_HEOCFG1_YUVEN		0x00000002
 #define REG_HEOCFG1_YUVMODE_12YCBCRP	0x00008000
 #define REG_HEOCFG1_YUVMODE_16YCBCR_0	0x00001000
-#define REG_HEOCFG1_YUVMODE_16YCBCR_1	0x00001000
+#define REG_HEOCFG1_YUVMODE_16YCBCR_1	0x00002000
 
 #define REG_HEOCFG2		0x54
 #define REG_HEOCFG2_XPOS		0x000007ff
@@ -733,11 +733,12 @@ static void at91sam9x5_video_update_config_real(
 	switch(pix->pixelformat) {
 		case V4L2_PIX_FMT_YUYV:
 			at91sam9x5_video_write32(priv, REG_HEOCFG1,
-			REG_HEOCFG1_YUVMODE_16YCBCR_1 |
+			REG_HEOCFG1_YUVMODE_16YCBCR_0 |
 			REG_HEOCFG1_YUVEN);
+			break;
 		case V4L2_PIX_FMT_UYVY:
 			at91sam9x5_video_write32(priv, REG_HEOCFG1,
-			REG_HEOCFG1_YUVMODE_16YCBCR_0 |
+			REG_HEOCFG1_YUVMODE_16YCBCR_1 |
 			REG_HEOCFG1_YUVEN);
 			break;
 		case V4L2_PIX_FMT_YUV420:
@@ -1047,7 +1048,7 @@ static int at91sam9x5_video_vidioc_querycap(struct file *filp,
 
 	/* XXX */
 	cap->version = 0;
-	cap->card[0] = '\0';
+	strcpy(cap->card, "Atmel HEO Layer");
 	cap->bus_info[0] = '\0';
 
 	return 0;
