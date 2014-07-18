@@ -759,6 +759,12 @@
 				};
 			};
 
+			rtc@fc0686b0 {
+				compatible = "atmel,at91rm9200-rtc";
+				reg = <0xfc0686b0 0x30>;
+				interrupts = <1 IRQ_TYPE_LEVEL_HIGH 7>;
+			};
+
 			aic: interrupt-controller@fc06e000 {
 				#interrupt-cells = <3>;
 				compatible = "atmel,sama5d4-aic";
