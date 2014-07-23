@@ -1,0 +1,278 @@
+/*
+ * sama5d4ek_pin_sleep_state.dtsi - Device Tree Include file for SAMA5D4 Evaluation Kit
+ *
+ *  Copyright (C) 2014 Atmel,
+ *
+ * Licensed under GPLv2 or later.
+ */
+/ {
+	ahb {
+		apb {
+			adc0: adc@fc034000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <
+					&pinctrl_adc0_ad0_sleep
+					&pinctrl_adc0_ad1_sleep
+					&pinctrl_adc0_ad2_sleep
+					&pinctrl_adc0_ad3_sleep
+					&pinctrl_adc0_ad4_sleep
+					>;
+			};
+
+			lcd_bus@f0000000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_lcd_sleep>;
+			};
+
+			ssc0: ssc@f8008000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_ssc0_tx_sleep &pinctrl_ssc0_rx_sleep>;
+			};
+
+			spi0: spi@f8010000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_spi0_sleep>;
+			};
+
+			i2c0: i2c@f8014000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_i2c0_sleep>;
+			};
+
+			macb0: ethernet@f8020000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_macb0_rmii_sleep>;
+			};
+
+			mmc1: mmc@fc000000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_mmc1_clk_cmd_dat0_sleep &pinctrl_mmc1_dat1_3_sleep>;
+			};
+
+			isi: isi@f0008000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_isi_sleep &pinctrl_isi_mck_sleep &pinctrl_isi_power_sleep &pinctrl_isi_reset_sleep>;
+			};
+
+			usart3: serial@fc00c000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_usart3_sleep>;
+			};
+
+			usart4: serial@fc010000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_usart4_sleep>;
+			};
+
+			pinctrl@fc06a000 {
+				adc0 {
+					pinctrl_adc0_ad0_sleep: adc0_ad0-1 {
+						atmel,pins =
+							<AT91_PIOC 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad1_sleep: adc0_ad1-1 {
+						atmel,pins =
+							<AT91_PIOC 28 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad2_sleep: adc0_ad2-1 {
+						atmel,pins =
+							<AT91_PIOC 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad3_sleep: adc0_ad3-1 {
+						atmel,pins =
+							<AT91_PIOC 30 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad4_sleep: adc0_ad4-1 {
+						atmel,pins =
+							<AT91_PIOC 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+				};
+
+				i2c0 {
+					pinctrl_i2c0_sleep: i2c0-1 {
+						atmel,pins =
+							<AT91_PIOA 30 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							>;
+					};
+				};
+
+				isi {
+					pinctrl_isi_sleep: isi-1 {
+						atmel,pins =
+							<AT91_PIOC 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D0 */
+							 AT91_PIOC 20 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D1 */
+							 AT91_PIOC 21 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D2 */
+							 AT91_PIOC 22 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D3 */
+							 AT91_PIOC 23 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D4 */
+							 AT91_PIOC 24 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D5 */
+							 AT91_PIOC 25 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D6 */
+							 AT91_PIOC 26 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_D7 */
+							 AT91_PIOB  1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_PCK */
+							 AT91_PIOB  3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_VSYNC */
+							 AT91_PIOB  4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* ISI_HSYNC */
+							>;
+					};
+					pinctrl_isi_mck_sleep: isi_mck-1 {
+						atmel,pins =
+							<AT91_PIOC 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* ISI_MCK(PCK1) */
+					};
+					pinctrl_isi_reset_sleep: isi_reset-1 {
+						atmel,pins =
+							<AT91_PIOB 11 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB11 gpio ISI_RST */
+					};
+
+					pinctrl_isi_power_sleep: isi_power-1 {
+						atmel,pins =
+							<AT91_PIOB 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB5 gpio ISI_PWD */
+					};
+				};
+
+				lcd {
+					pinctrl_lcd_sleep: lcd-1 {
+						atmel,pins = <
+							 AT91_PIOA 0 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 2 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 9 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 10 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 11 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 12 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 14 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 15 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 16 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 20 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 21 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 22 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 23 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 24 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 25 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 26 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 28 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOA 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							>;
+					};
+				};
+
+				macb0 {
+					pinctrl_macb0_rmii_sleep: macb0_rmii-1 {
+						atmel,pins =
+							<AT91_PIOB 12 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* G0_TX0 */
+							 AT91_PIOB 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* G0_TX1 */
+							 AT91_PIOB  8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN	/* G0_RX0 */
+							 AT91_PIOB  9 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN	/* G0_RX1 */
+							 AT91_PIOB  6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN	/* G0_RXDV */
+							 AT91_PIOB  7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN	/* G0_RXER */
+							 AT91_PIOB  2 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* G0_TXEN */
+							 AT91_PIOB  0 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* G0_TXCK */
+							 AT91_PIOB 16 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* G0_MDC */
+							 AT91_PIOB 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* G0_MDIO */
+							>;
+					};
+				};
+
+				mmc1 {
+					pinctrl_mmc1_clk_cmd_dat0_sleep: mmc1_clk_cmd_dat0-1 {
+						atmel,pins =
+							<AT91_PIOE 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN	/* MCI0_CK */
+							 AT91_PIOE 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* MCI0_CDA */
+							 AT91_PIOE 20 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* MCI0_DA0 */
+							>;
+					};
+					pinctrl_mmc1_dat1_3_sleep: mmc1_dat1_3-1 {
+						atmel,pins =
+							<AT91_PIOE 21 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* MCI0_DA1 */
+							 AT91_PIOE 22 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* MCI0_DA2 */
+							 AT91_PIOE 23 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* MCI0_DA3 */
+							>;
+					};
+				};
+
+				nand0 {
+					pinctrl_nand_sleep: nand-1 {
+						atmel,pins =
+							<AT91_PIOC 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC13 A Read Enable */
+							 AT91_PIOC 14 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC14 A Write Enable */
+
+							 AT91_PIOC 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC17 ALE */
+							 AT91_PIOC 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC18 CLE */
+
+							 AT91_PIOC 15 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC15 NCS3/Chip Enable */
+							 AT91_PIOC 16 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC16 NANDRDY */
+							 AT91_PIOC 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC5 Data bit 0 */
+							 AT91_PIOC 6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC6 Data bit 1 */
+							 AT91_PIOC 7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC7 Data bit 2 */
+							 AT91_PIOC 8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC8 Data bit 3 */
+							 AT91_PIOC 9 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC9 Data bit 4 */
+							 AT91_PIOC 10 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC10 Data bit 5 */
+							 AT91_PIOC 11 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC11 Data bit 6 */
+							 AT91_PIOC 12 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC12 Data bit 7 */
+							>;
+					};
+				};
+
+				spi0 {
+					pinctrl_spi0_sleep: spi0-1 {
+						atmel,pins =
+							<AT91_PIOC 0 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* SPI0_MISO */
+							 AT91_PIOC 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* SPI0_MOSI */
+							 AT91_PIOC 2 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* SPI0_SPCK */
+							>;
+					};
+				};
+
+				ssc0 {
+					pinctrl_ssc0_tx_sleep: ssc0_tx-1 {
+						atmel,pins =
+							<AT91_PIOB 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB27 TK0 */
+							 AT91_PIOB 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB31 TF0 */
+							 AT91_PIOB 28 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB28 TD0 */
+							>;
+					};
+
+					pinctrl_ssc0_rx_sleep: ssc0_rx-1 {
+						atmel,pins =
+							<AT91_PIOB 26 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB26 RK0 */
+							 AT91_PIOB 30 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB30 RF0 */
+							 AT91_PIOB 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN	/* PB29 RD0 */
+							>;
+					};
+				};
+
+				usart3 {
+					pinctrl_usart3_sleep: usart3-1 {
+						atmel,pins =
+							<AT91_PIOE 16 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* RXD */
+							 AT91_PIOE 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* TXD */
+							>;
+					};
+				};
+
+				usart4 {
+					pinctrl_usart4_sleep: usart4-1 {
+						atmel,pins =
+							<AT91_PIOE 26 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* RXD */
+							 AT91_PIOE 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN	/* TXD */
+							>;
+					};
+				};
+			};
+		};
+
+		nand0: nand@80000000 {
+			pinctrl-names = "default", "sleep";
+			pinctrl-1 = <&pinctrl_nand_sleep>;
+		};
+	};
+};

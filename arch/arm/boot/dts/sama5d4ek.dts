@@ -279,3 +279,5 @@
 		atmel,audio-codec = <&wm8904>;
 	};
 };
+
+#include "sama5d4ek_pin_sleep_state.dtsi"
