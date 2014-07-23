@@ -1431,6 +1431,7 @@ static int at91sam9x5_video_register(struct at91sam9x5_video_priv *priv,
 	q->mem_ops = &vb2_dma_contig_memops;
 	q->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	q->io_modes = VB2_MMAP | VB2_USERPTR | VB2_WRITE;
+	q->timestamp_type = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 
 	ret = vb2_queue_init(q);
 	if (ret) {
