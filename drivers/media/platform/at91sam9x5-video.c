@@ -1042,13 +1042,12 @@ const struct vb2_ops at91sam9x5_video_vb_ops = {
 static int at91sam9x5_video_vidioc_querycap(struct file *filp,
 		void *fh, struct v4l2_capability *cap)
 {
-	strcpy(cap->driver, DRIVER_NAME);
+	strlcpy(cap->driver, DRIVER_NAME, sizeof(cap->driver));
 	cap->capabilities = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_STREAMING |
 		V4L2_CAP_VIDEO_OVERLAY;
 
-	/* XXX */
 	cap->version = 0;
-	strcpy(cap->card, "Atmel HEO Layer");
+	strlcpy(cap->card, "Atmel HEO Layer", sizeof(cap->card));
 	cap->bus_info[0] = '\0';
 
 	return 0;
@@ -1439,6 +1438,8 @@ static int at91sam9x5_video_register(struct at91sam9x5_video_priv *priv,
 		goto err_queue_init;
 	}
 
+	strlcpy(priv->video_dev->name, DRIVER_NAME,
+			sizeof(priv->video_dev->name));
 	priv->video_dev->fops = &at91sam9x5_video_fops;
 	priv->video_dev->ioctl_ops = &at91sam9x5_video_ioctl_ops;
 	priv->video_dev->release = video_device_release;
