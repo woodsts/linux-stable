@@ -200,30 +200,30 @@
 
 				lcd@f0030000 {
 					compatible = "atmel,at91sam9x5-lcd";
-					reg = <0xf0030000 0xff
-					       0xf0030600 0x3ff>;
+					reg = <0xf0030000 0x100
+					       0xf0030600 0x400>;
 					interrupts = <36 4 3>;
 					status = "disabled";
 				};
 
 				lcdovl1@f0030140 {
 					compatible = "atmel,at91sam9x5-lcd";
-					reg = <0xf0030140 0xff
-					       0xf0030a00 0x3ff>;
+					reg = <0xf0030140 0x100
+					       0xf0030a00 0x400>;
 					status = "disabled";
 				};
 
 				lcdovl2@f0030240 {
 					compatible = "atmel,at91sam9x5-lcd";
-					reg = <0xf0030240 0xff
-					       0xf0030e00 0x3ff>;
+					reg = <0xf0030240 0x100
+					       0xf0030e00 0x400>;
 					status = "disabled";
 				};
 
 				lcdheo1@f0030340 {
 					compatible = "atmel,sama5d3-heo";
-					reg = <0xf0030340 0xff
-					       0xf0031200 0x3ff>;
+					reg = <0xf0030340 0x100
+					       0xf0031200 0x400>;
 					interrupts = <36 4 3>;
 					status = "disabled";
 				};
