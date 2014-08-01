@@ -103,7 +103,7 @@
 			L2: cache-controller@00a00000 {
 				compatible = "arm,pl310-cache";
 				reg = <0x00a00000 0x1000>;
-				interrupts = <0 67 4>;
+				interrupts = <67 IRQ_TYPE_LEVEL_HIGH 0>;
 				cache-unified;
 				cache-level = <2>;
 				/*arm,data-latency = <1 1 1>;*/
