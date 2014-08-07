@@ -46,6 +46,7 @@ memctrl	.req	r3
 tmp1	.req	r4
 tmp2	.req	r5
 ddrcid	.req	r6
+flag	.req	r7
 
 /*
  * Wait until master clock is ready (after switching master clock source)
@@ -149,6 +150,7 @@ ENTRY(at91_slow_clock)
 	 *  R4 = temporary register
 	 *  R5 = temporary register
 	 *  R6 = Memory controller's peripherial ID
+	 *  R7 = temporary indicator
 	 */
 
 	/* Drain write buffer */
@@ -228,6 +230,18 @@ sdr_sr_done:
 	str	tmp1, [pmc, #AT91_PMC_PCDR]
 2:
 
+	/* Disable UTMI PLL */
+	ldr	tmp1, [pmc, #AT91_CKGR_UCKR]
+	tst	tmp1, #AT91_PMC_UPLLEN
+	beq	1f
+	mov	flag, #1
+	bic	tmp1, tmp1, #AT91_PMC_UPLLEN
+	str	tmp1, [pmc, #AT91_CKGR_UCKR]
+	b	2f
+1:
+	mov	flag, #0
+2:
+
 	/* Save Master clock setting */
 	ldr	tmp1, [pmc, #AT91_PMC_MCKR]
 	str	tmp1, .saved_mckr
@@ -267,11 +281,6 @@ sdr_sr_done:
 	mov	tmp1, #AT91_PMC_PLLCOUNT
 	str	tmp1, [pmc, #AT91_CKGR_PLLBR]
 
-	/* Disable UTMI PLL */
-	ldr	tmp1, [pmc, #AT91_CKGR_UCKR]
-	bic	tmp1, tmp1, #AT91_PMC_UPLLEN
-	str	tmp1, [pmc, #AT91_CKGR_UCKR]
-
 	/* Turn off the main oscillator */
 	ldr	tmp1, [pmc, #AT91_CKGR_MOR]
 	bic	tmp1, tmp1, #AT91_PMC_MOSCEN
@@ -288,13 +297,6 @@ sdr_sr_done:
 	str	tmp1, [pmc, #AT91_CKGR_MOR]
 
 	wait_moscrdy
-
-	/* Turn on UTMI PLL */
-	ldr	tmp1, [pmc, #AT91_CKGR_UCKR]
-	orr	tmp1, tmp1, #AT91_PMC_UPLLEN
-	str	tmp1, [pmc, #AT91_CKGR_UCKR]
-
-	wait_uplllock
 
 	/* Restore PLLB setting */
 	ldr	tmp1, .saved_pllbr
@@ -343,6 +345,16 @@ sdr_sr_done:
 	str	tmp1, [pmc, #AT91_PMC_MCKR]
 
 	wait_mckrdy
+
+	/* Turn on UTMI PLL */
+	cmp	flag, #1
+	bne	1f
+	ldr	tmp1, [pmc, #AT91_CKGR_UCKR]
+	orr	tmp1, tmp1, #AT91_PMC_UPLLEN
+	str	tmp1, [pmc, #AT91_CKGR_UCKR]
+
+	wait_uplllock
+1:
 
 	/* Enable MPDDRC Clock*/
 	cmp	ddrcid, #0
