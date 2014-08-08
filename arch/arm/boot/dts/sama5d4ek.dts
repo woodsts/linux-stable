@@ -11,7 +11,7 @@
 
 / {
 	model = "Atmel SAMA5D4-EK";
-	compatible = "atmel,sama5d4ek", "atmel,sama5d4", "atmel,sama5";
+	compatible = "atmel,sama5d4ek", "atmel,sama5d4", "atmel,sama5", "pda,tm70xx";
 
 	chosen {
 		bootargs = "console=ttyS0,115200 ignore_loglevel earlyprintk";
