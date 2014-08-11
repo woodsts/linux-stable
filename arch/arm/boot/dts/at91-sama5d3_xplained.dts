@@ -247,3 +247,5 @@
 		};
 	};
 };
+
+#include "at91-sama5d3_xplained_pin_sleep_state.dtsi"
