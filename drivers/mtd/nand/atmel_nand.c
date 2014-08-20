@@ -1320,12 +1320,6 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 		 * So the index offset just set as 0.
 		 */
 		host->pmecc_lookup_table_offset = 0;
-	} else {
-		/* Make sure lookup table offset is valid as we'll use it */
-		if (!host->pmecc_lookup_table_offset) {
-			err_no = -EINVAL;
-			goto err;
-		}
 	}
 
 	nand_chip->ecc.size = sector_size;
