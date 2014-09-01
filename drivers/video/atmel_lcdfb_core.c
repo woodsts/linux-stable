@@ -615,7 +615,7 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 		goto put_bus_clk;
 	}
 
-	if (!strcmp(id->name, "atmel_hlcdfb_base"))
+	if ((!id) || (id && !strcmp(id->name, "atmel_hlcdfb_base")))
 		atmel_lcdfb_start_clock(sinfo);
 
 	ret = fb_find_mode(&info->var, info, NULL, info->monspecs.modedb,
