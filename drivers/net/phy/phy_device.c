@@ -1009,6 +1009,8 @@ static int phy_probe(struct device *dev)
 	phydrv = to_phy_driver(drv);
 	phydev->drv = phydrv;
 
+	genphy_resume(phydev);
+
 	/* Disable the interrupt if the PHY doesn't support it */
 	if (!(phydrv->flags & PHY_HAS_INTERRUPT))
 		phydev->irq = PHY_POLL;
