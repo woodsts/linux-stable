@@ -111,6 +111,16 @@
 					pinctrl-names = "default";
 					pinctrl-0 = <&pinctrl_mxt_ts>;
 				};
+
+				sii9022a:sii9022a@39 {
+					compatible = "sii902x";
+					reg = <0x39>;
+					interrupt-parent = <&pioE>;
+					interrupts = <3 0x0>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_sii9022a_irq>, <&pinctrl_sii9022a_reset>;
+					gpios = <&pioB 15 0>;
+				};
 			};
 
 			macb0: ethernet@f8020000 {
@@ -177,6 +187,14 @@
 					pinctrl_mxt_ts: mxt_irq {
 						atmel,pins =
 							<AT91_PIOE 24 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>; /* PE24 GPIO with pull up deglith */
+					};
+					pinctrl_sii9022a_irq: sii9022a_irq {
+						atmel,pins =
+							<AT91_PIOE 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
+					};
+					pinctrl_sii9022a_reset: sii9022a_reset {
+						atmel,pins =
+							<AT91_PIOB 15 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
 					};
 				};
 			};
