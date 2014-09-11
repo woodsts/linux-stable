@@ -44,6 +44,10 @@
 				};
 			};
 
+			ssc0: ssc@f0010000 {
+				status = "okay";
+			};
+
 			dbgu: serial@fffff200 {
 				status = "okay";
 			};
@@ -59,6 +63,11 @@
 
 			i2c0: i2c@f8010000 {
 				status = "okay";
+
+				wm8731: wm8731@1a {
+					compatible = "wm8731";
+					reg = <0x1a>;
+				};
 			};
 
 			adc0: adc@f804c000 {
@@ -111,5 +120,20 @@
 		usb1: ehci@00700000 {
 			status = "okay";
 		};
+	};
+
+	sound {
+		compatible = "atmel,sam9x5-wm8731-audio";
+
+		atmel,model = "wm8731 @ AT91SAM9X5EK";
+
+		atmel,audio-routing =
+			"Headphone Jack", "RHPOUT",
+			"Headphone Jack", "LHPOUT",
+			"LLINEIN", "Line In Jack",
+			"RLINEIN", "Line In Jack";
+
+		atmel,ssc-controller = <&ssc0>;
+		atmel,audio-codec = <&wm8731>;
 	};
 };
