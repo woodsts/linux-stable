@@ -275,6 +275,7 @@ static struct clk_lookup periph_clocks_lookups[] = {
 	CLKDEV_CON_DEV_ID(NULL, "fffff600.gpio", &pioC_clk),
 	CLKDEV_CON_DEV_ID(NULL, "fffff800.gpio", &pioDE_clk),
 	CLKDEV_CON_DEV_ID(NULL, "fffffa00.gpio", &pioDE_clk),
+	CLKDEV_CON_DEV_ID("ac97_clk", "fffac000.ac97", &ac97_clk),
 
 	CLKDEV_CON_ID("pioA", &pioA_clk),
 	CLKDEV_CON_ID("pioB", &pioB_clk),
