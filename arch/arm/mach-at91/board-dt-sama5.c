@@ -19,9 +19,12 @@
 
 #include <asm/setup.h>
 #include <asm/irq.h>
+#include <asm/firmware.h>
+#include <asm/hardware/cache-l2x0.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/mach/irq.h>
+#include <linux/of_address.h>
 
 #include "at91_aic.h"
 #include "generic.h"
@@ -38,7 +41,7 @@
 #include <media/soc_camera.h>
 #include <media/atmel-isi.h>
 
-#define LINK_SENSOR_MODULE_TO_SOC_CAMERA(_sensor_name, _soc_camera_id)	\
+#define LINK_SENSOR_MODULE_TO_SOC_CAMERA(_sensor_name, _soc_camera_id, _i2c_adapter_id)	\
 	static struct soc_camera_desc iclink_##_sensor_name = {		\
 		.subdev_desc = {					\
 			.power = i2c_camera_power,			\
@@ -47,7 +50,7 @@
 		.host_desc = {						\
 			.bus_id		= -1,				\
 			.board_info	= &i2c_##_sensor_name,		\
-			.i2c_adapter_id	= 1,				\
+			.i2c_adapter_id	= _i2c_adapter_id,		\
 		},							\
 	};								\
 	static struct platform_device isi_##_sensor_name = {		\
@@ -229,10 +232,10 @@ static struct i2c_board_info i2c_ov7740 = {
 	I2C_BOARD_INFO("ov7740", 0x21),
 };
 
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2);
-LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov2640, 0, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov5642, 1, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov9740, 2, 1);
+LINK_SENSOR_MODULE_TO_SOC_CAMERA(ov7740, 3, 1);
 
 static struct platform_device *sensors[] __initdata = {
 	&isi_ov2640,
@@ -241,6 +244,25 @@ static struct platform_device *sensors[] __initdata = {
 	&isi_ov7740,
 };
 
+static void at91_fixup_isi_sensor_bus(struct platform_device **sensors,
+		unsigned int sensors_nbr, unsigned int fixed_i2c_id)
+{
+	int i;
+	struct platform_device **s;
+	struct soc_camera_desc *scd;
+
+	s = sensors;
+	for (i = 0; i < sensors_nbr; i++) {
+		if (s[i]) {
+			scd = s[i]->dev.platform_data;
+			if (scd)
+				scd->host_desc.i2c_adapter_id = fixed_i2c_id;
+		} else {
+			break;
+		}
+	}
+}
+
 struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf8038000, "atmel_hlcdfb_base", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf8038100, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
@@ -248,12 +270,18 @@ struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf0034000, "atmel_isi", &isi_data),
+	OF_DEV_AUXDATA("atmel,at91sam9g45-isi", 0xf0008000, "atmel_isi", &isi_data),
+	/* SAMA5D4 */
+	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000000, "atmel_hlcdfb_base", &ek_lcdc_data),
+	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
+	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0000240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
 	{ /* sentinel */ }
 };
 
 static const struct of_device_id irq_of_match[] __initconst = {
 
-	{ .compatible = "atmel,sama5d3-aic", .data = at91_aic5_of_init },
+	{ .compatible = "atmel,sama5d3-aic", .data = sama5d3_aic5_of_init },
+	{ .compatible = "atmel,sama5d4-aic", .data = sama5d4_aic5_of_init },
 	{ /*sentinel*/ }
 };
 
@@ -310,25 +338,107 @@ static int ksz9031rn_phy_fixup(struct phy_device *dev)
 	return 0;
 }
 
+static int ksz8081_phy_reset(struct phy_device *phy)
+{
+	int value;
+
+	/*
+	 * As disconnect the hardware reset, so use software reset
+	 *
+	 * The basic control (register 0) bit 15 is software reset
+	 */
+	value = phy_read(phy, 0);
+	value |= (1 << 15);
+	phy_write(phy, 0, value);
+
+	return 0;
+}
+
+#ifdef CONFIG_CACHE_L2X0
+static void __init at91_init_l2cache(void)
+{
+	struct device_node *np;
+	void __iomem *l2cc_base;
+	u32 reg;
+	int ret;
+
+	np = of_find_compatible_node(NULL, NULL, "arm,pl310-cache");
+	if (!np)
+		return;
+
+	l2cc_base = of_iomap(np, 0);
+	if (!l2cc_base)
+		panic("unable to map l2cc cpu registers\n");
+
+	of_node_put(np);
+
+	ret = call_firmware_op(l2x0_init);
+	if (ret == -ENOSYS) {
+		/* Disable cache if it hasn't been done yet */
+		if (readl_relaxed(l2cc_base + L2X0_CTRL) & L2X0_CTRL_EN)
+			writel_relaxed(~L2X0_CTRL_EN, l2cc_base + L2X0_CTRL);
+
+		/* Prefetch Control */
+		reg = readl_relaxed(l2cc_base + L2X0_PREFETCH_CTRL);
+		reg &= ~L2X0_PCR_OFFSET_MASK;
+		reg |= L2X0_PCR_OFFSET_(0x01);
+		reg |= L2X0_PCR_IDLEN;
+		reg |= L2X0_PCR_PDEN;
+		reg |= L2X0_PCR_DATPEN;
+		reg |= L2X0_PCR_INSPEN;
+		reg |= L2X0_PCR_DLEN;
+		writel_relaxed(reg, l2cc_base + L2X0_PREFETCH_CTRL);
+
+		/* Power Control */
+		reg = readl_relaxed(l2cc_base + L2X0_POWER_CTRL);
+		reg |= L2X0_STNDBY_MODE_EN;
+		reg |= L2X0_DYNAMIC_CLK_GATING_EN;
+		writel_relaxed(reg, l2cc_base + L2X0_POWER_CTRL);
+
+		/* Disable interrupts */
+		writel_relaxed(0x00, l2cc_base + L2X0_INTR_MASK);
+		writel_relaxed(0x01ff, l2cc_base + L2X0_INTR_CLEAR);
+
+		l2x0_of_init(0, ~0UL);
+	} else {
+		outer_cache.disable = firmware_ops->l2x0_disable;
+	}
+}
+#else
+static inline void at91_init_l2cache(void) {}
+#endif
+
 static void __init sama5_dt_device_init(void)
 {
 	struct device_node *np;
 
+	at91_init_l2cache();
+
 	if (of_machine_is_compatible("atmel,sama5d3xcm") &&
-	    IS_ENABLED(CONFIG_PHYLIB))
+	    IS_ENABLED(CONFIG_PHYLIB)) {
 		phy_register_fixup_for_uid(PHY_ID_KSZ9021, MICREL_PHY_ID_MASK,
 			ksz9021rn_phy_fixup);
-	else if (of_machine_is_compatible("atmel,sama5d3-xplained") &&
+	} else if (of_machine_is_compatible("atmel,sama5d3-xplained") &&
 	    IS_ENABLED(CONFIG_PHYLIB)) {
 		phy_register_fixup_for_uid(PHY_ID_KSZ9031, MICREL_PHY_ID_MASK,
 			ksz9031rn_phy_fixup);
+	} else if (of_machine_is_compatible("atmel,sama5d4ek") &&
+	    IS_ENABLED(CONFIG_PHYLIB)) {
+		phy_register_fixup_for_uid(PHY_ID_KSZ8081, MICREL_PHY_ID_MASK,
+			ksz8081_phy_reset);
 	}
 
 	np = of_find_compatible_node(NULL, NULL, "atmel,at91sam9g45-isi");
 	if (np) {
 		if (of_device_is_available(np)) {
-			camera_set_gpio_pins(AT91_PIN_PE24, AT91_PIN_PE29);
-			at91_config_isi(true, "pck1");
+			if (of_machine_is_compatible("atmel,sama5d3xmb")) {
+				camera_set_gpio_pins(AT91_PIN_PE24, AT91_PIN_PE29);
+				at91_config_isi(true, "pck1");
+			} else if (of_machine_is_compatible("atmel,sama5d4ek")) {
+				at91_fixup_isi_sensor_bus(sensors, ARRAY_SIZE(sensors), 0);
+				camera_set_gpio_pins(AT91_PIN_PB11, AT91_PIN_PB5);
+				at91_config_isi(true, "pck1");
+			}
 		}
 	}
 
@@ -395,4 +505,20 @@ DT_MACHINE_START(sama5_dt, "Atmel SAMA5 (Device Tree)")
 	.init_irq	= at91_dt_init_irq,
 	.init_machine	= sama5_dt_device_init,
 	.dt_compat	= sama5_dt_board_compat,
+MACHINE_END
+
+static const char *sama5_alt_dt_board_compat[] __initdata = {
+	"atmel,sama5d4",
+	NULL
+};
+
+DT_MACHINE_START(sama5_alt_dt, "Atmel SAMA5 (Device Tree)")
+	/* Maintainer: Atmel */
+	.init_time	= at91sam926x_pit_init,
+	.map_io		= at91_alt_map_io,
+	.handle_irq	= at91_aic5_handle_irq,
+	.init_early	= at91_alt_dt_initialize,
+	.init_irq	= at91_dt_init_irq,
+	.init_machine	= sama5_dt_device_init,
+	.dt_compat	= sama5_alt_dt_board_compat,
 MACHINE_END

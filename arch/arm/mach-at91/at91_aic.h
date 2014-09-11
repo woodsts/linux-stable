@@ -30,7 +30,8 @@ extern void __iomem *at91_aic_base;
 
 /* Number of irq lines managed by AIC */
 #define NR_AIC_IRQS	32
-#define NR_AIC5_IRQS	128
+#define NR_SAMA5D3_IRQS	48
+#define NR_SAMA5D4_IRQS	68
 
 #define AT91_AIC5_SSR		0x0			/* Source Select Register [AIC5] */
 #define 	AT91_AIC5_INTSEL_MSK	(0x7f << 0)		/* Interrupt Line Selection Mask */

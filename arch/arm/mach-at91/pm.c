@@ -32,6 +32,8 @@
 #include "generic.h"
 #include "pm.h"
 
+#define	SAMA5D4_PM_DEBUG
+
 /*
  * Show the reason for the previous system reset.
  */
@@ -199,6 +201,23 @@ extern void at91_slow_clock(void __iomem *pmc, void __iomem *ramc0,
 extern u32 at91_slow_clock_sz;
 #endif
 
+#ifdef SAMA5D4_PM_DEBUG
+static void print_peripherals_pwr_status_for_pm(void)
+{
+	pr_info("\n");
+	pr_info("The Peripheral Power State for PM:\n");
+	pr_info("PMC_SCSR: 0x%x\n",
+				__raw_readl(at91_pmc_base + AT91_PMC_SCSR));
+	pr_info("PMC_PCSR: 0x%x\n",
+				__raw_readl(at91_pmc_base + AT91_PMC_PCSR));
+	pr_info("PMC_PCSR1: 0x%x\n",
+				__raw_readl(at91_pmc_base + AT91_PMC_PCSR1));
+	pr_info("\n");
+}
+#else
+static void print_peripherals_pwr_status_for_pm(void) {}
+#endif
+
 static int at91_pm_enter(suspend_state_t state)
 {
 	if (of_have_populated_dt())
@@ -229,6 +248,8 @@ static int at91_pm_enter(suspend_state_t state)
 			if (!at91_pm_verify_clocks())
 				goto error;
 
+			print_peripherals_pwr_status_for_pm();
+
 			/*
 			 * Enter slow clock mode by switching over to clk32k and
 			 * turning off the main oscillator; reverse on wakeup.
@@ -241,7 +262,8 @@ static int at91_pm_enter(suspend_state_t state)
 				else if (cpu_is_at91sam9g45()
 					|| cpu_is_at91sam9x5()
 					|| cpu_is_at91sam9n12()
-					|| cpu_is_sama5d3())
+					|| cpu_is_sama5d3()
+					|| cpu_is_sama5d4())
 					memctrl = AT91_MEMCTRL_DDRSDR;
 #ifdef CONFIG_AT91_SLOW_CLOCK
 				/* copy slow_clock handler to SRAM, and call it */
@@ -275,6 +297,11 @@ static int at91_pm_enter(suspend_state_t state)
 				at91sam9g45_standby();
 			else if (cpu_is_at91sam9263())
 				at91sam9263_standby();
+			else if (cpu_is_at91sam9x5()
+				|| cpu_is_at91sam9n12()
+				|| cpu_is_sama5d3()
+				|| cpu_is_sama5d4())
+				at91sam_ddrc_standby();
 			else
 				at91sam9_standby();
 			break;

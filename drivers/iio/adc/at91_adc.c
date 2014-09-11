@@ -71,7 +71,6 @@ enum atmel_adc_ts_type {
 };
 
 struct at91_adc_state {
-	struct clk		*adc_clk;
 	u32			adc_clk_rate;
 	u16			*buffer;
 	unsigned long		channels_mask;
@@ -686,7 +685,7 @@ static int at91_adc_probe_dt(struct at91_adc_state *st,
 	st->caps = (struct at91_adc_caps *)
 		of_match_device(at91_adc_dt_ids, &pdev->dev)->data;
 
-	prop = 0;
+	prop = 1000000;	/* default adc-clock-rate is 1MHz. */
 	of_property_read_u32(node, "atmel,adc-clock-rate", &prop);
 	st->adc_clk_rate = prop;
 
@@ -980,28 +979,13 @@ static int at91_adc_probe(struct platform_device *pdev)
 		goto error_free_irq;
 	}
 
-	st->adc_clk = devm_clk_get(&pdev->dev, "adc_op_clk");
-	if (IS_ERR(st->adc_clk)) {
-		dev_err(&pdev->dev, "Failed to get the ADC clock.\n");
-		ret = PTR_ERR(st->adc_clk);
-		goto error_disable_clk;
-	}
-
-	ret = clk_prepare_enable(st->adc_clk);
-	if (ret) {
-		dev_err(&pdev->dev,
-			"Could not prepare or enable the ADC clock.\n");
-		goto error_disable_clk;
-	}
-
 	/*
 	 * Prescaler rate computation using the formula from the Atmel's
 	 * datasheet : ADC Clock = MCK / ((Prescaler + 1) * 2), ADC Clock being
 	 * specified by the electrical characteristics of the board.
 	 */
 	mstrclk = clk_get_rate(st->clk);
-	adc_clk = st->adc_clk_rate ?
-		st->adc_clk_rate : clk_get_rate(st->adc_clk);
+	adc_clk = st->adc_clk_rate;
 	adc_clk_khz = adc_clk / 1000;
 
 	dev_dbg(&pdev->dev, "Master clock is set as: %d Hz, adc_clk should set as: %d Hz\n",
@@ -1090,8 +1074,6 @@ error_iio_device_register:
 		at91_ts_unregister(st);
 	}
 error_disable_adc_clk:
-	clk_disable_unprepare(st->adc_clk);
-error_disable_clk:
 	clk_disable_unprepare(st->clk);
 error_free_irq:
 	free_irq(st->irq, idev);
@@ -1113,13 +1095,43 @@ static int at91_adc_remove(struct platform_device *pdev)
 	} else {
 		at91_ts_unregister(st);
 	}
-	clk_disable_unprepare(st->adc_clk);
 	clk_disable_unprepare(st->clk);
 	free_irq(st->irq, idev);
 	iio_device_free(idev);
 
 	return 0;
 }
+
+#ifdef CONFIG_PM_SLEEP
+static int at91_adc_suspend(struct device *dev)
+{
+	struct iio_dev *idev = platform_get_drvdata(to_platform_device(dev));
+	struct at91_adc_state *st = iio_priv(idev);
+
+	clk_disable_unprepare(st->clk);
+
+	return 0;
+}
+
+static int at91_adc_resume(struct device *dev)
+{
+	struct iio_dev *idev = platform_get_drvdata(to_platform_device(dev));
+	struct at91_adc_state *st = iio_priv(idev);
+
+	clk_prepare_enable(st->clk);
+
+	return 0;
+}
+
+static const struct dev_pm_ops at91_adc_pm_ops = {
+	.suspend = at91_adc_suspend,
+	.resume = at91_adc_resume,
+};
+
+#define AT91_ADC_PM_OPS (&at91_adc_pm_ops)
+#else
+#define AT91_ADC_PM_OPS NULL
+#endif
 
 #ifdef CONFIG_OF
 static struct at91_adc_caps at91sam9260_caps = {
@@ -1182,6 +1194,7 @@ static struct platform_driver at91_adc_driver = {
 	.driver = {
 		   .name = DRIVER_NAME,
 		   .of_match_table = of_match_ptr(at91_adc_dt_ids),
+		.pm = AT91_ADC_PM_OPS,
 	},
 };
 

@@ -91,6 +91,7 @@ static struct nand_ecclayout atmel_oobinfo_small = {
 
 struct atmel_nfc {
 	void __iomem		*base_cmd_regs;
+	void __iomem		*busy_cmd_regs;
 	void __iomem		*hsmc_regs;
 	void __iomem		*sram_bank0;
 	dma_addr_t		sram_bank0_phys;
@@ -98,7 +99,9 @@ struct atmel_nfc {
 	bool			write_by_sram;
 
 	bool			is_initialized;
-	struct completion	comp_nfc;
+	struct completion	comp_ready;
+	struct completion	comp_cmd_done;
+	struct completion	comp_xfer_done;
 
 	/* Point to the sram bank which include readed data via NFC */
 	void __iomem		*data_in_sram;
@@ -863,12 +866,11 @@ static int pmecc_correction(struct mtd_info *mtd, u32 pmecc_stat, uint8_t *buf,
 {
 	struct nand_chip *nand_chip = mtd->priv;
 	struct atmel_nand_host *host = nand_chip->priv;
-	int i, err_nbr, eccbytes;
+	int i, err_nbr;
 	uint8_t *buf_pos;
 	int total_err = 0;
 
-	eccbytes = nand_chip->ecc.bytes;
-	for (i = 0; i < eccbytes; i++)
+	for (i = 0; i < nand_chip->ecc.total; i++)
 		if (ecc[i] != 0xff)
 			goto normal_check;
 	/* Erased page, return OK */
@@ -930,7 +932,7 @@ static int atmel_nand_pmecc_read_page(struct mtd_info *mtd,
 	struct nand_chip *chip, uint8_t *buf, int oob_required, int page)
 {
 	struct atmel_nand_host *host = chip->priv;
-	int eccsize = chip->ecc.size;
+	int eccsize = chip->ecc.size * chip->ecc.steps;
 	uint8_t *oob = chip->oob_poi;
 	uint32_t *eccpos = chip->ecc.layout->eccpos;
 	uint32_t stat;
@@ -1119,11 +1121,11 @@ static int pmecc_choose_ecc(struct atmel_nand_host *host,
 			host->pmecc_corr_cap = 2;
 		else if (*cap <= 4)
 			host->pmecc_corr_cap = 4;
-		else if (*cap < 8)
+		else if (*cap <= 8)
 			host->pmecc_corr_cap = 8;
-		else if (*cap < 12)
+		else if (*cap <= 12)
 			host->pmecc_corr_cap = 12;
-		else if (*cap < 24)
+		else if (*cap <= 24)
 			host->pmecc_corr_cap = 24;
 		else
 			return -EINVAL;
@@ -1137,6 +1139,118 @@ static int pmecc_choose_ecc(struct atmel_nand_host *host,
 		else
 			return -EINVAL;
 	}
+	return 0;
+}
+
+static int pmecc_build_galois_table(unsigned int mm,
+		int16_t *index_of, int16_t *alpha_to)
+{
+	unsigned int i, mask, nn;
+	unsigned int p[15];
+
+	nn = (1 << mm) - 1;
+	/* set default value */
+	for (i = 1; i < mm; i++)
+		p[i] = 0;
+
+	/* 1 + X^mm */
+	p[0]  = 1;
+	p[mm] = 1;
+
+	/* others  */
+	switch (mm) {
+	case 3:
+	case 4:
+	case 6:
+	case 15:
+		p[1] = 1;
+		break;
+	case 5:
+	case 11:
+		p[2] = 1;
+		break;
+	case 7:
+	case 10:
+		p[3] = 1;
+		break;
+	case 8:
+		p[2] = p[3] = p[4] = 1;
+		break;
+	case 9:
+		p[4] = 1;
+		break;
+	case 12:
+		p[1] = p[4] = p[6] = 1;
+		break;
+	case 13:
+		p[1] = p[3] = p[4] = 1;
+		break;
+	case 14:
+		p[1] = p[6] = p[10] = 1;
+		break;
+	default:
+		/* Error */
+		return -EINVAL;
+	}
+
+	/* Build alpha ^ mm it will help to generate the field (primitiv) */
+	alpha_to[mm] = 0;
+	for (i = 0; i < mm; i++)
+		if (p[i])
+			alpha_to[mm] |= 1 << i;
+
+	/*
+	 * Then build elements from 0 to mm - 1. As degree is less than mm
+	 * so it is just a logical shift.
+	 */
+	mask = 1;
+	for (i = 0; i < mm; i++) {
+		alpha_to[i] = mask;
+		index_of[alpha_to[i]] = i;
+		mask <<= 1;
+	}
+
+	index_of[alpha_to[mm]] = mm;
+
+	/* use a mask to select the MSB bit of the LFSR */
+	mask >>= 1;
+
+	/* then finish the building */
+	for (i = mm + 1; i <= nn; i++) {
+		/* check if the msb bit of the lfsr is set */
+		if (alpha_to[i - 1] & mask)
+			alpha_to[i] = alpha_to[mm] ^
+				((alpha_to[i - 1] ^ mask) << 1);
+		else
+			alpha_to[i] = alpha_to[i - 1] << 1;
+
+		index_of[alpha_to[i]] = i % nn;
+	}
+
+	/* index of 0 is undefined in a multiplicative field */
+	index_of[0] = -1;
+
+	return 0;
+}
+
+int malloc_build_lookup_table(struct atmel_nand_host *host)
+{
+	uint16_t *galois_table;
+
+	/* Set pmecc_rom_base as the begin of gf table */
+	int size = host->pmecc_sector_size == 512 ?
+		PMECC_LOOKUP_TABLE_SIZE_512 :
+		PMECC_LOOKUP_TABLE_SIZE_1024;
+	galois_table = devm_kzalloc(host->dev, 2 * size * sizeof(uint16_t),
+				GFP_KERNEL);
+	if (!galois_table)
+		return -ENOMEM;
+
+	host->pmecc_rom_base = galois_table;
+	pmecc_build_galois_table((host->pmecc_sector_size == 512) ?
+			PMECC_GF_DIMENSION_13 : PMECC_GF_DIMENSION_14,
+			host->pmecc_rom_base,
+			host->pmecc_rom_base + (size * sizeof(int16_t)));
 	return 0;
 }
 
@@ -1194,13 +1308,21 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 	regs_rom = platform_get_resource(pdev, IORESOURCE_MEM, 3);
 	host->pmecc_rom_base = devm_ioremap_resource(&pdev->dev, regs_rom);
 	if (IS_ERR(host->pmecc_rom_base)) {
-		dev_err(host->dev, "Can not get I/O resource for ROM!\n");
-		err_no = PTR_ERR(host->pmecc_rom_base);
-		goto err;
+		dev_err(host->dev, "Can not get I/O resource for ROM. So build lookup runtime!\n");
+
+		/* Build the look-up table in runtime */
+		err_no = malloc_build_lookup_table(host);
+		if (err_no)
+			goto err;
+
+		/*
+		 * As pmecc_rom_base is the begin of the gallois field table,
+		 * So the index offset just set as 0.
+		 */
+		host->pmecc_lookup_table_offset = 0;
 	}
 
-	/* ECC is calculated for the whole page (1 step) */
-	nand_chip->ecc.size = mtd->writesize;
+	nand_chip->ecc.size = sector_size;
 
 	/* set ECC page size and oob layout */
 	switch (mtd->writesize) {
@@ -1217,18 +1339,20 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 		host->pmecc_index_of = host->pmecc_rom_base +
 			host->pmecc_lookup_table_offset;
 
-		nand_chip->ecc.steps = 1;
+		nand_chip->ecc.steps = host->pmecc_sector_number;
 		nand_chip->ecc.strength = cap;
-		nand_chip->ecc.bytes = host->pmecc_bytes_per_sector *
+		nand_chip->ecc.bytes = host->pmecc_bytes_per_sector;
+		nand_chip->ecc.total = host->pmecc_bytes_per_sector *
 				       host->pmecc_sector_number;
-		if (nand_chip->ecc.bytes > mtd->oobsize - 2) {
+		if (nand_chip->ecc.total > mtd->oobsize - 2) {
 			dev_err(host->dev, "No room for ECC bytes\n");
 			err_no = -EINVAL;
 			goto err;
 		}
 		pmecc_config_ecc_layout(&atmel_pmecc_oobinfo,
 					mtd->oobsize,
-					nand_chip->ecc.bytes);
+					nand_chip->ecc.total);
+
 		nand_chip->ecc.layout = &atmel_pmecc_oobinfo;
 		break;
 	case 512:
@@ -1251,6 +1375,7 @@ static int __init atmel_pmecc_nand_init_params(struct platform_device *pdev,
 		goto err;
 	}
 
+	nand_chip->options |= NAND_NO_SUBPAGE_WRITE;
 	nand_chip->ecc.read_page = atmel_nand_pmecc_read_page;
 	nand_chip->ecc.write_page = atmel_nand_pmecc_write_page;
 
@@ -1531,7 +1656,7 @@ static int atmel_of_init_port(struct atmel_nand_host *host,
 	if (of_property_read_u32_array(np, "atmel,pmecc-lookup-table-offset",
 			offset, 2) != 0) {
 		dev_err(host->dev, "Cannot get PMECC lookup table offset\n");
-		return -EINVAL;
+		return 0;	/* we can live with it as no table in rom code */
 	}
 	if (!offset[0] && !offset[1]) {
 		dev_err(host->dev, "Invalid PMECC lookup table offset\n");
@@ -1615,23 +1740,26 @@ static irqreturn_t hsmc_interrupt(int irq, void *dev_id)
 {
 	struct atmel_nand_host *host = dev_id;
 	u32 status, mask, pending;
-	irqreturn_t ret = IRQ_HANDLED;
+	irqreturn_t ret = IRQ_NONE;
 
 	status = nfc_readl(host->nfc->hsmc_regs, SR);
 	mask = nfc_readl(host->nfc->hsmc_regs, IMR);
 	pending = status & mask;
 
 	if (pending & NFC_SR_XFR_DONE) {
-		complete(&host->nfc->comp_nfc);
+		complete(&host->nfc->comp_xfer_done);
 		nfc_writel(host->nfc->hsmc_regs, IDR, NFC_SR_XFR_DONE);
-	} else if (pending & NFC_SR_RB_EDGE) {
-		complete(&host->nfc->comp_nfc);
+		ret = IRQ_HANDLED;
+	}
+	if (pending & NFC_SR_RB_EDGE) {
+		complete(&host->nfc->comp_ready);
 		nfc_writel(host->nfc->hsmc_regs, IDR, NFC_SR_RB_EDGE);
-	} else if (pending & NFC_SR_CMD_DONE) {
-		complete(&host->nfc->comp_nfc);
+		ret = IRQ_HANDLED;
+	}
+	if (pending & NFC_SR_CMD_DONE) {
+		complete(&host->nfc->comp_cmd_done);
 		nfc_writel(host->nfc->hsmc_regs, IDR, NFC_SR_CMD_DONE);
-	} else {
-		ret = IRQ_NONE;
+		ret = IRQ_HANDLED;
 	}
 
 	return ret;
@@ -1641,16 +1769,40 @@ static irqreturn_t hsmc_interrupt(int irq, void *dev_id)
 static int nfc_wait_interrupt(struct atmel_nand_host *host, u32 flag)
 {
 	unsigned long timeout;
-	init_completion(&host->nfc->comp_nfc);
+	struct completion *comp[3];	/* Support 3 interrupt completion */
+	int i, index = 0;
+
+	if (flag & NFC_SR_XFR_DONE)
+		comp[index++] = &host->nfc->comp_xfer_done;
+
+	if (flag & NFC_SR_RB_EDGE)
+		comp[index++] = &host->nfc->comp_ready;
+
+	if (flag & NFC_SR_CMD_DONE)
+		comp[index++] = &host->nfc->comp_cmd_done;
+
+	if (index == 0) {
+		dev_err(host->dev, "Unkown interrupt flag: 0x%08x\n", flag);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < index; i++)
+		init_completion(comp[i]);
 
 	/* Enable interrupt that need to wait for */
 	nfc_writel(host->nfc->hsmc_regs, IER, flag);
 
-	timeout = wait_for_completion_timeout(&host->nfc->comp_nfc,
-			msecs_to_jiffies(NFC_TIME_OUT_MS));
-	if (timeout)
-		return 0;
+	for (i = 0; i < index; i++) {
+		timeout = wait_for_completion_timeout(comp[i],
+				msecs_to_jiffies(NFC_TIME_OUT_MS));
+		if (timeout)
+			continue;
+		else
+			goto err_timeout;
+	}
+	return 0;
 
+err_timeout:
 	/* Time out to wait for the interrupt */
 	dev_err(host->dev, "Time out to wait for interrupt: 0x%08x\n", flag);
 	return -ETIMEDOUT;
@@ -1665,7 +1817,7 @@ static int nfc_send_command(struct atmel_nand_host *host,
 		cmd, addr, cycle0);
 
 	timeout = jiffies + msecs_to_jiffies(NFC_TIME_OUT_MS);
-	while (nfc_cmd_readl(NFCADDR_CMD_NFCBUSY, host->nfc->base_cmd_regs)
+	while (nfc_busy_cmd_regs_readl(host->nfc)
 			& NFCADDR_CMD_NFCBUSY) {
 		if (time_after(jiffies, timeout)) {
 			dev_err(host->dev,
@@ -1675,7 +1827,8 @@ static int nfc_send_command(struct atmel_nand_host *host,
 	}
 	nfc_writel(host->nfc->hsmc_regs, CYCLE0, cycle0);
 	nfc_cmd_addr1234_writel(cmd, addr, host->nfc->base_cmd_regs);
-	return nfc_wait_interrupt(host, NFC_SR_CMD_DONE);
+	return nfc_wait_interrupt(host, NFC_SR_CMD_DONE |
+			(cmd & NFCADDR_CMD_DATAEN ? NFC_SR_XFR_DONE : 0));
 }
 
 static int nfc_device_ready(struct mtd_info *mtd)
@@ -1832,10 +1985,6 @@ static void nfc_nand_command(struct mtd_info *mtd, unsigned int command,
 	nfc_addr_cmd = cmd1 | cmd2 | vcmd2 | acycle | csid | dataen | nfcwr;
 	nfc_send_command(host, nfc_addr_cmd, addr1234, cycle0);
 
-	if (dataen == NFCADDR_CMD_DATAEN)
-		if (nfc_wait_interrupt(host, NFC_SR_XFR_DONE))
-			dev_err(host->dev, "something wrong, No XFR_DONE interrupt comes.\n");
-
 	/*
 	 * Program and erase have their own busy handlers status, sequential
 	 * in, and deplete1 need no delay.
@@ -1877,15 +2026,13 @@ static int nfc_sram_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 	if (offset || (data_len < mtd->writesize))
 		return -EINVAL;
 
-	cfg = nfc_readl(host->nfc->hsmc_regs, CFG);
+	if (data_len > mtd->writesize) {
+		printk(KERN_ERR "data_len: %d should not bigger than mtd->writesize: %d!\n",
+			data_len, mtd->writesize);
+		return -EINVAL;
+	}
+
 	len = mtd->writesize;
-
-	if (unlikely(raw)) {
-		len += mtd->oobsize;
-		nfc_writel(host->nfc->hsmc_regs, CFG, cfg | NFC_CFG_WSPARE);
-	} else
-		nfc_writel(host->nfc->hsmc_regs, CFG, cfg & ~NFC_CFG_WSPARE);
-
 	/* Copy page data to sram that will write to nand via NFC */
 	if (use_dma) {
 		if (atmel_nand_dma_op(mtd, (void *)buf, len, 0) != 0)
@@ -1893,6 +2040,15 @@ static int nfc_sram_write_page(struct mtd_info *mtd, struct nand_chip *chip,
 			memcpy32_toio(sram, buf, len);
 	} else {
 		memcpy32_toio(sram, buf, len);
+	}
+
+	cfg = nfc_readl(host->nfc->hsmc_regs, CFG);
+	if (unlikely(raw) && oob_required) {
+		memcpy32_toio(sram + len, chip->oob_poi, mtd->oobsize);
+		len += mtd->oobsize;
+		nfc_writel(host->nfc->hsmc_regs, CFG, cfg | NFC_CFG_WSPARE);
+	} else {
+		nfc_writel(host->nfc->hsmc_regs, CFG, cfg & ~NFC_CFG_WSPARE);
 	}
 
 	if (chip->ecc.mode == NAND_ECC_HW && host->has_pmecc)
@@ -2078,7 +2234,11 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 	}
 
 	nand_chip->ecc.mode = host->board.ecc_mode;
-	nand_chip->chip_delay = 20;		/* 20us command delay time */
+
+	/* For support 4k-page flash, incease the delay time to 25us.
+	 * In P.108 of MT29F8G08ABABA datasheet, tR max is 25us.
+	 */
+	nand_chip->chip_delay = 25;
 
 	if (host->board.bus_width_16)	/* 16-bit bus width */
 		nand_chip->options |= NAND_BUSWIDTH_16;
@@ -2236,12 +2396,17 @@ static int atmel_nand_nfc_probe(struct platform_device *pdev)
 	if (IS_ERR(nfc->base_cmd_regs))
 		return PTR_ERR(nfc->base_cmd_regs);
 
-	nfc_hsmc_regs = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	nfc_cmd_regs = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	nfc->busy_cmd_regs = devm_ioremap_resource(&pdev->dev, nfc_cmd_regs);
+	if (IS_ERR(nfc->busy_cmd_regs))
+		return PTR_ERR(nfc->busy_cmd_regs);
+
+	nfc_hsmc_regs = platform_get_resource(pdev, IORESOURCE_MEM, 2);
 	nfc->hsmc_regs = devm_ioremap_resource(&pdev->dev, nfc_hsmc_regs);
 	if (IS_ERR(nfc->hsmc_regs))
 		return PTR_ERR(nfc->hsmc_regs);
 
-	nfc_sram = platform_get_resource(pdev, IORESOURCE_MEM, 2);
+	nfc_sram = platform_get_resource(pdev, IORESOURCE_MEM, 3);
 	if (nfc_sram) {
 		nfc->sram_bank0 = devm_ioremap_resource(&pdev->dev, nfc_sram);
 		if (IS_ERR(nfc->sram_bank0)) {

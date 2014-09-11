@@ -120,22 +120,22 @@
 
 				lcd@f8038000 {
 					compatible = "atmel,at91sam9x5-lcd";
-					reg = <0xf8038000 0xff>,
-					      <0xf8038400 0x3ff>;
+					reg = <0xf8038000 0x100>,
+					      <0xf8038400 0x400>;
 					interrupts = <25 IRQ_TYPE_LEVEL_HIGH 3>;
 					status = "disabled";
 				};
 
 				lcdovl1@f8038100 {
 					compatible = "atmel,at91sam9x5-lcd";
-					reg = <0xf8038100 0xff>,
-					      <0xf8038800 0x3ff>;
+					reg = <0xf8038100 0x100>,
+					      <0xf8038800 0x400>;
 					status = "disabled";
 				};
 
 				lcdheo1@f8038280 {
 					compatible = "atmel,at91sam9x5-heo";
-					reg = <0xf8038280 0xbf>;
+					reg = <0xf8038280 0xc0>;
 					interrupts = <25 IRQ_TYPE_LEVEL_HIGH 3>;
 					status = "disabled";
 				};

@@ -32,10 +32,20 @@
 				};
 			};
 
+			ssc0: ssc@f0008000 {
+				atmel,clk-from-rk-pin;
+			};
+
 			i2c1: i2c@f0018000 {
 				wm8904: wm8904@1a {
 					compatible = "wm8904";
 					reg = <0x1a>;
+
+					DCVDD-supply = <&vdd_1v8_reg>;
+					DBVDD-supply = <&vdd_3v3_reg>;
+					AVDD-supply = <&vdd_1v8_reg>;
+					CPVDD-supply = <&vdd_1v8_reg>;
+					MICVDD-supply = <&vdd_3v3_reg>;
 				};
 			};
 
@@ -140,6 +150,20 @@
 		usb2: ehci@00700000 {
 			status = "okay";
 		};
+	};
+
+	vdd_1v8_reg: wm8904_1v8_reg {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_1v8_reg";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	vdd_3v3_reg: wm8904_3v3_reg {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_3v3_reg";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
 	};
 
 	sound {

@@ -108,7 +108,7 @@
 #define REG_HEOCFG1_YUVEN		0x00000002
 #define REG_HEOCFG1_YUVMODE_12YCBCRP	0x00008000
 #define REG_HEOCFG1_YUVMODE_16YCBCR_0	0x00001000
-#define REG_HEOCFG1_YUVMODE_16YCBCR_1	0x00001000
+#define REG_HEOCFG1_YUVMODE_16YCBCR_1	0x00002000
 
 #define REG_HEOCFG2		0x54
 #define REG_HEOCFG2_XPOS		0x000007ff
@@ -733,11 +733,12 @@ static void at91sam9x5_video_update_config_real(
 	switch(pix->pixelformat) {
 		case V4L2_PIX_FMT_YUYV:
 			at91sam9x5_video_write32(priv, REG_HEOCFG1,
-			REG_HEOCFG1_YUVMODE_16YCBCR_1 |
+			REG_HEOCFG1_YUVMODE_16YCBCR_0 |
 			REG_HEOCFG1_YUVEN);
+			break;
 		case V4L2_PIX_FMT_UYVY:
 			at91sam9x5_video_write32(priv, REG_HEOCFG1,
-			REG_HEOCFG1_YUVMODE_16YCBCR_0 |
+			REG_HEOCFG1_YUVMODE_16YCBCR_1 |
 			REG_HEOCFG1_YUVEN);
 			break;
 		case V4L2_PIX_FMT_YUV420:
@@ -1041,13 +1042,12 @@ const struct vb2_ops at91sam9x5_video_vb_ops = {
 static int at91sam9x5_video_vidioc_querycap(struct file *filp,
 		void *fh, struct v4l2_capability *cap)
 {
-	strcpy(cap->driver, DRIVER_NAME);
+	strlcpy(cap->driver, DRIVER_NAME, sizeof(cap->driver));
 	cap->capabilities = V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_STREAMING |
 		V4L2_CAP_VIDEO_OVERLAY;
 
-	/* XXX */
 	cap->version = 0;
-	cap->card[0] = '\0';
+	strlcpy(cap->card, "Atmel HEO Layer", sizeof(cap->card));
 	cap->bus_info[0] = '\0';
 
 	return 0;
@@ -1430,6 +1430,7 @@ static int at91sam9x5_video_register(struct at91sam9x5_video_priv *priv,
 	q->mem_ops = &vb2_dma_contig_memops;
 	q->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	q->io_modes = VB2_MMAP | VB2_USERPTR | VB2_WRITE;
+	q->timestamp_type = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 
 	ret = vb2_queue_init(q);
 	if (ret) {
@@ -1437,6 +1438,8 @@ static int at91sam9x5_video_register(struct at91sam9x5_video_priv *priv,
 		goto err_queue_init;
 	}
 
+	strlcpy(priv->video_dev->name, DRIVER_NAME,
+			sizeof(priv->video_dev->name));
 	priv->video_dev->fops = &at91sam9x5_video_fops;
 	priv->video_dev->ioctl_ops = &at91sam9x5_video_ioctl_ops;
 	priv->video_dev->release = video_device_release;

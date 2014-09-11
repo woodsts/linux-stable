@@ -89,8 +89,8 @@
 #define nfc_cmd_addr1234_writel(cmd, addr1234, nfc_base) \
 	writel((addr1234), (cmd) + nfc_base)
 
-#define nfc_cmd_readl(bitstatus, nfc_base) \
-	readl_relaxed((bitstatus) + nfc_base)
+#define nfc_busy_cmd_regs_readl(nfc) \
+	readl_relaxed(nfc->busy_cmd_regs)
 
 #define NFC_TIME_OUT_MS		100
 #define	NFC_SRAM_BANK1_OFFSET	0x1200

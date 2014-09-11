@@ -162,8 +162,6 @@ static const struct backlight_ops atmel_hlcdc_bl_ops = {
 
 void atmel_hlcdfb_start(struct atmel_lcdfb_info *sinfo)
 {
-	u32 value;
-
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDEN, LCDC_LCDEN_CLKEN);
 	while (!(lcdc_readl(sinfo, ATMEL_LCDC_LCDSR) & LCDC_LCDSR_CLKSTS))
 		msleep(1);

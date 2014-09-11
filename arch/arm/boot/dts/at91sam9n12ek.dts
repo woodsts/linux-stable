@@ -92,6 +92,12 @@
 			nand-on-flash-bbt;
 			status = "okay";
 		};
+
+		usb0: ohci@00500000 {
+			num-ports = <1>;
+			atmel,vbus-gpio = <&pioB 7 GPIO_ACTIVE_LOW>;
+			status = "okay";
+		};
 	};
 
 	leds {

@@ -31,6 +31,7 @@
 #include <linux/bitops.h>
 #include <linux/uaccess.h>
 #include <linux/of.h>
+#include <asm/firmware.h>
 
 #include "at91sam9_wdt.h"
 
@@ -82,7 +83,14 @@ static struct {
  */
 static inline void at91_wdt_reset(void)
 {
-	wdt_write(AT91_WDT_CR, AT91_WDT_KEY | AT91_WDT_WDRSTT);
+	int ret;
+
+	ret = call_firmware_op(wdt_reload_counter);
+	if (ret != -ENOSYS)
+		WARN_ONCE(ret != 0,
+			"watchdog: error when trying to reset watchdog\n");
+	else
+		wdt_write(AT91_WDT_CR, AT91_WDT_KEY | AT91_WDT_WDRSTT);
 }
 
 /*
@@ -131,8 +139,15 @@ static int at91_wdt_set_timeout(struct watchdog_device *wdd, unsigned int new_ti
  */
 static int at91_wdt_settimeout(unsigned int timeout)
 {
+	int ret = 0;
 	unsigned int reg;
 	unsigned int mr;
+
+	ret = call_firmware_op(wdt_set_counter, timeout);
+	if (ret != -ENOSYS && ret != 0) {
+		pr_err("watchdog: error when trying to set counter\n");
+		return -EIO;
+	}
 
 	/* Check if disabled */
 	mr = wdt_read(AT91_WDT_MR);

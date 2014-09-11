@@ -178,9 +178,12 @@ static int atmel_asoc_wm8904_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	mclk = clk_get(NULL, "pck0");
+	if (of_machine_is_compatible("atmel,sama5d4ek"))
+		mclk = clk_get(NULL, "pck2");
+	else
+		mclk = clk_get(NULL, "pck0");
 	if (IS_ERR(mclk)) {
-		dev_err(&pdev->dev, "failed to get pck0\n");
+		dev_err(&pdev->dev, "failed to get pck\n");
 		ret = PTR_ERR(mclk);
 		goto err_set_audio;
 	}
@@ -199,7 +202,7 @@ static int atmel_asoc_wm8904_probe(struct platform_device *pdev)
 		goto err_set_audio;
 	}
 
-	dev_info(&pdev->dev, "setting pck0 to %dHz\n", MCLK_RATE);
+	dev_info(&pdev->dev, "setting pck to %dHz\n", MCLK_RATE);
 	clk_set_rate(mclk, MCLK_RATE);
 
 	ret = snd_soc_register_card(card);

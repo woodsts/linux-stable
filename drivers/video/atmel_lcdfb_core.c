@@ -558,6 +558,7 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 	struct fb_videomode fbmode;
 	struct resource *regs = NULL, *clut = NULL;
 	struct resource *map = NULL;
+	const struct platform_device_id *id = platform_get_device_id(pdev);
 	int ret;
 
 	dev_dbg(dev, "%s BEGIN\n", __func__);
@@ -613,7 +614,9 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 		ret = PTR_ERR(sinfo->lcdc_clk);
 		goto put_bus_clk;
 	}
-	atmel_lcdfb_start_clock(sinfo);
+
+	if ((!id) || (id && !strcmp(id->name, "atmel_hlcdfb_base")))
+		atmel_lcdfb_start_clock(sinfo);
 
 	ret = fb_find_mode(&info->var, info, NULL, info->monspecs.modedb,
 			info->monspecs.modedb_len, info->monspecs.modedb,

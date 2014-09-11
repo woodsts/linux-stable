@@ -379,7 +379,7 @@ atc_chain_complete(struct at_dma_chan *atchan, struct at_desc *desc)
 		 * The API requires that no submissions are done from a
 		 * callback, so we don't need to drop the lock here
 		 */
-		if (callback)
+		if (callback && (txd->flags & DMA_PREP_INTERRUPT))
 			callback(param);
 	}
 
@@ -504,7 +504,7 @@ static void atc_handle_cyclic(struct at_dma_chan *atchan)
 			"new cyclic period llp 0x%08x\n",
 			channel_readl(atchan, DSCR));
 
-	if (callback)
+	if (callback && (txd->flags & DMA_PREP_INTERRUPT))
 		callback(param);
 }
 
@@ -984,6 +984,7 @@ atc_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t buf_addr, size_t buf_len,
 	first->txd.cookie = -EBUSY;
 	first->len = buf_len;
 	first->tx_width = reg_width;
+	first->txd.flags = flags; /* client is in control of this ack */
 
 	return &first->txd;
 

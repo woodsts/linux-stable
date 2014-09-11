@@ -65,6 +65,8 @@ dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_pda7.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_revc.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_revc_pda4.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_revc_pda7.dtb
+# sama5d4
+dtb-$(CONFIG_ARCH_AT91)	+= sama5d4ek.dtb
 
 dtb-$(CONFIG_ARCH_BCM2835) += bcm2835-rpi-b.dtb
 dtb-$(CONFIG_ARCH_BCM) += bcm11351-brt.dtb
