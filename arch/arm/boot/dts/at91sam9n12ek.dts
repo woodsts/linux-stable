@@ -73,6 +73,14 @@
 				};
 			};
 
+			lcd_bus@f8038000 {
+				status = "okay";
+
+				lcd@f8038000 {
+					status = "okay";
+				};
+			};
+
 			pinctrl@fffff400 {
 				mmc0 {
 					pinctrl_board_mmc0: mmc0-board {
