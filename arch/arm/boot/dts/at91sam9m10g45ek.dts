@@ -164,6 +164,14 @@
 			};
 		};
 
+		lcd_bus@00500000 {
+			status = "okay";
+
+			lcd@00500000 {
+				status = "okay";
+			};
+		};
+
 		usb0: ohci@00700000 {
 			status = "okay";
 			num-ports = <2>;
