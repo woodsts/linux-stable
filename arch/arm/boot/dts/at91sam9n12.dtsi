@@ -125,6 +125,24 @@
 				#dma-cells = <2>;
 			};
 
+			lcd_bus@f8038000 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "atmel,at91sam9x5-lcd-bus", "simple-bus";
+				ranges = <0xf8038000 0xf8038000 0x4000>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_lcd>;
+				status = "disabled";
+
+				lcd@f8038000 {
+					compatible = "atmel,at91sam9x5-lcd";
+					reg = <0xf8038000 0x100>,
+					      <0xf8038400 0x400>;
+					interrupts = <25 IRQ_TYPE_LEVEL_HIGH 3>;
+					status = "disabled";
+				};
+			};
+
 			pinctrl@fffff400 {
 				#address-cells = <1>;
 				#size-cells = <1>;
@@ -305,6 +323,42 @@
 						atmel,pins =
 							<AT91_PIOC 0 AT91_PERIPH_C AT91_PINCTRL_NONE
 							 AT91_PIOC 1 AT91_PERIPH_C AT91_PINCTRL_NONE>;
+					};
+				};
+
+				lcd {
+					pinctrl_lcd: lcd-0 {
+						atmel,pins =
+							<AT91_PIOC 26 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 27 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 28 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 24 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 29 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 30 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 0 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 1 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 2 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 3 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 4 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 5 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 6 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 7 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 8 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 9 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 10 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 11 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 12 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 13 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 14 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 15 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 16 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 17 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 18 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 19 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 20 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 21 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 22 AT91_PERIPH_A AT91_PINCTRL_NONE>,
+							<AT91_PIOC 23 AT91_PERIPH_A AT91_PINCTRL_NONE>;
 					};
 				};
 
