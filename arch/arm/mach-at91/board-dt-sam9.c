@@ -31,6 +31,7 @@
 #include <linux/fb.h>
 #include <video/atmel_lcdfb.h>
 #include <mach/atmel_hlcdc.h>
+#include <mach/atmel_lcdc.h>
 
 /*
  * LCD Controller
@@ -83,9 +84,7 @@ static struct atmel_lcdfb_info __initdata ek_lcdc_data = {
 struct of_dev_auxdata at91_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf8038000, "atmel_hlcdfb_base", &ek_lcdc_data),
 	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf8038100, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
-	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030000, "atmel_hlcdfb_base", &ek_lcdc_data),
-	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030140, "atmel_hlcdfb_ovl1", &ek_lcdc_data),
-	OF_DEV_AUXDATA("atmel,at91sam9x5-lcd", 0xf0030240, "atmel_hlcdfb_ovl2", &ek_lcdc_data),
+	OF_DEV_AUXDATA("atmel,at91sam9g45-lcd", 0x00500000, "atmel_lcdfb", &ek_lcdc_data),
 	{ /* sentinel */ }
 };
 
@@ -102,6 +101,53 @@ static void __init at91_dt_init_irq(void)
 
 static void __init at91_dt_device_init(void)
 {
+	if (of_machine_is_compatible("atmel,at91sam9n12ek")) {
+		__u8 manufacturer[4] = "QD";
+		__u8 monitor[14] = "QD43003C1";
+
+		/* set LCD configuration */
+		at91_tft_vga_modes[0].name = "QD";
+		at91_tft_vga_modes[0].xres = 480;
+		at91_tft_vga_modes[0].yres = 272;
+		at91_tft_vga_modes[0].pixclock = KHZ2PICOS(9000),
+
+		at91_tft_vga_modes[0].left_margin = 8;
+		at91_tft_vga_modes[0].right_margin = 43;
+		at91_tft_vga_modes[0].upper_margin = 4;
+		at91_tft_vga_modes[0].lower_margin = 12;
+		at91_tft_vga_modes[0].hsync_len = 5;
+		at91_tft_vga_modes[0].vsync_len = 10;
+
+		memcpy(at91fb_default_monspecs.manufacturer, manufacturer, 4);
+		memcpy(at91fb_default_monspecs.monitor, monitor, 14);
+
+		printk("LCD parameters updated for at91sam9n12ek display module\n");
+	}
+
+	if (of_machine_is_compatible("atmel,at91sam9m10g45ek")) {
+		#define AT91SAM9G45_DEFAULT_LCDCON2		\
+				(ATMEL_LCDC_MEMOR_LITTLE \
+				 | ATMEL_LCDC_DISTYPE_TFT \
+				 | ATMEL_LCDC_CLKMOD_ALWAYSACTIVE)
+
+		/* set LCD configuration */
+		at91_tft_vga_modes[0].xres = 480;
+		at91_tft_vga_modes[0].yres = 272;
+		at91_tft_vga_modes[0].pixclock = KHZ2PICOS(9000),
+
+		at91_tft_vga_modes[0].left_margin = 1;
+		at91_tft_vga_modes[0].right_margin = 1;
+		at91_tft_vga_modes[0].upper_margin = 40;
+		at91_tft_vga_modes[0].lower_margin = 1;
+		at91_tft_vga_modes[0].hsync_len = 45;
+		at91_tft_vga_modes[0].vsync_len = 1;
+
+		ek_lcdc_data.default_lcdcon2 = AT91SAM9G45_DEFAULT_LCDCON2;
+		ek_lcdc_data.default_dmacon = ATMEL_LCDC_DMAEN;
+
+		printk("LCD parameters updated for at91sam9m10g45ek display module\n");
+	}
+
 	of_platform_populate(NULL, of_default_bus_match_table, at91_auxdata_lookup, NULL);
 }
 
