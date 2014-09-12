@@ -99,6 +99,29 @@ static void __init at91_dt_init_irq(void)
 
 static void __init at91_dt_device_init(void)
 {
+	if (of_machine_is_compatible("atmel,at91sam9n12ek")) {
+		__u8 manufacturer[4] = "QD";
+		__u8 monitor[14] = "QD43003C1";
+
+		/* set LCD configuration */
+		at91_tft_vga_modes[0].name = "QD";
+		at91_tft_vga_modes[0].xres = 480;
+		at91_tft_vga_modes[0].yres = 272;
+		at91_tft_vga_modes[0].pixclock = KHZ2PICOS(9000),
+
+		at91_tft_vga_modes[0].left_margin = 8;
+		at91_tft_vga_modes[0].right_margin = 43;
+		at91_tft_vga_modes[0].upper_margin = 4;
+		at91_tft_vga_modes[0].lower_margin = 12;
+		at91_tft_vga_modes[0].hsync_len = 5;
+		at91_tft_vga_modes[0].vsync_len = 10;
+
+		memcpy(at91fb_default_monspecs.manufacturer, manufacturer, 4);
+		memcpy(at91fb_default_monspecs.monitor, monitor, 14);
+
+		printk("LCD parameters updated for at91sam9n12ek display module\n");
+	}
+
 	of_platform_populate(NULL, of_default_bus_match_table, at91_auxdata_lookup, NULL);
 }
 
