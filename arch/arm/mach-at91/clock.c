@@ -38,6 +38,12 @@
 void __iomem *at91_pmc_base;
 EXPORT_SYMBOL_GPL(at91_pmc_base);
 
+void __iomem *at91_get_pmc_base(void)
+{
+	return at91_pmc_base;
+}
+EXPORT_SYMBOL_GPL(at91_get_pmc_base);
+
 /*
  * There's a lot more which can be done with clocks, including cpufreq
  * integration, slow clock mode support (for system suspend), letting
