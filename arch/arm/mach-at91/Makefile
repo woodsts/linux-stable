@@ -101,6 +101,10 @@ obj-y				+= leds.o
 
 # Power Management
 obj-$(CONFIG_PM)		+= pm.o
+ifeq ($(CONFIG_CPU_V7), y)
+obj-$(CONFIG_PM)		+= sleep_sama5.o
+endif
+
 obj-$(CONFIG_AT91_SLOW_CLOCK)	+= pm_slowclock.o
 obj-$(CONFIG_CPU_IDLE)	+= cpuidle.o
 
