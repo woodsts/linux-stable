@@ -268,8 +268,13 @@ static int at91_pm_enter(suspend_state_t state)
 				/* copy slow_clock handler to SRAM, and call it */
 				memcpy(slow_clock, at91_slow_clock, at91_slow_clock_sz);
 #endif
+				at91_cortexa5_disable_cache();
+
 				slow_clock(at91_pmc_base, at91_ramc_base[0],
 					   at91_ramc_base[1], memctrl);
+
+				at91_cortexa5_enable_cache();
+
 				break;
 			} else {
 				pr_info("AT91: PM - no slow clock mode enabled ...\n");
