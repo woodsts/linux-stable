@@ -354,11 +354,18 @@ static int ksz8081_phy_reset(struct phy_device *phy)
 	return 0;
 }
 
+static void __iomem *l2cc_base;
+
+void __iomem *at91_get_l2cc_base(void)
+{
+	return l2cc_base;
+}
+EXPORT_SYMBOL_GPL(at91_get_l2cc_base);
+
 #ifdef CONFIG_CACHE_L2X0
 static void __init at91_init_l2cache(void)
 {
 	struct device_node *np;
-	void __iomem *l2cc_base;
 	u32 reg;
 	int ret;
 
