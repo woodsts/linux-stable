@@ -12,6 +12,9 @@
 #ifndef __ASSEMBLY__
 extern void __iomem *at91_ramc_base[];
 
+extern void __iomem *at91_get_ramc0_base(void);
+extern void __iomem *at91_get_ramc1_base(void);
+
 #define at91_ramc_read(id, field) \
 	__raw_readl(at91_ramc_base[id] + field)
 
