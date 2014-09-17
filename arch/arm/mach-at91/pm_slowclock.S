@@ -125,6 +125,10 @@ flag	.req	r7
 
 #if defined(CONFIG_CPU_V7)
 	dsb
+
+	mov	tmp1, #AT91_PMC_PCK
+	str	tmp1, [pmc, #AT91_PMC_SCDR]
+
 	wfi		@ Wait For Interrupt
 #else
 	mcr	p15, 0, tmp1, c7, c0, 4
