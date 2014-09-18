@@ -1195,8 +1195,8 @@ static void at91_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
 	void __iomem *pio = at91_gpio->regbase;
 
 	for (i = 0; i < chip->ngpio; i++) {
-		unsigned pin = chip->base + i;
-		unsigned mask = pin_to_mask(pin);
+		unsigned pin_id = chip->base + i;
+		unsigned mask = pin_to_mask(pin_id % MAX_NB_GPIO_PER_BANK);
 		const char *gpio_label;
 		u32 pdsr;
 
