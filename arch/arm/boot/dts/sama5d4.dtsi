@@ -850,6 +850,7 @@
 				reg = <7>;
 				atmel,fifo-size = <1024>;
 				atmel,nb-banks = <2>;
+				atmel,can-dma;
 				atmel,can-isoc;
 			};
 
