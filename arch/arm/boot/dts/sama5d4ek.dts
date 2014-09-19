@@ -1,5 +1,5 @@
 /*
- * sama5d4ek.dtsi - Device Tree Include file for SAMA5D4 Evaluation Kit
+ * sama5d4ek.dts - Device Tree file for SAMA5D4 Evaluation Kit
  *
  *  Copyright (C) 2013 Atmel,
  *                2013 Nicolas Ferre <nicolas.ferre@atmel.com>
