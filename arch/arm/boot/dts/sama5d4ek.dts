@@ -263,6 +263,28 @@
 		};
 	};
 
+	leds {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		d8 {
+			label = "d8";
+			gpios = <&pioE 28 GPIO_ACTIVE_LOW>;	/* PE28, conflicts with USART4 */
+			status = "disabled";
+		};
+
+		d9 {
+			label = "d9";
+			gpios = <&pioE 9 GPIO_ACTIVE_HIGH>;
+		};
+
+		d10 {
+			label = "d10";
+			gpios = <&pioE 8 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+		};
+	};
+
 	sound {
 		compatible = "atmel,asoc-wm8904";
 		pinctrl-names = "default";
