@@ -17,15 +17,15 @@ config HAVE_AT91_XDMAC
 
 config AT91_PMC_UNIT
 	bool
-	default !ARCH_AT91X40
+	default y
 
 config AT91_SAM9_ALT_RESET
 	bool
-	default !ARCH_AT91X40
+	default y
 
 config AT91_SAM9G45_RESET
 	bool
-	default !ARCH_AT91X40
+	default y
 
 config AT91_SAM9_TIME
 	bool
@@ -55,8 +55,7 @@ choice
 config SOC_SAM_V4_V5
 	bool "ARM7/ARM9"
 	help
-	  Select this if you are using one of Atmel's AT91SAM9, AT91RM9200
-	  or AT91X40 SoC.
+	  Select this if you are using one of Atmel's AT91SAM9, AT91RM9200 SoC.
 
 config SOC_SAM_V7
 	bool "Cortex A5"

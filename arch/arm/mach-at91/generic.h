@@ -20,7 +20,6 @@ extern void __init at91_init_sram(int bank, unsigned long base,
  /* Processors */
 extern void __init at91rm9200_set_type(int type);
 extern void __init at91_initialize(unsigned long main_clock);
-extern void __init at91x40_initialize(unsigned long main_clock);
 extern void __init at91rm9200_dt_initialize(void);
 extern void __init at91_dt_initialize(void);
 extern void __init at91_alt_dt_initialize(void);
@@ -28,7 +27,6 @@ extern void __init at91_alt_dt_initialize(void);
  /* Interrupts */
 extern void __init at91_init_irq_default(void);
 extern void __init at91_init_interrupts(unsigned int priority[]);
-extern void __init at91x40_init_interrupts(unsigned int priority[]);
 extern void __init at91_aic_init(unsigned int priority[],
 				 unsigned int ext_irq_mask);
 extern int  __init at91_aic_of_init(struct device_node *node,
@@ -46,7 +44,6 @@ extern void at91rm9200_ioremap_st(u32 addr);
 extern void at91rm9200_timer_init(void);
 extern void at91sam926x_ioremap_pit(u32 addr);
 extern void at91sam926x_pit_init(void);
-extern void at91x40_timer_init(void);
 
  /* Clocks */
 #ifdef CONFIG_AT91_PMC_UNIT
