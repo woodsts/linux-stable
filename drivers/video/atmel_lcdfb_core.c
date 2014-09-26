@@ -846,19 +846,70 @@ static const struct of_device_id atmel_lcdfb_bus_dt_ids[] = {
 	{ /* sentinel */ }
 };
 
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
+
 static int atmel_lcdfb_bus_probe(struct platform_device *pdev)
 {
-	struct pinctrl *pinctrl;
 	struct device *dev = &pdev->dev;
 
-	pinctrl = devm_pinctrl_get_select_default(dev);
-	if (IS_ERR(pinctrl)) {
-		dev_err(dev, "Failed to request pinctrl\n");
+#ifdef CONFIG_PM
+	pinctrl = devm_pinctrl_get(dev);
+	if (IS_ERR(pinctrl))
 		return PTR_ERR(pinctrl);
+
+	pins_default = pinctrl_lookup_state(pinctrl, PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(pins_default)) {
+		dev_err(dev, "could not get default pinstate\n");
+	} else {
+		if (pinctrl_select_state(pinctrl, pins_default))
+			dev_dbg(dev, "could not set default pinstate\n");
+	}
+
+	pins_sleep = pinctrl_lookup_state(pinctrl, PINCTRL_STATE_SLEEP);
+	if (IS_ERR(pins_sleep))
+		dev_dbg(dev, "could not get sleep pinstate\n");
+#endif
+
+	return 0;
+}
+
+#ifdef CONFIG_PM
+static int atmel_lcdfb_bus_suspend(struct platform_device *pdev,
+							pm_message_t mesg)
+{
+	int ret;
+
+	if (!IS_ERR(pins_sleep)) {
+		ret = pinctrl_select_state(pinctrl, pins_sleep);
+		if (ret)
+			dev_err(&pdev->dev, "could not set pins to sleep state\n");
 	}
 
 	return 0;
 }
+
+static int atmel_lcdfb_bus_resume(struct platform_device *pdev)
+{
+	int ret;
+
+	/* First go to the default state */
+	if (!IS_ERR(pins_default)) {
+		ret = pinctrl_select_state(pinctrl, pins_default);
+		if (ret)
+			dev_err(&pdev->dev, "could not set pins to default state\n");
+	}
+
+	return 0;
+}
+#else
+#define atmel_lcdfb_bus_suspend		NULL
+#define atmel_lcdfb_bus_resume		NULL
+#endif
 
 static struct platform_driver atmel_lcdfb_bus = {
 	.probe		= atmel_lcdfb_bus_probe,
@@ -867,6 +918,8 @@ static struct platform_driver atmel_lcdfb_bus = {
 		.owner	= THIS_MODULE,
 		.of_match_table	= of_match_ptr(atmel_lcdfb_bus_dt_ids),
 	},
+	.suspend	= atmel_lcdfb_bus_suspend,
+	.resume		= atmel_lcdfb_bus_resume,
 };
 
 static int __init atmel_lcdfb_bus_init(void)

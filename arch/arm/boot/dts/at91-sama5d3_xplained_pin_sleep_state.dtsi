@@ -1,0 +1,347 @@
+/*
+ * at91-sama5d3_xplained_pin_sleep_state.dtsi - Device Tree Include file for the SAMA5D3 Xplained board
+ *
+ *  Copyright (C) 2014 Atmel,
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/ {
+	ahb {
+		apb {
+			mmc0: mmc@f0000000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_mmc0_clk_cmd_dat0_sleep &pinctrl_mmc0_dat1_3_sleep &pinctrl_mmc0_dat4_7_sleep>;
+			};
+
+			spi0: spi@f0004000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_spi0_sleep>;
+			};
+
+			can0: can@f000c000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_can0_rx_tx_sleep>;
+			};
+
+			can1: can@f8010000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_can1_rx_tx_sleep>;
+			};
+
+			i2c0: i2c@f0014000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_i2c0_sleep>;
+			};
+
+			i2c1: i2c@f0018000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_i2c1_sleep>;
+			};
+
+			macb0: ethernet@f0028000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_macb0_data_rgmii_sleep &pinctrl_macb0_signal_rgmii_sleep>;
+			};
+
+			macb1: ethernet@f802c000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_macb1_rmii_sleep>;
+			};
+
+			pwm0: pwm@f002c000 {
+				status = "disabled";
+			};
+
+			usart0: serial@f001c000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_usart0_sleep>;
+			};
+
+			usart1: serial@f0020000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_usart1_sleep &pinctrl_usart1_rts_cts_sleep>;
+			};
+
+			uart0: serial@f0024000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_uart0_sleep>;
+			};
+
+			mmc1: mmc@f8000000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_mmc1_clk_cmd_dat0_sleep &pinctrl_mmc1_dat1_3_sleep>;
+			};
+
+			spi1: spi@f8008000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_spi1_sleep>;
+			};
+
+			adc0: adc@f8018000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <
+					&pinctrl_adc0_adtrg_sleep
+					&pinctrl_adc0_ad0_sleep
+					&pinctrl_adc0_ad1_sleep
+					&pinctrl_adc0_ad2_sleep
+					&pinctrl_adc0_ad3_sleep
+					&pinctrl_adc0_ad4_sleep
+					&pinctrl_adc0_ad5_sleep
+					&pinctrl_adc0_ad6_sleep
+					&pinctrl_adc0_ad7_sleep
+					&pinctrl_adc0_ad8_sleep
+					&pinctrl_adc0_ad9_sleep
+					>;
+				status = "disabled";
+			};
+
+			i2c2: i2c@f801c000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_i2c2_sleep>;
+				status = "disabled";
+			};
+
+			dbgu: serial@ffffee00 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_dbgu_sleep>;
+			};
+
+			pinctrl@fffff200 {
+				mmc0 {
+					pinctrl_mmc0_clk_cmd_dat0_sleep: mmc0_clk_cmd_dat0_1 {
+						atmel,pins =
+							<AT91_PIOD 9 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PD9 GPIO output 0 */
+							 AT91_PIOD 0 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD0 GPIO Input with pullup */
+							 AT91_PIOD 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD1 GPIO Input with pullup */
+					};
+					pinctrl_mmc0_dat1_3_sleep: mmc0_dat1_3_1 {
+						atmel,pins =
+							<AT91_PIOD 2 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD2 GPIO Input with pullup */
+							 AT91_PIOD 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD3 GPIO Input with pullup */
+							 AT91_PIOD 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD4 GPIO Input with pullup */
+					};
+					pinctrl_mmc0_dat4_7_sleep: mmc0_dat4_7_1 {
+						atmel,pins =
+							<AT91_PIOD 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD5 GPIO Input with pullup */
+							 AT91_PIOD 6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD6 GPIO Input with pullup */
+							 AT91_PIOD 7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD7 GPIO Input with pullup */
+							 AT91_PIOD 8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD8 GPIO Input with pullup */
+					};
+				};
+
+				spi0 {
+					pinctrl_spi0_sleep: spi0-1 {
+						atmel,pins =
+							<AT91_PIOD 10 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD10 GPIO Input with pullup */
+							 AT91_PIOD 11 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD11 GPIO Input with pullup */
+							 AT91_PIOD 12 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD12 GPIO Input with pullup */
+					};
+				};
+
+				can0 {
+					pinctrl_can0_rx_tx_sleep: can0_rx_tx-1 {
+						atmel,pins =
+							<AT91_PIOD 14 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD14 GPIO Input with pullup */
+							 AT91_PIOD 15 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD15 GPIO Input with pullup */
+					};
+				};
+
+				can1 {
+					pinctrl_can1_rx_tx_sleep: can1_rx_tx-1 {
+						atmel,pins =
+							<AT91_PIOB 14 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB14 GPIO Input with pullup */
+							 AT91_PIOB 15 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB15 GPIO Input with pullup */
+					};
+				};
+
+				i2c0 {
+					pinctrl_i2c0_sleep: i2c0-1 {
+						atmel,pins =
+							<AT91_PIOA 30 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PA30 GPIO Input with pullup */
+							 AT91_PIOA 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PA31 GPIO Input with pullup */
+					};
+				};
+
+				i2c1 {
+					pinctrl_i2c1_sleep: i2c1-1 {
+						atmel,pins =
+							<AT91_PIOC 26 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))	/* PC26 GPIO output 1 */
+							 AT91_PIOC 27 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))>;	/* PC27 GPIO output 1 */
+					};
+				};
+
+				macb0 {
+					pinctrl_macb0_data_rgmii_sleep: macb0_data_rgmii_1 {
+						atmel,pins =
+							<AT91_PIOB 0 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB0 GPIO output 0 */
+							 AT91_PIOB 1 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB1 GPIO output 0 */
+							 AT91_PIOB 2 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB2 GPIO output 0 */
+							 AT91_PIOB 3 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB3 GPIO output 0 */
+							 AT91_PIOB 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB4 GPIO input with pullup */
+							 AT91_PIOB 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB5 GPIO input with pullup */
+							 AT91_PIOB 6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB6 GPIO input with pullup */
+							 AT91_PIOB 7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB7 GPIO input with pullup */
+					};
+
+					pinctrl_macb0_signal_rgmii_sleep: macb0_signal_rgmii_1 {
+						atmel,pins =
+							<AT91_PIOB 8 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB8 GPIO output 0 */
+							 AT91_PIOB 9 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB9 GPIO output 0 */
+							 AT91_PIOB 11 AT91_PERIPH_GPIO AT91_PINCTRL_NONE	/* PB11 GPIO input default */
+							 AT91_PIOB 13 AT91_PERIPH_GPIO AT91_PINCTRL_NONE	/* PB13 GPIO input default */
+							 AT91_PIOB 16 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB16 GPIO output 0 */
+							 AT91_PIOB 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB17 GPIO Input with pullup */
+							 AT91_PIOB 18 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))>;	/* PB18 GPIO output 0 */
+					};
+				};
+
+				macb1 {
+					pinctrl_macb1_rmii_sleep: macb1_rmii-1 {
+						atmel,pins =
+							<AT91_PIOC 0 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PC0 GPIO output 0 */
+							 AT91_PIOC 1 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PC1 GPIO output 0 */
+							 AT91_PIOC 2 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC2 GPIO input with pullup */
+							 AT91_PIOC 3 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PC3 GPIO output 0 */
+							 AT91_PIOC 4 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PC4 GPIO output 0 */
+							 AT91_PIOC 5 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PC5 GPIO output 0 */
+							 AT91_PIOC 6 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PC6 GPIO output 0 */
+							 AT91_PIOC 7 AT91_PERIPH_GPIO AT91_PINCTRL_NONE		/* PC7 GPIO input default */
+							 AT91_PIOC 8 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PC8 GPIO output 1 */
+							 AT91_PIOC 9 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))>;	/* PC9 GPIO output 1 */
+					};
+				};
+
+				usart0 {
+					pinctrl_usart0_sleep: usart0-1 {
+						atmel,pins =
+							<AT91_PIOD 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PD17 GPIO input with pullup */
+							 AT91_PIOD 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD18 GPIO input with pullup */
+					};
+				};
+
+				usart1 {
+					pinctrl_usart1_sleep: usart1-1 {
+						atmel,pins =
+							<AT91_PIOB 28 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB28 GPIO input with pullup */
+							 AT91_PIOB 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB29 GPIO input with pullup */
+					};
+
+					pinctrl_usart1_rts_cts_sleep: usart1_rts_cts-1 {
+						atmel,pins =
+							<AT91_PIOB 26 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB26 GPIO input with pullup */
+							 AT91_PIOB 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB27 GPIO input with pullup */
+					};
+				};
+
+				uart0 {
+					pinctrl_uart0_sleep: uart0-1 {
+						atmel,pins =
+							<AT91_PIOC 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC29 GPIO input with pullup */
+							 AT91_PIOC 30 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PC30 GPIO input with pullup */
+					};
+				};
+
+				mmc1 {
+					pinctrl_mmc1_clk_cmd_dat0_sleep: mmc1_clk_cmd_dat0_1 {
+						atmel,pins =
+							<AT91_PIOB 24 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PB24 GPIO output 0 */
+							 AT91_PIOB 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB19 GPIO Input with pullup */
+							 AT91_PIOB 20 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB20 GPIO Input with pullup */
+					};
+					pinctrl_mmc1_dat1_3_sleep: mmc1_dat1_3_1 {
+						atmel,pins =
+							<AT91_PIOB 21 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB21 GPIO Input with pullup */
+							 AT91_PIOB 22 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PB22 GPIO Input with pullup */
+							 AT91_PIOB 23 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PB23 GPIO Input with pullup */
+					};
+				};
+
+				spi1 {
+					pinctrl_spi1_sleep: spi1-1 {
+						atmel,pins =
+							<AT91_PIOC 22 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC22 GPIO Input with pullup */
+							 AT91_PIOC 23 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PC23 GPIO Input with pullup */
+							 AT91_PIOC 24 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PC24 GPIO Input with pullup */
+					};
+				};
+
+				adc0 {
+					pinctrl_adc0_adtrg_sleep: adc0_adtrg-1 {
+						atmel,pins =
+							<AT91_PIOD 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD19 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad0_sleep: adc0_ad0-1 {
+						atmel,pins =
+							<AT91_PIOD 20 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD20 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad1_sleep: adc0_ad1-1 {
+						atmel,pins =
+							<AT91_PIOD 21 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD21 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad2_sleep: adc0_ad2-1 {
+						atmel,pins =
+							<AT91_PIOD 22 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD22 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad3_sleep: adc0_ad3-1 {
+						atmel,pins =
+							<AT91_PIOD 23 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD23 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad4_sleep: adc0_ad4-1 {
+						atmel,pins =
+							<AT91_PIOD 24 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD24 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad5_sleep: adc0_ad5-1 {
+						atmel,pins =
+							<AT91_PIOD 25 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD25 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad6_sleep: adc0_ad6-1 {
+						atmel,pins =
+							<AT91_PIOD 26 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD26 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad7_sleep: adc0_ad7-1 {
+						atmel,pins =
+							<AT91_PIOD 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD27 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad8_sleep: adc0_ad8-1 {
+						atmel,pins =
+							<AT91_PIOD 28 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD28 GPIO Input with pullup */
+					};
+					pinctrl_adc0_ad9_sleep: adc0_ad9-1 {
+						atmel,pins =
+							<AT91_PIOD 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PD29 GPIO Input with pullup */
+					};
+				};
+
+				i2c2 {
+					pinctrl_i2c2_sleep: i2c2-1 {
+						atmel,pins =
+							<AT91_PIOA 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP	/* PA18 GPIO Input with pullup */
+							 AT91_PIOA 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;	/* PA19 GPIO Input with pullup */
+					};
+				};
+
+				dbgu {
+					pinctrl_dbgu_sleep: dbgu-1 {
+						atmel,pins =
+							<AT91_PIOB 30 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))	/* PB30 GPIO output 1 */
+							 AT91_PIOB 31 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))>;	/* PB31 GPIO output 1 */
+					};
+				};
+
+				nand0 {
+					pinctrl_nand0_ale_cle_sleep: nand0_ale_cle-1 {
+						atmel,pins =
+							<AT91_PIOE 21 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))	/* PE21 GPIO output 0 */
+							 AT91_PIOE 22 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))>;	/* PE22 GPIO output 0 */
+					};
+				};
+			};
+		};
+
+		nand0: nand@60000000 {
+			pinctrl-names = "default", "sleep";
+			pinctrl-1 = <&pinctrl_nand0_ale_cle_sleep>;
+		};
+	};
+};

@@ -30,6 +30,7 @@
 #include <linux/iio/trigger.h>
 #include <linux/iio/trigger_consumer.h>
 #include <linux/iio/triggered_buffer.h>
+#include <linux/pinctrl/consumer.h>
 
 #include <mach/at91_adc.h>
 
@@ -114,6 +115,13 @@ struct at91_adc_state {
 
 	u16			ts_sample_period_val;
 	u32			ts_pressure_threshold;
+
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
 };
 
 static irqreturn_t at91_adc_trigger_handler(int irq, void *p)
@@ -928,6 +936,28 @@ static int at91_adc_probe(struct platform_device *pdev)
 		goto error_free_device;
 	}
 
+#ifdef CONFIG_PM
+	st->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(st->pinctrl)) {
+		ret =  PTR_ERR(st->pinctrl);
+		goto error_free_device;
+	}
+
+	st->pins_default = pinctrl_lookup_state(st->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(st->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		if (pinctrl_select_state(st->pinctrl, st->pins_default))
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
+	}
+
+	st->pins_sleep = pinctrl_lookup_state(st->pinctrl,
+					       PINCTRL_STATE_SLEEP);
+	if (IS_ERR(st->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
+
 	platform_set_drvdata(pdev, idev);
 
 	idev->dev.parent = &pdev->dev;
@@ -1107,6 +1137,14 @@ static int at91_adc_suspend(struct device *dev)
 {
 	struct iio_dev *idev = platform_get_drvdata(to_platform_device(dev));
 	struct at91_adc_state *st = iio_priv(idev);
+	int ret;
+
+	if (!IS_ERR(st->pins_sleep)) {
+		ret = pinctrl_select_state(st->pinctrl,
+						st->pins_sleep);
+		if (ret)
+			dev_err(dev, "could not set pins to sleep state\n");
+	}
 
 	clk_disable_unprepare(st->clk);
 
@@ -1117,7 +1155,15 @@ static int at91_adc_resume(struct device *dev)
 {
 	struct iio_dev *idev = platform_get_drvdata(to_platform_device(dev));
 	struct at91_adc_state *st = iio_priv(idev);
+	int ret;
 
+	/* First go to the default state */
+	if (!IS_ERR(st->pins_default)) {
+		ret = pinctrl_select_state(st->pinctrl,
+						st->pins_default);
+		if (ret)
+			dev_err(dev, "could not set pins to default state\n");
+	}
 	clk_prepare_enable(st->clk);
 
 	return 0;

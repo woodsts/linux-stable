@@ -156,6 +156,26 @@ static int ssc_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
+#ifdef CONFIG_PM
+	ssc->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(ssc->pinctrl))
+		return PTR_ERR(ssc->pinctrl);
+
+	ssc->pins_default = pinctrl_lookup_state(ssc->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(ssc->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		if (pinctrl_select_state(ssc->pinctrl, ssc->pins_default))
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
+	}
+
+	ssc->pins_sleep = pinctrl_lookup_state(ssc->pinctrl,
+					       PINCTRL_STATE_SLEEP);
+	if (IS_ERR(ssc->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
+
 	ssc->pdev = pdev;
 
 	plat_dat = atmel_ssc_get_driver_data(pdev);
@@ -221,8 +241,16 @@ static int ssc_remove(struct platform_device *pdev)
 static int atmel_ssc_suspend(struct platform_device *pdev, pm_message_t mesg)
 {
 	struct ssc_device *ssc = platform_get_drvdata(pdev);
+	int ret;
 
 	clk_disable_unprepare(ssc->clk);
+
+	if (!IS_ERR(ssc->pins_sleep)) {
+		ret = pinctrl_select_state(ssc->pinctrl, ssc->pins_sleep);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to sleep state\n");
+	}
 
 	return 0;
 }
@@ -230,8 +258,17 @@ static int atmel_ssc_suspend(struct platform_device *pdev, pm_message_t mesg)
 static int atmel_ssc_resume(struct platform_device *pdev)
 {
 	struct ssc_device *ssc = platform_get_drvdata(pdev);
+	int ret;
 
 	clk_prepare_enable(ssc->clk);
+
+	/* First go to the default state */
+	if (!IS_ERR(ssc->pins_default)) {
+		ret = pinctrl_select_state(ssc->pinctrl, ssc->pins_default);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to default state\n");
+	}
 
 	return 0;
 }

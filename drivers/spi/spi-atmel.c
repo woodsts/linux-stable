@@ -26,6 +26,7 @@
 
 #include <linux/io.h>
 #include <linux/gpio.h>
+#include <linux/pinctrl/consumer.h>
 
 /* SPI register offsets */
 #define SPI_CR					0x0000
@@ -241,6 +242,13 @@ struct atmel_spi {
 	bool			use_pdc;
 	/* dmaengine data */
 	struct atmel_spi_dma	dma;
+
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
 };
 
 /* Controller-specific per-slave state */
@@ -1538,6 +1546,28 @@ static int atmel_spi_probe(struct platform_device *pdev)
 
 	as = spi_master_get_devdata(master);
 
+#ifdef CONFIG_PM
+	as->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(as->pinctrl)) {
+		ret = PTR_ERR(as->pinctrl);
+		goto err_pinctrl;
+	}
+
+	as->pins_default = pinctrl_lookup_state(as->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(as->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		ret = pinctrl_select_state(as->pinctrl, as->pins_default);
+		if (ret)
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
+	}
+
+	as->pins_sleep = pinctrl_lookup_state(as->pinctrl, PINCTRL_STATE_SLEEP);
+	if (IS_ERR(as->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
+
 	/*
 	 * Scratch buffer is used for throwaway rx and tx data.
 	 * It's coherent to minimize dcache pollution.
@@ -1625,6 +1655,7 @@ out_free_buffer:
 		tasklet_kill(&as->tasklet);
 	dma_free_coherent(&pdev->dev, BUFFER_SIZE, as->buffer,
 			as->buffer_dma);
+err_pinctrl:
 out_free:
 	clk_put(clk);
 	spi_master_put(master);
@@ -1684,6 +1715,14 @@ static int atmel_spi_suspend(struct platform_device *pdev, pm_message_t mesg)
 {
 	struct spi_master	*master = platform_get_drvdata(pdev);
 	struct atmel_spi	*as = spi_master_get_devdata(master);
+	int ret;
+
+	if (!IS_ERR(as->pins_sleep)) {
+		ret = pinctrl_select_state(as->pinctrl, as->pins_sleep);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to sleep state\n");
+	}
 
 	clk_disable(as->clk);
 	return 0;
@@ -1693,6 +1732,15 @@ static int atmel_spi_resume(struct platform_device *pdev)
 {
 	struct spi_master	*master = platform_get_drvdata(pdev);
 	struct atmel_spi	*as = spi_master_get_devdata(master);
+	int ret;
+
+	/* First go to the default state */
+	if (!IS_ERR(as->pins_default)) {
+		ret = pinctrl_select_state(as->pinctrl, as->pins_default);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to default state\n");
+	}
 
 	clk_enable(as->clk);
 	return 0;

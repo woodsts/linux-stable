@@ -150,6 +150,13 @@ struct atmel_nand_host {
 	int			*pmecc_mu;
 	int			*pmecc_dmu;
 	int			*pmecc_delta;
+
+#ifdef CONFIG_PM
+	/* Two pin states - default, sleep */
+	struct pinctrl		*pinctrl;
+	struct pinctrl_state	*pins_default;
+	struct pinctrl_state	*pins_sleep;
+#endif
 };
 
 static struct nand_ecclayout atmel_pmecc_oobinfo;
@@ -2153,7 +2160,6 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 	struct resource *mem;
 	struct mtd_part_parser_data ppdata = {};
 	int res, irq;
-	struct pinctrl *pinctrl;
 
 	/* Allocate memory for the device structure (and zero it) */
 	host = devm_kzalloc(&pdev->dev, sizeof(*host), GFP_KERNEL);
@@ -2195,12 +2201,25 @@ static int __init atmel_nand_probe(struct platform_device *pdev)
 	nand_chip->IO_ADDR_R = host->io_base;
 	nand_chip->IO_ADDR_W = host->io_base;
 
-	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
-	if (IS_ERR(pinctrl)) {
-		dev_err(host->dev, "Failed to request pinctrl\n");
-		res = PTR_ERR(pinctrl);
+#ifdef CONFIG_PM
+	host->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(host->pinctrl))
 		goto err_nand_ioremap;
+
+	host->pins_default = pinctrl_lookup_state(host->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(host->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		if (pinctrl_select_state(host->pinctrl, host->pins_default))
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
 	}
+
+	host->pins_sleep = pinctrl_lookup_state(host->pinctrl,
+						PINCTRL_STATE_SLEEP);
+	if (IS_ERR(host->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
 
 	if (nand_nfc.is_initialized) {
 		/* NFC driver is probed and initialized */
@@ -2428,6 +2447,42 @@ static int atmel_nand_nfc_probe(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef	CONFIG_PM
+static int atmel_nand_suspend(struct platform_device *pdev, pm_message_t mesg)
+{
+	struct atmel_nand_host *host = platform_get_drvdata(pdev);
+	int ret;
+
+	if (!IS_ERR(host->pins_sleep)) {
+		ret = pinctrl_select_state(host->pinctrl, host->pins_sleep);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to sleep state\n");
+	}
+
+	return 0;
+}
+
+static int atmel_nand_resume(struct platform_device *pdev)
+{
+	struct atmel_nand_host *host = platform_get_drvdata(pdev);
+	int ret;
+
+	/* First go to the default state */
+	if (!IS_ERR(host->pins_default)) {
+		ret = pinctrl_select_state(host->pinctrl, host->pins_default);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to default state\n");
+	}
+
+	return 0;
+}
+#else
+#define	atmel_nand_suspend	NULL
+#define	atmel_nand_resume	NULL
+#endif
+
 #if defined(CONFIG_OF)
 static struct of_device_id atmel_nand_nfc_match[] = {
 	{ .compatible = "atmel,sama5d3-nfc" },
@@ -2451,6 +2506,8 @@ static struct platform_driver atmel_nand_driver = {
 		.owner	= THIS_MODULE,
 		.of_match_table	= of_match_ptr(atmel_nand_dt_ids),
 	},
+	.suspend	= atmel_nand_suspend,
+	.resume		= atmel_nand_resume,
 };
 
 module_platform_driver_probe(atmel_nand_driver, atmel_nand_probe);

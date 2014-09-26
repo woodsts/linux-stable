@@ -2003,6 +2003,7 @@ static int __init macb_probe(struct platform_device *pdev)
 	int err = -ENXIO;
 	struct pinctrl *pinctrl;
 	const char *mac;
+	int ret;
 
 	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!regs) {
@@ -2032,6 +2033,29 @@ static int __init macb_probe(struct platform_device *pdev)
 
 	spin_lock_init(&bp->lock);
 	INIT_WORK(&bp->tx_error_task, macb_tx_error_task);
+
+#ifdef CONFIG_PM
+	bp->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (IS_ERR(bp->pinctrl)) {
+		ret = PTR_ERR(bp->pinctrl);
+		goto err_pinctrl;
+	}
+
+	bp->pins_default = pinctrl_lookup_state(bp->pinctrl,
+						 PINCTRL_STATE_DEFAULT);
+	if (IS_ERR(bp->pins_default)) {
+		dev_err(&pdev->dev, "could not get default pinstate\n");
+	} else {
+		ret = pinctrl_select_state(bp->pinctrl, bp->pins_default);
+		if (ret)
+			dev_dbg(&pdev->dev, "could not set default pinstate\n");
+	}
+
+	bp->pins_sleep = pinctrl_lookup_state(bp->pinctrl,
+					       PINCTRL_STATE_SLEEP);
+	if (IS_ERR(bp->pins_sleep))
+		dev_dbg(&pdev->dev, "could not get sleep pinstate\n");
+#endif
 
 	bp->pclk = clk_get(&pdev->dev, "pclk");
 	if (IS_ERR(bp->pclk)) {
@@ -2173,6 +2197,7 @@ err_out_put_pclk:
 	clk_put(bp->pclk);
 err_out_free_dev:
 	free_netdev(dev);
+err_pinctrl:
 err_out:
 	return err;
 }
@@ -2209,12 +2234,20 @@ static int macb_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	struct net_device *netdev = platform_get_drvdata(pdev);
 	struct macb *bp = netdev_priv(netdev);
+	int ret;
 
 	netif_carrier_off(netdev);
 	netif_device_detach(netdev);
 
 	clk_disable_unprepare(bp->hclk);
 	clk_disable_unprepare(bp->pclk);
+
+	if (!IS_ERR(bp->pins_sleep)) {
+		ret = pinctrl_select_state(bp->pinctrl, bp->pins_sleep);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to sleep state\n");
+	}
 
 	return 0;
 }
@@ -2223,6 +2256,15 @@ static int macb_resume(struct platform_device *pdev)
 {
 	struct net_device *netdev = platform_get_drvdata(pdev);
 	struct macb *bp = netdev_priv(netdev);
+	int ret;
+
+	/* First go to the default state */
+	if (!IS_ERR(bp->pins_default)) {
+		ret = pinctrl_select_state(bp->pinctrl, bp->pins_default);
+		if (ret)
+			dev_err(&pdev->dev,
+				"could not set pins to default state\n");
+	}
 
 	clk_prepare_enable(bp->pclk);
 	clk_prepare_enable(bp->hclk);

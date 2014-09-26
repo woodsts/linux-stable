@@ -427,6 +427,29 @@ static int __exit vdec_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM
+static int vdec_suspend(struct platform_device *pdev, pm_message_t mesg)
+{
+	struct vdec_device *p = vdec6731_global;
+
+	clk_disable(p->clk);
+
+	return 0;
+}
+
+static int vdec_resume(struct platform_device *pdev)
+{
+	struct vdec_device *p = vdec6731_global;
+
+	clk_enable(p->clk);
+
+	return 0;
+}
+#else
+#define	vdec_suspend	NULL
+#define	vdec_resume	NULL
+#endif
+
 static const struct of_device_id vdec_of_match[] = {
 	{ .compatible = "on2,g1", .data = NULL },
 	{},
@@ -439,6 +462,8 @@ static struct platform_driver vdec_of_driver = {
 		.owner	= THIS_MODULE,
 		.of_match_table	= vdec_of_match,
 	},
+	.suspend	= vdec_suspend,
+	.resume		= vdec_resume,
 	.remove		= vdec_remove,
 };
 

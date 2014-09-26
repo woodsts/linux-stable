@@ -125,4 +125,14 @@ static inline void at91sam_ddrc_standby(void)
 	at91_ramc_write(0, AT91_DDRSDRC_LPR, saved_lpr);
 }
 
+#ifdef CONFIG_CPU_V7
+extern void at91_cortexa5_standby(void);
+extern void at91_cortexa5_disable_cache(void);
+extern void at91_cortexa5_enable_cache(void);
+#else
+void at91_cortexa5_standby(void) {}
+void at91_cortexa5_disable_cache(void) {}
+void at91_cortexa5_enable_cache(void) {}
+#endif
+
 #endif
