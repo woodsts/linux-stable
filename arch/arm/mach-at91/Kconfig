@@ -187,7 +187,6 @@ config MACH_SAMA5_DT
 	bool "Atmel SAMA5 Evaluation Kits with device-tree support"
 	depends on SOC_SAMA5
 	select USE_OF
-	select AT91_PROGRAMMABLE_CLOCKS
 	select PHYLIB if NETDEVICES
 	help
 	  Select this if you want to experiment device-tree with
@@ -196,12 +195,6 @@ config MACH_SAMA5_DT
 # ----------------------------------------------------------
 
 comment "AT91 Feature Selections"
-
-config AT91_PROGRAMMABLE_CLOCKS
-	bool "Programmable Clocks"
-	help
-	  Select this if you need to program one or more of the PCK0..PCK3
-	  programmable clock outputs.
 
 config AT91_SLOW_CLOCK
 	bool "Suspend-to-RAM disables main oscillator"
