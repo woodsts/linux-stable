@@ -286,10 +286,7 @@ static inline u32 at_xdmac_csize(u32 maxburst)
 {
 	u32 csize;
 
-	switch (ffs(maxburst) -1) {
-	case 0:
-		csize = AT_XDMAC_CC_CSIZE_CHK_1;
-		break;
+	switch (ffs(maxburst) - 1) {
 	case 1:
 		csize = AT_XDMAC_CC_CSIZE_CHK_2;
 		break;
@@ -299,8 +296,11 @@ static inline u32 at_xdmac_csize(u32 maxburst)
 	case 3:
 		csize = AT_XDMAC_CC_CSIZE_CHK_8;
 		break;
-	default:
+	case 4:
 		csize = AT_XDMAC_CC_CSIZE_CHK_16;
+		break;
+	default:
+		csize = AT_XDMAC_CC_CSIZE_CHK_1;
 	}
 
 	return csize;
