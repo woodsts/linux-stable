@@ -251,12 +251,14 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 	struct atmel_lcdfb_info *sinfo = info->par;
 	unsigned long value;
 	unsigned long clk_value_khz;
+	unsigned long required_pixclk, updated_pixclk;
 
 	dev_dbg(info->device, "%s:\n", __func__);
 	/* Set pixel clock */
 	clk_value_khz = clk_get_rate(sinfo->lcdc_clk) / 1000;
 
 	value = DIV_ROUND_CLOSEST(clk_value_khz, PICOS2KHZ(info->var.pixclock));
+	required_pixclk = info->var.pixclock;
 
 	if (value < 1) {
 		dev_notice(info->device, "using system clock as pixel clock\n");
@@ -273,6 +275,13 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 			| LCDC_LCDCFG0_CGDISBASE;
 		lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG0, value);
 	}
+
+	updated_pixclk = info->var.pixclock;
+
+	if (required_pixclk < updated_pixclk * 95 / 100
+	    || required_pixclk > updated_pixclk * 105 / 100)
+		dev_warn(info->device, "WARNING: required pixclk is: %lu KHz, real get clock: %lu KHz\n",
+			 PICOS2KHZ(required_pixclk), PICOS2KHZ(updated_pixclk));
 
 	/* Initialize control register 5 */
 	/* In 9x5, the default_lcdcon2 will use for LCDCFG5 */
