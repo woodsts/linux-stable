@@ -448,6 +448,7 @@ static void __init sama5_dt_device_init(void)
 			}
 		}
 	}
+	of_node_put(np);
 
 	/* Hack for PDA display modules to update lcd settings */
 	if (of_machine_is_compatible("pda,tm70xx")) {
