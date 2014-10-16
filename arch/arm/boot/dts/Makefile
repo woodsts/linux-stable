@@ -60,6 +60,7 @@ dtb-$(CONFIG_ARCH_AT91)	+= sama5d34ek_revc_pda7.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d35ek.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d35ek_revc.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek.dtb
+dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_hdmi.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_pda4.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_pda7.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_revc.dtb
