@@ -1,0 +1,13 @@
+menuconfig HDMI
+	bool "High Definition Multimedia Interface (HDMI) Support"
+
+if HDMI
+
+config HDMI_SII902x
+	tristate "Silicon Image sii902x HDMI support"
+
+config SND_SOC_SII9022
+	tristate
+	depends on HDMI_SII902x
+
+endif

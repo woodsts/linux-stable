@@ -52,6 +52,16 @@
 					CPVDD-supply = <&vdd_1v8_reg>;
 					MICVDD-supply = <&vdd_3v3_reg>;
 				};
+
+				sii9022a:sii9022a@39 {
+					compatible = "sii902x";
+					reg = <0x39>;
+					interrupt-parent = <&pioC>;
+					interrupts = <29 0x0>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_sii9022a_irq>, <&pinctrl_sii9022a_reset>;
+					gpios = <&pioC 31 0>;
+				};
 			};
 
 			usart1: serial@f0020000 {
@@ -128,6 +138,16 @@
 					pinctrl_usba_vbus: usba_vbus {
 						atmel,pins =
 							<AT91_PIOD 29 AT91_PERIPH_GPIO AT91_PINCTRL_DEGLITCH>; /* PD29 GPIO with deglitch */
+					};
+
+					pinctrl_sii9022a_irq: sii9022a_irq {
+						atmel,pins =
+							<AT91_PIOC 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
+					};
+
+					pinctrl_sii9022a_reset: sii9022a_reset {
+						atmel,pins =
+							<AT91_PIOC 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
 					};
 				};
 			};
