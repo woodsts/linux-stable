@@ -12,7 +12,7 @@
 
 / {
 	model = "Atmel SAMA5D4-EK";
-	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5";
+	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5", "encoder-sii9022";
 
 	chosen {
 		bootargs = "console=ttyS0,115200 ignore_loglevel earlyprintk";
@@ -42,6 +42,10 @@
 				status = "okay";		/* Enable ADC IIO support */
 			};
 
+			ssc0: ssc@f8008000 {
+				status = "okay";
+			};
+
 			spi0: spi@f8010000 {
 				cs-gpios = <&pioC 3 0>, <0>, <0>, <0>;
 				status = "okay";
@@ -63,6 +67,14 @@
 					pinctrl-names = "default";
 					pinctrl-0 = <&pinctrl_sii9022a_irq>, <&pinctrl_sii9022a_reset>;
 					gpios = <&pioB 15 0>;
+
+					resolution = <720>;
+
+			                i2s-fifo-routing =
+							<(0x80 | 0x0)
+							 0
+							 0
+							 0>;
 				};
 			};
 
@@ -223,5 +235,15 @@
 			gpios = <&pioD 30 GPIO_ACTIVE_HIGH>;
 			status = "disabled";
 		}; */
+	};
+
+	sound@sii9022a {
+		compatible = "atmel,asoc-sii9022";
+
+		atmel,model = "sii9022 @ SAMA5D3EK";
+		atmel,audio-routing = "Playback", "TX";
+
+		atmel,ssc-controller = <&ssc0>;
+		atmel,audio-codec = <&sii9022a>;
 	};
 };
