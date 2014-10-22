@@ -1,8 +1,9 @@
 /*
- * sama5d4ek.dts - Device Tree file for SAMA5D4 Evaluation Kit
+ * sama5d4_xplained_hdmi.dts - Device Tree file for SAMA5D4 Xplained ULTRA
+ * with HDMI support.
  *
- *  Copyright (C) 2013 Atmel,
- *                2013 Nicolas Ferre <nicolas.ferre@atmel.com>
+ *  Copyright (C) 2014 Atmel,
+ *                2014 Josh Wu <josh.wu@atmel.com>
  *
  * Licensed under GPLv2 or later.
  */
@@ -11,7 +12,7 @@
 
 / {
 	model = "Atmel SAMA5D4-EK";
-	compatible = "atmel,sama5d4ek", "atmel,sama5d4", "atmel,sama5", "pda,tm70xx";
+	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5", "encoder-sii9022";
 
 	chosen {
 		bootargs = "console=ttyS0,115200 ignore_loglevel earlyprintk";
@@ -34,41 +35,11 @@
 
 	ahb {
 		apb {
-			lcd_bus@f0000000 {
-				status = "okay";
-
-				lcd@f0000000 {
-					status = "okay";
-				};
-
-				lcdovl1@f0000140 {
-					status = "okay";
-				};
-
-				lcdovl2@f0000240 {
-					status = "okay";
-				};
-
-				lcdheo1@f0000340 {
-					status = "okay";
-				};
-			};
-
 			adc0: adc@fc034000 {
 				/* The vref depends on JP22 of EK. If connect 1-2 then use 3.3V. connect 2-3 use 3.0V */
 				atmel,adc-vref = <3300>;
 				/*atmel,adc-ts-wires = <4>;*/	/* Set up ADC touch screen */
 				status = "okay";		/* Enable ADC IIO support */
-			};
-
-			mmc0: mmc@f8000000 {
-				pinctrl-names = "default";
-				pinctrl-0 = <&pinctrl_mmc0_clk_cmd_dat0 &pinctrl_mmc0_dat1_3 &pinctrl_mmc0_cd>;
-				slot@1 {
-					reg = <1>;
-					bus-width = <4>;
-					cd-gpios = <&pioE 5 0>;
-				};
 			};
 
 			ssc0: ssc@f8008000 {
@@ -88,38 +59,30 @@
 			i2c0: i2c@f8014000 {
 				status = "okay";
 
-				wm8904: codec@1a {
-					compatible = "wm8904";
-					reg = <0x1a>;
-				};
-
-				qt1070:keyboard@1b {
-					compatible = "qt1070";
-					reg = <0x1b>;
-					interrupt-parent = <&pioE>;
-					interrupts = <25 0x0>;
-					pinctrl-names = "default";
-					pinctrl-0 = <&pinctrl_qt1070_irq>;
-					wakeup-source;
-				};
-
-				atmel_mxt_ts@4c {
-					compatible = "atmel,atmel_mxt_ts";
-					reg = <0x4c>;
-					interrupt-parent = <&pioE>;
-					interrupts = <24 0x0>;
-					pinctrl-names = "default";
-					pinctrl-0 = <&pinctrl_mxt_ts>;
-				};
-
 				sii9022a:sii9022a@39 {
 					compatible = "sii902x";
 					reg = <0x39>;
-					interrupt-parent = <&pioE>;
-					interrupts = <3 0x0>;
+					interrupt-parent = <&pioA>;
+					interrupts = <25 0x0>;
 					pinctrl-names = "default";
 					pinctrl-0 = <&pinctrl_sii9022a_irq>, <&pinctrl_sii9022a_reset>;
 					gpios = <&pioB 15 0>;
+
+					resolution = <720>;
+
+			                i2s-fifo-routing =
+							<(0x80 | 0x0)
+							 0
+							 0
+							 0>;
+				};
+			};
+
+			lcd_bus@f0000000 {
+				status = "okay";
+
+				lcd@f0000000 {
+					status = "okay";
 				};
 			};
 
@@ -135,15 +98,8 @@
 				slot@0 {
 					reg = <0>;
 					bus-width = <4>;
-					cd-gpios = <&pioE 6 0>;
+					cd-gpios = <&pioE 3 0>;
 				};
-			};
-
-			/* USART2 has conflict with ISI in ISI_VSYNC(PB3) & ISI_HSYNC(PB4).
-			 * So disable USART2 and enable ISI
-			 */
-			isi: isi@f0008000 {
-				status = "okay";
 			};
 
 			usart3: serial@fc00c000 {
@@ -160,13 +116,9 @@
 
 			pinctrl@fc06a000 {
 				board {
-					pinctrl_mmc0_cd: mmc0_cd {
-						atmel,pins =
-							<AT91_PIOE 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
-					};
 					pinctrl_mmc1_cd: mmc1_cd {
 						atmel,pins =
-							<AT91_PIOE 6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
+							<AT91_PIOE 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 					};
 					pinctrl_usba_vbus: usba_vbus {
 						atmel,pins =
@@ -174,23 +126,11 @@
 					};
 					pinctrl_key_gpio: key_gpio_0 {
 						atmel,pins =
-							<AT91_PIOE 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>; /* PE13 gpio */
-					};
-					pinctrl_pck0_as_audio_mck: pck2_as_audio_mck {
-						atmel,pins =
-							<AT91_PIOB 10 AT91_PERIPH_B AT91_PINCTRL_NONE>;
-					};
-					pinctrl_qt1070_irq: qt1070_irq {
-						atmel,pins =
-							<AT91_PIOE 25 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>; /* PE25 GPIO with pull up deglith */
-					};
-					pinctrl_mxt_ts: mxt_irq {
-						atmel,pins =
-							<AT91_PIOE 24 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>; /* PE24 GPIO with pull up deglith */
+							<AT91_PIOE 8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 					};
 					pinctrl_sii9022a_irq: sii9022a_irq {
 						atmel,pins =
-							<AT91_PIOE 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
+							<AT91_PIOA 25 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 					};
 					pinctrl_sii9022a_reset: sii9022a_reset {
 						atmel,pins =
@@ -213,9 +153,9 @@
 
 		usb1: ohci@00500000 {
 			num-ports = <3>;
-			atmel,vbus-gpio = <0 /* &pioE 10 GPIO_ACTIVE_LOW */
-					   &pioE 11 GPIO_ACTIVE_LOW
-					   &pioE 12 GPIO_ACTIVE_LOW
+			atmel,vbus-gpio = <0
+					   &pioE 11 GPIO_ACTIVE_HIGH
+					   &pioE 14 GPIO_ACTIVE_HIGH
 					  >;
 			status = "okay";
 		};
@@ -273,7 +213,7 @@
 
 		pb_user1 {
 			label = "pb_user1";
-			gpios = <&pioE 13 GPIO_ACTIVE_HIGH>;
+			gpios = <&pioE 8 GPIO_ACTIVE_HIGH>;
 			linux,code = <0x100>;
 			gpio-key,wakeup;
 		};
@@ -285,37 +225,25 @@
 
 		d8 {
 			label = "d8";
-			gpios = <&pioE 28 GPIO_ACTIVE_LOW>;	/* PE28, conflicts with USART4 */
-			status = "disabled";
-		};
-
-		d9 {
-			label = "d9";
-			gpios = <&pioE 9 GPIO_ACTIVE_HIGH>;
-		};
-
-		d10 {
-			label = "d10";
-			gpios = <&pioE 8 GPIO_ACTIVE_LOW>;
+			gpios = <&pioE 15 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
 		};
+
+		/* pioD is secure, not enable yet
+		d10 {
+			label = "d10";
+			gpios = <&pioD 30 GPIO_ACTIVE_HIGH>;
+			status = "disabled";
+		}; */
 	};
 
-	sound {
-		compatible = "atmel,asoc-wm8904";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_pck0_as_audio_mck>;
+	sound@sii9022a {
+		compatible = "atmel,asoc-sii9022";
 
-		atmel,model = "wm8904 @ SAMA5D4EK";
-		atmel,audio-routing =
-			"Headphone Jack", "HPOUTL",
-			"Headphone Jack", "HPOUTR",
-			"IN1L", "Line In Jack",
-			"IN1R", "Line In Jack";
+		atmel,model = "sii9022 @ SAMA5D3EK";
+		atmel,audio-routing = "Playback", "TX";
 
 		atmel,ssc-controller = <&ssc0>;
-		atmel,audio-codec = <&wm8904>;
+		atmel,audio-codec = <&sii9022a>;
 	};
 };
-
-#include "sama5d4ek_pin_sleep_state.dtsi"

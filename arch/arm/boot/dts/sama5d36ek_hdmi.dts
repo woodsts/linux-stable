@@ -1,0 +1,81 @@
+/*
+ * sama5d35ek.dts - Device Tree file for SAMA5D36-EK board
+ *
+ *  Copyright (C) 2013 Atmel,
+ *                2013 Josh Wu <josh.wu@atmel.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
+/dts-v1/;
+#include "sama5d3xmb.dtsi"
+#include "sama5d3xdm.dtsi"
+
+/ {
+	model = "Atmel SAMA5D36-EK";
+	compatible = "atmel,sama5d36ek", "atmel,sama5d3xmb", "atmel,sama5d3xcm", "atmel,sama5d3", "atmel,sama5", "encoder-sii9022";
+
+	ahb {
+		apb {
+			spi0: spi@f0004000 {
+				status = "okay";
+			};
+
+			ssc0: ssc@f0008000 {
+				status = "okay";
+			};
+
+			can0: can@f000c000 {
+				status = "okay";
+			};
+
+			i2c0: i2c@f0014000 {
+				status = "disabled";
+			};
+
+			i2c1: i2c@f0018000 {
+				status = "okay";
+
+				sii9022a:sii9022a@39 {
+					resolution = <1080>;
+			                i2s-fifo-routing =
+							<(0x80 | 0x0)
+							 0
+							 0
+							 0>;
+				};
+			};
+
+			/* ISI VSYNC/HSYNC Conflict with i2c0 */
+			isi: isi@f0034000 {
+				status = "okay";
+			};
+
+			macb0: ethernet@f0028000 {
+				status = "okay";
+			};
+
+			macb1: ethernet@f802c000 {
+				status = "okay";
+			};
+		};
+	};
+
+	leds {
+		d3 {
+			label = "d3";
+			gpios = <&pioE 24 GPIO_ACTIVE_HIGH>;
+			/* Conflict with ISI module's reset pin */
+			status = "disabled";
+		};
+	};
+
+	sound@sii9022a {
+		compatible = "atmel,asoc-sii9022";
+
+		atmel,model = "sii9022 @ SAMA5D3EK";
+		atmel,audio-routing = "Playback", "TX";
+
+		atmel,ssc-controller = <&ssc0>;
+		atmel,audio-codec = <&sii9022a>;
+	};
+};

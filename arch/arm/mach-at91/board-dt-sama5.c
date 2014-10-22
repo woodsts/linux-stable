@@ -418,6 +418,7 @@ static inline void at91_init_l2cache(void) {}
 static void __init sama5_dt_device_init(void)
 {
 	struct device_node *np;
+	int resolution;
 
 	at91_init_l2cache();
 
@@ -493,6 +494,72 @@ static void __init sama5_dt_device_init(void)
 		ek_lcdc_data.smem_len = 480 * 272 * 4;
 
 		printk("LCD parameters updated for PDA4 display module\n");
+	}
+
+	if (of_machine_is_compatible("encoder-sii9022")) {
+		np = of_find_compatible_node(NULL, NULL, "sii902x");
+		if (np)
+			if (of_device_is_available(np))
+				of_property_read_u32(np, "resolution", &resolution);
+
+		of_node_put(np);
+
+		switch (resolution) {
+		case 1080:
+			/* set LCD configuration */
+			at91_tft_vga_modes[0].xres = 1920;
+			at91_tft_vga_modes[0].yres = 1080;
+			at91_tft_vga_modes[0].pixclock = KHZ2PICOS(74250);
+			at91_tft_vga_modes[0].left_margin = 148;
+			at91_tft_vga_modes[0].right_margin = 88;
+			at91_tft_vga_modes[0].upper_margin = 36;
+			at91_tft_vga_modes[0].lower_margin = 4;
+			at91_tft_vga_modes[0].hsync_len = 44;
+			at91_tft_vga_modes[0].vsync_len = 5;
+			at91_tft_vga_modes[0].sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+
+			ek_lcdc_data.smem_len = 1920 * 1080 * 2;
+
+			printk("LCD parameters updated for HDMI with 1080P30 resolution\n");
+
+			break;
+		case 900:
+			/* set LCD configuration */
+			at91_tft_vga_modes[0].xres = 1440;
+			at91_tft_vga_modes[0].yres = 900;
+			at91_tft_vga_modes[0].pixclock = KHZ2PICOS(88750);
+			at91_tft_vga_modes[0].left_margin = 48;
+			at91_tft_vga_modes[0].right_margin = 80;
+			at91_tft_vga_modes[0].upper_margin = 3;
+			at91_tft_vga_modes[0].lower_margin = 17;
+			at91_tft_vga_modes[0].hsync_len = 32;
+			at91_tft_vga_modes[0].vsync_len = 6;
+			at91_tft_vga_modes[0].sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+
+			ek_lcdc_data.smem_len = 1440 * 900 * 2;
+
+			printk("LCD parameters updated for HDMI with 1440 x 900 resolution\n");
+
+			break;
+		default:
+			/* set LCD configuration */
+			at91_tft_vga_modes[0].xres = 1280;
+			at91_tft_vga_modes[0].yres = 720;
+			at91_tft_vga_modes[0].pixclock = KHZ2PICOS(74250);
+			at91_tft_vga_modes[0].left_margin = 220;
+			at91_tft_vga_modes[0].right_margin = 110;
+			at91_tft_vga_modes[0].upper_margin = 20;
+			at91_tft_vga_modes[0].lower_margin = 5;
+			at91_tft_vga_modes[0].hsync_len = 40;
+			at91_tft_vga_modes[0].vsync_len = 5;
+			at91_tft_vga_modes[0].sync = FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+
+			ek_lcdc_data.smem_len = 1280 * 720 * 2;
+
+			printk("LCD parameters updated for HDMI with 720P60 resolution\n");
+
+			break;
+		}
 	}
 
 	of_platform_populate(NULL, of_default_bus_match_table, at91_auxdata_lookup, NULL);
