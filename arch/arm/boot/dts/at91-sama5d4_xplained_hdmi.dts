@@ -1,5 +1,5 @@
 /*
- * sama5d4_xplained_hdmi.dts - Device Tree file for SAMA5D4 Xplained ULTRA
+ * at91-sama5d4_xplained_hdmi.dts - Device Tree file for SAMA5D4 Xplained ULTRA
  * with HDMI support.
  *
  *  Copyright (C) 2014 Atmel,
@@ -11,7 +11,7 @@
 #include "sama5d4.dtsi"
 
 / {
-	model = "Atmel SAMA5D4-EK";
+	model = "Atmel SAMA5D4 Xplained ULTRA";
 	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5", "encoder-sii9022";
 
 	chosen {

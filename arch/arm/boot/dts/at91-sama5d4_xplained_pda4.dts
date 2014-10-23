@@ -1,5 +1,5 @@
 /*
- * sama5d4_xplained_pda4.dts - Device Tree file for SAMA5D4 Xplained ULTRA
+ * at91-sama5d4_xplained_pda4.dts - Device Tree file for SAMA5D4 Xplained ULTRA
  * with PDA4.
  *
  *  Copyright (C) 2014 Atmel,
@@ -12,7 +12,7 @@
 #include "at91-sama5d4_xplained_dm_pda4.dtsi"
 
 / {
-	model = "Atmel SAMA5D4-EK";
+	model = "Atmel SAMA5D4 Xplained ULTRA";
 	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5", "pda,tm43xx";
 
 	chosen {
