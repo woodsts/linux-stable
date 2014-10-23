@@ -98,7 +98,7 @@ static void sii902x_reset(struct sii902x_data *sii9022x)
 
 static int sii902x_set_avi_infoframe(struct sii902x_data *sii9022x)
 {
-	struct i2c_client *client;
+	struct i2c_client *client = sii9022x->client;
 	struct hdmi_avi_infoframe infoframe;
 	u8 infoframe_buf[HDMI_INFOFRAME_HEADER_SIZE + HDMI_AVI_INFOFRAME_SIZE];
 	int ret;
