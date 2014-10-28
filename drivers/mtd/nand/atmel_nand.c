@@ -124,6 +124,7 @@ struct atmel_nand_host {
 	struct atmel_nfc	*nfc;
 
 	bool			has_pmecc;
+	bool			pmecc_correct_erase_page; 
 	u8			pmecc_corr_cap;
 	u16			pmecc_sector_size;
 	u32			pmecc_lookup_table_offset;
@@ -876,6 +877,10 @@ static int pmecc_correction(struct mtd_info *mtd, u32 pmecc_stat, uint8_t *buf,
 	int i, err_nbr;
 	uint8_t *buf_pos;
 	int total_err = 0;
+
+	/* If can correct bitfilps from erased page, do the normal check */
+	if (host->pmecc_correct_erase_page)
+		goto normal_check;
 
 	for (i = 0; i < nand_chip->ecc.total; i++)
 		if (ecc[i] != 0xff)
@@ -1671,6 +1676,8 @@ static int atmel_of_init_port(struct atmel_nand_host *host,
 	}
 	host->pmecc_lookup_table_offset_512 = offset[0];
 	host->pmecc_lookup_table_offset_1024 = offset[1];
+	host->pmecc_correct_erase_page = of_property_read_bool(np,
+				"atmel,nand-pmecc-correct-erase-page");
 
 	return 0;
 }

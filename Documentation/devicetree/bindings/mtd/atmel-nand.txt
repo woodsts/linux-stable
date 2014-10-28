@@ -21,6 +21,9 @@ Optional properties:
   "soft_bch".
 - atmel,has-pmecc : boolean to enable Programmable Multibit ECC hardware.
   Only supported by at91sam9x5 or later sam9 product.
+- atmel,nand-pmecc-correct-erase-page : boolean, true means the Programmable
+  Multibit ECC hardware support encode all 0xff data sector to 0xff ecc bytes.
+  Only SAMA5D4 and later chips has this feature.
 - atmel,pmecc-cap : error correct capability for Programmable Multibit ECC
   Controller. Supported values are: 2, 4, 8, 12, 24.
 - atmel,pmecc-sector-size : sector size for ECC computation. Supported values
