@@ -190,3 +190,5 @@
 		}; */
 	};
 };
+
+#include "at91-sama5d4_xplained_pinctrl_state.dtsi"

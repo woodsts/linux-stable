@@ -1,0 +1,170 @@
+/*
+ * at91-sama5d4_xplained_pinctrl_state.dtsi - Device Tree Include file for the SAMA5D4 Xplained board
+ *
+ *  Copyright (C) 2014 Atmel,
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/ {
+	ahb {
+		apb {
+			adc0: adc@fc034000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <
+					&pinctrl_adc0_adtrg_sleep /* external trigger is conflict with USBA_VBUS */
+					&pinctrl_adc0_ad0_sleep
+					&pinctrl_adc0_ad1_sleep
+					&pinctrl_adc0_ad2_sleep
+					&pinctrl_adc0_ad3_sleep
+					&pinctrl_adc0_ad4_sleep
+					>;
+			};
+
+			spi0: spi@f8010000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_spi0_sleep>;
+			};
+
+			macb0: ethernet@f8020000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_macb0_rmii_sleep>;
+			};
+
+			mmc1: mmc@fc000000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_mmc1_clk_cmd_dat0_sleep &pinctrl_mmc1_dat1_3_sleep &pinctrl_mmc1_cd_sleep>;
+			};
+
+			usart3: serial@fc00c000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_usart3_sleep>;
+			};
+
+			usart4: serial@fc010000 {
+				pinctrl-names = "default", "sleep";
+				pinctrl-1 = <&pinctrl_usart4_sleep>;
+			};
+
+			pinctrl@fc06a000 {
+				adc0 {
+					pinctrl_adc0_adtrg_sleep: adc0_adtrg-1 {
+						atmel,pins =
+							<AT91_PIOE 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN>;
+					};
+					pinctrl_adc0_ad0_sleep: adc0_ad0-1 {
+						atmel,pins =
+							<AT91_PIOC 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad1_sleep: adc0_ad1-1 {
+						atmel,pins =
+							<AT91_PIOC 28 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad2_sleep: adc0_ad2-1 {
+						atmel,pins =
+							<AT91_PIOC 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad3_sleep: adc0_ad3-1 {
+						atmel,pins =
+							<AT91_PIOC 30 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+					pinctrl_adc0_ad4_sleep: adc0_ad4-sleep {
+						atmel,pins =
+							<AT91_PIOC 31 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+				};
+				spi0 {
+					pinctrl_spi0_sleep: spi0-1 {
+						atmel,pins =
+							<AT91_PIOC 0 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 1 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 2 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							>;
+					};
+				};
+				macb0 {
+					pinctrl_macb0_rmii_sleep: macb0_rmii-1 {
+						atmel,pins =
+							<AT91_PIOB 12 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOB 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOB  8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN
+							 AT91_PIOB  9 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN
+							 AT91_PIOB  6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN
+							 AT91_PIOB  7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN
+							 AT91_PIOB  2 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOB  0 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOB 16 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOB 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							>;
+					};
+				};
+				mmc1 {
+					pinctrl_mmc1_clk_cmd_dat0_sleep: mmc1_clk_cmd_dat0-1 {
+						atmel,pins =
+							<AT91_PIOE 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN
+							 AT91_PIOE 19 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOE 20 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							>;
+					};
+					pinctrl_mmc1_dat1_3_sleep: mmc1_dat1_3-1 {
+						atmel,pins =
+							<AT91_PIOE 21 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOE 22 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOE 23 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							>;
+					};
+				};
+				usart3 {
+					pinctrl_usart3_sleep: usart3-1 {
+						atmel,pins =
+							<AT91_PIOE 16 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOE 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							>;
+					};
+				};
+				usart4 {
+					pinctrl_usart4_sleep: usart4-1 {
+						atmel,pins =
+							<AT91_PIOE 26 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN
+							 AT91_PIOE 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_DOWN
+							>;
+					};
+				};
+
+				nand0 {
+					pinctrl_nand_sleep: nand-1 {
+						atmel,pins =
+							<AT91_PIOC 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 14 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+
+							 AT91_PIOC 17 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 18 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+
+							 AT91_PIOC 15 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 16 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 5 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 9 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 10 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 11 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP
+							 AT91_PIOC 12 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+				};
+
+				board {
+					pinctrl_mmc1_cd_sleep: mmc1_cd-1 {
+						atmel,pins =
+							<AT91_PIOE 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+				};
+			};
+		};
+
+		nand0: nand@80000000 {
+			pinctrl-names = "default", "sleep";
+			pinctrl-1 = <&pinctrl_nand_sleep>;
+		};
+	};
+};
