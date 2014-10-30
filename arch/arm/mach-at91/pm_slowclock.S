@@ -215,10 +215,6 @@ sdr_sr_enable:
 	str	tmp1, [sdramc, #AT91_SDRAMC_LPR]
 
 sdr_sr_done:
-	/* Disable DDR Clock */
-	mov 	tmp1, #AT91_PMC_SYS_DDR
-	str	tmp1, [pmc, #AT91_PMC_SCDR]
-
 	/* Disable MPDDRC Clock*/
 	cmp	ddrcid, #0
 	beq	2f
@@ -233,6 +229,10 @@ sdr_sr_done:
 1:
 	str	tmp1, [pmc, #AT91_PMC_PCDR]
 2:
+
+	/* Disable DDR Clock */
+	mov 	tmp1, #AT91_PMC_SYS_DDR
+	str	tmp1, [pmc, #AT91_PMC_SCDR]
 
 	/* Save PLLB setting and disable it */
 	ldr	tmp1, [pmc, #AT91_CKGR_PLLBR]
