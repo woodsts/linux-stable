@@ -310,6 +310,8 @@ supported.
      - Even though that structure contains a direction field, this
        field is deprecated in favor of the direction argument given to
        the prep_* functions
+     - This call is only required for slave operations.  This should NOT be
+       set or expected to be set for memcpy operations
 
    * device_pause
      - Pauses a transfer on the channel
