@@ -753,8 +753,10 @@ static int at91_twi_probe(struct platform_device *pdev)
 
 	dev->clk = devm_clk_get(dev->dev, NULL);
 	if (IS_ERR(dev->clk)) {
-		dev_err(dev->dev, "no clock defined\n");
-		return -ENODEV;
+		rc = PTR_ERR(dev->clk);
+		if (rc != -EPROBE_DEFER)
+			dev_err(dev->dev, "no clock defined\n");
+		return rc;
 	}
 	clk_prepare_enable(dev->clk);
 
