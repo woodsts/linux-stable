@@ -13,6 +13,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
@@ -306,6 +307,7 @@ struct ov2640_priv {
 	struct v4l2_ctrl_handler	hdl;
 	u32	cfmt_code;
 	struct v4l2_clk			*clk;
+	struct clk			*master_clk;
 	const struct ov2640_win_size	*win;
 
 	struct soc_camera_subdev_desc	ssdd_dt;
@@ -767,8 +769,22 @@ static int ov2640_s_power(struct v4l2_subdev *sd, int on)
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
 	struct ov2640_priv *priv = to_ov2640(client);
+	int ret;
 
-	return soc_camera_set_power(&client->dev, ssdd, priv->clk, on);
+	if (on) {
+		ret = clk_prepare_enable(priv->master_clk);
+		if (ret)
+			return ret;
+	} else {
+		clk_disable_unprepare(priv->master_clk);
+	}
+
+	ret = soc_camera_set_power(&client->dev, ssdd, priv->clk, on);
+
+	if (ret && on)
+		clk_disable_unprepare(priv->master_clk);
+
+	return ret;
 }
 
 /* Select the nearest higher resolution for capture */
@@ -1161,6 +1177,12 @@ static int ov2640_probe(struct i2c_client *client,
 		ret = ov2640_probe_dt(client, priv);
 		if (ret)
 			goto err_mclk;
+	}
+
+	priv->master_clk = devm_clk_get(&client->dev, "xvclk");
+	if (IS_ERR(priv->master_clk)) {
+		ret = PTR_ERR(priv->master_clk);
+		goto err_mclk;
 	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov2640_subdev_ops);
