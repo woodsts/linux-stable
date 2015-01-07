@@ -5677,6 +5677,10 @@ static int ov5642_probe(struct i2c_client *client,
 	if (!priv)
 		return -ENOMEM;
 
+	priv->clk = v4l2_clk_get(&client->dev, "mclk");
+	if (IS_ERR(priv->clk))
+		return -EPROBE_DEFER;
+
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov5642_subdev_ops);
 
 	priv->fmt		= &ov5642_colour_fmts[0];
@@ -5688,14 +5692,18 @@ static int ov5642_probe(struct i2c_client *client,
 	priv->total_width = OV5642_DEFAULT_WIDTH + BLANKING_EXTRA_WIDTH;
 	priv->total_height = BLANKING_MIN_HEIGHT;
 
-	priv->clk = v4l2_clk_get(&client->dev, "mclk");
-	if (IS_ERR(priv->clk))
-		return PTR_ERR(priv->clk);
-
 	ret = ov5642_video_probe(client);
 	if (ret < 0)
-		v4l2_clk_put(priv->clk);
+		goto err_clk;
 
+	ret = v4l2_async_register_subdev(&priv->subdev);
+	if (ret < 0)
+		goto err_clk;
+
+	return 0;
+
+err_clk:
+	v4l2_clk_put(priv->clk);
 	return ret;
 }
 
@@ -5704,6 +5712,7 @@ static int ov5642_remove(struct i2c_client *client)
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
 	struct ov5642 *priv = to_ov5642(client);
 
+	v4l2_async_unregister_subdev(&priv->subdev);
 	v4l2_clk_put(priv->clk);
 	if (ssdd->free_bus)
 		ssdd->free_bus(ssdd);
