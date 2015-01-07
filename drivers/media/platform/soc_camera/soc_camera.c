@@ -1708,17 +1708,10 @@ static void scan_of_host(struct soc_camera_host *ici)
 			continue;
 		}
 
-		/* so we now have a remote node to connect */
-		if (!i)
-			soc_of_bind(ici, epn, ren->parent);
+		soc_of_bind(ici, epn, ren->parent);
 
 		of_node_put(epn);
 		of_node_put(ren);
-
-		if (i) {
-			dev_err(dev, "multiple subdevices aren't supported yet!\n");
-			break;
-		}
 	}
 }
 
