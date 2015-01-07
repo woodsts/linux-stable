@@ -15,6 +15,7 @@
  */
 
 #include <linux/bitops.h>
+#include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>
@@ -5054,6 +5055,7 @@ struct ov5642 {
 	const struct ov5642_datafmt	*fmt;
 	struct v4l2_rect                crop_rect;
 	struct v4l2_clk			*clk;
+	struct clk			*xvclk;
 
 	/* blanking information */
 	int total_width;
@@ -5549,12 +5551,20 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 	dev_dbg(&client->dev, "ov5642_s_power(): width = %d, height = %d\n",
 		priv->crop_rect.width, priv->crop_rect.height);
 
-	if (!on)
+	if (!on) {
+		clk_disable_unprepare(priv->xvclk);
 		return soc_camera_power_off(&client->dev, ssdd, priv->clk);
+	}
 
-	ret = soc_camera_power_on(&client->dev, ssdd, priv->clk);
+	ret = clk_prepare_enable(priv->xvclk);
 	if (ret < 0)
 		return ret;
+
+	ret = soc_camera_power_on(&client->dev, ssdd, priv->clk);
+	if (ret < 0) {
+		clk_disable_unprepare(priv->xvclk);
+		return ret;
+	}
 
 	/* ov5640 */
 	if (priv->is_ov5640) {
@@ -5749,6 +5759,12 @@ static int ov5642_probe(struct i2c_client *client,
 		ret = ov5642_probe_dt(client, priv);
 		if (ret)
 			goto err_clk;
+	}
+
+	priv->xvclk = devm_clk_get(&client->dev, "xvclk");
+	if (IS_ERR(priv->xvclk)) {
+		ret = PTR_ERR(priv->xvclk);
+		goto err_clk;
 	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov5642_subdev_ops);
