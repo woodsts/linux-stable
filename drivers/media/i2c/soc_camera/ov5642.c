@@ -5541,6 +5541,8 @@ static int ov5642_g_mbus_config(struct v4l2_subdev *sd,
 	return 0;
 }
 
+static int ov5642_hw_reset(struct device *dev);
+
 static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
@@ -5565,6 +5567,9 @@ static int ov5642_s_power(struct v4l2_subdev *sd, int on)
 		clk_disable_unprepare(priv->xvclk);
 		return ret;
 	}
+
+	/* Add reset when power on the camera according to the datasheet */
+	ov5642_hw_reset(&client->dev);
 
 	/* ov5640 */
 	if (priv->is_ov5640) {
@@ -5645,6 +5650,10 @@ static int ov5642_hw_power(struct device *dev, int on)
 	if (priv->pwdn_gpio)
 		gpiod_direction_output(priv->pwdn_gpio, !on);
 
+	/* We need wait for ~1ms, then access the SCCB */
+	if (on)
+		usleep_range(1000, 2000);
+
 	return 0;
 }
 
@@ -5656,9 +5665,12 @@ static int ov5642_hw_reset(struct device *dev)
 	if (priv->resetb_gpio) {
 		/* Active the resetb pin to perform a reset pulse */
 		gpiod_direction_output(priv->resetb_gpio, 1);
-		usleep_range(3000, 5000);
+		usleep_range(1000, 3000);
 		gpiod_direction_output(priv->resetb_gpio, 0);
 	}
+
+	/* We need wait for ~20ms, then access the SCCB */
+	usleep_range(20000, 21000);
 
 	return 0;
 }
