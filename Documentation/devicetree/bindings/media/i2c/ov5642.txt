@@ -1,0 +1,46 @@
+* Omnivision OV5642 CMOS sensor
+
+The Omnivision OV5642 is a 1/4" color CMOS QSXGA (5 megapixel) image sensor.
+It supports up to 2592x1944 resolution. It also support output YUV422/420,
+RGB565/555/444, CCIR656, 8-bit compression or raw RGB data.
+
+Required Properties:
+- compatible: should be "ovti,ov5642"
+- clocks: reference to the xvclk input clock.
+- clock-names: should be "xvclk".
+
+Optional Properties:
+- resetb-gpios: reference to the GPIO connected to the resetb pin, if any.
+- pwdn-gpios: reference to the GPIO connected to the pwdn pin, if any.
+
+The device node must contain one 'port' child node for its digital output
+video port, in accordance with the video interface bindings defined in
+Documentation/devicetree/bindings/media/video-interfaces.txt.
+
+Example:
+
+	i2c1: i2c@f0018000 {
+		ov5642: camera@0x3c {
+			compatible = "ovti,ov5642";
+			reg = <0x3c>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_pck1 &pinctrl_sensor_pwdn &pinctrl_sensor_resetb>;
+
+			resetb-gpios = <&pioE 24 GPIO_ACTIVE_LOW>;
+			pwdn-gpios = <&pioE 29 GPIO_ACTIVE_HIGH>;
+
+			clocks = <&pck1>;
+			clock-names = "xvclk";
+
+			assigned-clocks = <&pck1>;
+			assigned-clock-rates = <25000000>;
+
+			port {
+				ov5642_0: endpoint {
+					remote-endpoint = <&isi_0>;
+					bus-width = <8>;
+				};
+			};
+		};
+	};
