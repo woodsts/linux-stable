@@ -65,6 +65,7 @@
 		tcb0 = &tcb0;
 		tcb1 = &tcb1;
 		i2c2 = &i2c2;
+		pwm0 = &pwm0;
 	};
 	cpus {
 		#address-cells = <1>;
@@ -768,6 +769,15 @@
 				#size-cells = <0>;
 				clocks = <&mci0_clk>;
 				clock-names = "mci_clk";
+			};
+
+			pwm0: pwm@f800c000 {
+				compatible = "atmel,sama5d3-pwm";
+				reg = <0xf800c000 0x300>;
+				interrupts = <43 IRQ_TYPE_LEVEL_HIGH 4>;
+				#pwm-cells = <3>;
+				clocks = <&pwm_clk>;
+				status = "disabled";
 			};
 
 			spi0: spi@f8010000 {
