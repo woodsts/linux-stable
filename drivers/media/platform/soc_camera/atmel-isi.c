@@ -227,7 +227,7 @@ static int atmel_isi_wait_status(struct atmel_isi *isi, int wait_reset)
 	}
 
 	timeout = wait_for_completion_timeout(&isi->complete,
-			msecs_to_jiffies(100));
+			msecs_to_jiffies(500));
 	if (timeout == 0)
 		return -ETIMEDOUT;
 
@@ -839,9 +839,16 @@ static int isi_camera_set_bus_param(struct soc_camera_device *icd)
 	if (isi->pdata.full_mode)
 		cfg1 |= ISI_CFG1_FULL_MODE;
 
+	cfg1 |= ISI_CFG1_THMASK_BEATS_16;
+
 	isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
 	isi_writel(isi, ISI_CFG1, cfg1);
 
+	return 0;
+}
+
+static int isi_camera_set_parm(struct soc_camera_device *icd, struct v4l2_streamparm *parm)
+{
 	return 0;
 }
 
@@ -858,6 +865,8 @@ static struct soc_camera_host_ops isi_soc_camera_host_ops = {
 	.poll		= isi_camera_poll,
 	.querycap	= isi_camera_querycap,
 	.set_bus_param	= isi_camera_set_bus_param,
+	.set_parm	= isi_camera_set_parm,
+	.get_parm	= isi_camera_set_parm,
 };
 
 /* -----------------------------------------------------------------------*/
