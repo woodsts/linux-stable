@@ -688,7 +688,8 @@ static int soc_camera_open(struct file *file)
 
 		/* The camera could have been already on, try to reset */
 		if (sdesc->subdev_desc.reset)
-			sdesc->subdev_desc.reset(icd->pdev);
+			if (icd->control)
+				sdesc->subdev_desc.reset(icd->control);
 
 		ret = soc_camera_add_device(icd);
 		if (ret < 0) {
@@ -1175,7 +1176,8 @@ static void scan_add_host(struct soc_camera_host *ici)
 
 			/* The camera could have been already on, try to reset */
 			if (ssdd->reset)
-				ssdd->reset(icd->pdev);
+				if (icd->control)
+					ssdd->reset(icd->control);
 
 			icd->parent = ici->v4l2_dev.dev;
 
@@ -1461,7 +1463,7 @@ static int soc_camera_async_bound(struct v4l2_async_notifier *notifier,
 				memcpy(&sdesc->subdev_desc, ssdd,
 				       sizeof(sdesc->subdev_desc));
 				if (ssdd->reset)
-					ssdd->reset(icd->pdev);
+					ssdd->reset(&client->dev);
 			}
 
 			icd->control = &client->dev;
@@ -1706,17 +1708,10 @@ static void scan_of_host(struct soc_camera_host *ici)
 			continue;
 		}
 
-		/* so we now have a remote node to connect */
-		if (!i)
-			soc_of_bind(ici, epn, ren->parent);
+		soc_of_bind(ici, epn, ren->parent);
 
 		of_node_put(epn);
 		of_node_put(ren);
-
-		if (i) {
-			dev_err(dev, "multiple subdevices aren't supported yet!\n");
-			break;
-		}
 	}
 }
 
