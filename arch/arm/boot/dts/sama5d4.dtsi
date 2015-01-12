@@ -108,6 +108,13 @@
 		#size-cells = <1>;
 		ranges;
 
+		vdec0: vdec@00300000 {
+			compatible = "on2,g1";
+			reg = <0x00300000 0x1000>;
+			interrupts = <19 IRQ_TYPE_LEVEL_HIGH 4>;
+			status = "disabled";
+		};
+
 		usb0: gadget@00400000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
