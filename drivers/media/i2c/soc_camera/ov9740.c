@@ -10,6 +10,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/clk.h>
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
@@ -203,6 +204,7 @@ struct ov9740_priv {
 	struct v4l2_subdev		subdev;
 	struct v4l2_ctrl_handler	hdl;
 	struct v4l2_clk			*clk;
+	struct clk			*xvclk;
 
 	u16				model;
 	u8				revision;
@@ -728,6 +730,8 @@ static int ov9740_s_power(struct v4l2_subdev *sd, int on)
 	int ret;
 
 	if (on) {
+		clk_prepare_enable(priv->xvclk);
+
 		ret = soc_camera_power_on(&client->dev, ssdd, priv->clk);
 		if (ret < 0)
 			return ret;
@@ -743,6 +747,8 @@ static int ov9740_s_power(struct v4l2_subdev *sd, int on)
 		}
 
 		soc_camera_power_off(&client->dev, ssdd, priv->clk);
+
+		clk_disable_unprepare(priv->xvclk);
 	}
 
 	return 0;
@@ -974,6 +980,12 @@ static int ov9740_probe(struct i2c_client *client,
 		ret = ov9740_probe_dt(client, priv);
 		if (ret)
 			goto err_clk;
+	}
+
+	priv->xvclk = devm_clk_get(&client->dev, "xvclk");
+	if (IS_ERR(priv->xvclk)) {
+		ret = PTR_ERR(priv->xvclk);
+		goto err_clk;
 	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov9740_subdev_ops);
