@@ -892,6 +892,11 @@ static int ov9740_probe(struct i2c_client *client,
 		return -ENOMEM;
 	}
 
+	priv->clk = v4l2_clk_get(&client->dev, "mclk");
+	if (IS_ERR(priv->clk)) {
+		return -EPROBE_DEFER;
+	}
+
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov9740_subdev_ops);
 	v4l2_ctrl_handler_init(&priv->hdl, 13);
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
@@ -899,21 +904,25 @@ static int ov9740_probe(struct i2c_client *client,
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
 			V4L2_CID_HFLIP, 0, 1, 1, 1);
 	priv->subdev.ctrl_handler = &priv->hdl;
-	if (priv->hdl.error)
-		return priv->hdl.error;
-
-	priv->clk = v4l2_clk_get(&client->dev, "mclk");
-	if (IS_ERR(priv->clk)) {
-		ret = PTR_ERR(priv->clk);
-		goto eclkget;
+	if (priv->hdl.error) {
+		ret = priv->hdl.error;
+		goto err_clk;
 	}
 
 	ret = ov9740_video_probe(client);
-	if (ret < 0) {
-		v4l2_clk_put(priv->clk);
-eclkget:
-		v4l2_ctrl_handler_free(&priv->hdl);
-	}
+	if (ret < 0)
+		goto err_handler;
+
+	ret = v4l2_async_register_subdev(&priv->subdev);
+	if (ret < 0)
+		goto err_handler;
+
+	return 0;
+
+err_handler:
+	v4l2_ctrl_handler_free(&priv->hdl);
+err_clk:
+	v4l2_clk_put(priv->clk);
 
 	return ret;
 }
@@ -922,6 +931,7 @@ static int ov9740_remove(struct i2c_client *client)
 {
 	struct ov9740_priv *priv = i2c_get_clientdata(client);
 
+	v4l2_async_unregister_subdev(&priv->subdev);
 	v4l2_clk_put(priv->clk);
 	v4l2_device_unregister_subdev(&priv->subdev);
 	v4l2_ctrl_handler_free(&priv->hdl);
