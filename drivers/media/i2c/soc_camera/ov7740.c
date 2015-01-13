@@ -11,6 +11,7 @@
  */
 
 #include <linux/init.h>
+#include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>
@@ -73,6 +74,7 @@ struct ov7740_priv {
 	struct v4l2_ctrl_handler	hdl;
 	u32				cfmt_code;
 	struct v4l2_clk			*clk;
+	struct clk			*xvclk;
 	const struct ov7740_win_size	*win;
 
 	struct soc_camera_subdev_desc	ssdd_dt;
@@ -351,6 +353,11 @@ static int ov7740_s_power(struct v4l2_subdev *sd, int on)
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
 	struct ov7740_priv *priv = to_ov7740(client);
+
+	if (on)
+		clk_prepare_enable(priv->xvclk);
+	else
+		clk_disable_unprepare(priv->xvclk);
 
 	return soc_camera_set_power(&client->dev, ssdd, priv->clk, on);
 }
@@ -689,6 +696,12 @@ static int ov7740_probe(struct i2c_client *client,
 		ret = ov7740_probe_dt(client, priv);
 		if (ret)
 			goto err_clk;
+	}
+
+	priv->xvclk = devm_clk_get(&client->dev, "xvclk");
+	if (IS_ERR(priv->xvclk)) {
+		ret = PTR_ERR(priv->xvclk);
+		goto err_clk;
 	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov7740_subdev_ops);
