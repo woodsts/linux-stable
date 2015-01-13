@@ -69,7 +69,7 @@ struct ov7740_win_size {
 struct ov7740_priv {
 	struct v4l2_subdev		subdev;
 	struct v4l2_ctrl_handler	hdl;
-	enum v4l2_mbus_pixelcode	cfmt_code;
+	u32				cfmt_code;
 	struct v4l2_clk			*clk;
 	const struct ov7740_win_size	*win;
 };
@@ -213,8 +213,8 @@ static const struct ov7740_win_size ov7740_supported_win_sizes[] = {
 	OV7740_SIZE("VGA", W_VGA, H_VGA, ov7740_vga_regs),
 };
 
-static enum v4l2_mbus_pixelcode ov7740_codes[] = {
-	V4L2_MBUS_FMT_YUYV8_2X8,
+static u32 ov7740_codes[] = {
+	MEDIA_BUS_FMT_YUYV8_2X8,
 };
 
 /*
@@ -369,7 +369,7 @@ static const struct ov7740_win_size *ov7740_select_win(u32 *width, u32 *height)
 }
 
 static int ov7740_set_params(struct i2c_client *client, u32 *width, u32 *height,
-			     enum v4l2_mbus_pixelcode code)
+			     u32 code)
 {
 	struct ov7740_priv       *priv = to_ov7740(client);
 	int ret;
@@ -381,7 +381,7 @@ static int ov7740_set_params(struct i2c_client *client, u32 *width, u32 *height,
 	priv->cfmt_code = 0;
 	switch (code) {
 	default:
-	case V4L2_MBUS_FMT_YUYV8_2X8:
+	case MEDIA_BUS_FMT_YUYV8_2X8:
 		dev_dbg(&client->dev, "%s: Selected cfmt YUYV (YUV422)", __func__);
 	}
 
@@ -417,7 +417,7 @@ static int ov7740_g_fmt(struct v4l2_subdev *sd,
 	if (!priv->win) {
 		u32 width = W_VGA, height = H_VGA;
 		priv->win = ov7740_select_win(&width, &height);
-		priv->cfmt_code = V4L2_MBUS_FMT_YUYV8_2X8;
+		priv->cfmt_code = MEDIA_BUS_FMT_YUYV8_2X8;
 	}
 
 	mf->width	= priv->win->width;
@@ -425,13 +425,13 @@ static int ov7740_g_fmt(struct v4l2_subdev *sd,
 	mf->code	= priv->cfmt_code;
 
 	switch (mf->code) {
-	case V4L2_MBUS_FMT_RGB565_2X8_BE:
-	case V4L2_MBUS_FMT_RGB565_2X8_LE:
+	case MEDIA_BUS_FMT_RGB565_2X8_BE:
+	case MEDIA_BUS_FMT_RGB565_2X8_LE:
 		mf->colorspace = V4L2_COLORSPACE_SRGB;
 		break;
 	default:
-	case V4L2_MBUS_FMT_YUYV8_2X8:
-	case V4L2_MBUS_FMT_UYVY8_2X8:
+	case MEDIA_BUS_FMT_YUYV8_2X8:
+	case MEDIA_BUS_FMT_UYVY8_2X8:
 		mf->colorspace = V4L2_COLORSPACE_JPEG;
 	}
 	mf->field	= V4L2_FIELD_NONE;
@@ -447,14 +447,14 @@ static int ov7740_s_fmt(struct v4l2_subdev *sd,
 
 
 	switch (mf->code) {
-	case V4L2_MBUS_FMT_RGB565_2X8_BE:
-	case V4L2_MBUS_FMT_RGB565_2X8_LE:
+	case MEDIA_BUS_FMT_RGB565_2X8_BE:
+	case MEDIA_BUS_FMT_RGB565_2X8_LE:
 		mf->colorspace = V4L2_COLORSPACE_SRGB;
 		break;
 	default:
-		mf->code = V4L2_MBUS_FMT_YUYV8_2X8;
-	case V4L2_MBUS_FMT_YUYV8_2X8:
-	case V4L2_MBUS_FMT_UYVY8_2X8:
+		mf->code = MEDIA_BUS_FMT_YUYV8_2X8;
+	case MEDIA_BUS_FMT_YUYV8_2X8:
+	case MEDIA_BUS_FMT_UYVY8_2X8:
 		mf->colorspace = V4L2_COLORSPACE_JPEG;
 	}
 
@@ -474,14 +474,14 @@ static int ov7740_try_fmt(struct v4l2_subdev *sd,
 	mf->field	= V4L2_FIELD_NONE;
 
 	switch (mf->code) {
-	case V4L2_MBUS_FMT_RGB565_2X8_BE:
-	case V4L2_MBUS_FMT_RGB565_2X8_LE:
+	case MEDIA_BUS_FMT_RGB565_2X8_BE:
+	case MEDIA_BUS_FMT_RGB565_2X8_LE:
 		mf->colorspace = V4L2_COLORSPACE_SRGB;
 		break;
 	default:
-		mf->code = V4L2_MBUS_FMT_UYVY8_2X8;
-	case V4L2_MBUS_FMT_YUYV8_2X8:
-	case V4L2_MBUS_FMT_UYVY8_2X8:
+		mf->code = MEDIA_BUS_FMT_UYVY8_2X8;
+	case MEDIA_BUS_FMT_YUYV8_2X8:
+	case MEDIA_BUS_FMT_UYVY8_2X8:
 		mf->colorspace = V4L2_COLORSPACE_JPEG;
 	}
 
@@ -489,7 +489,7 @@ static int ov7740_try_fmt(struct v4l2_subdev *sd,
 }
 
 static int ov7740_enum_fmt(struct v4l2_subdev *sd, unsigned int index,
-			   enum v4l2_mbus_pixelcode *code)
+			   u32 *code)
 {
 	if (index >= ARRAY_SIZE(ov7740_codes))
 		return -EINVAL;
