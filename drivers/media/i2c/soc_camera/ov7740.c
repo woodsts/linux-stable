@@ -19,6 +19,7 @@
 #include <linux/videodev2.h>
 
 #include <media/soc_camera.h>
+#include <media/v4l2-clk.h>
 #include <media/v4l2-subdev.h>
 #include <media/v4l2-ctrls.h>
 
@@ -69,6 +70,7 @@ struct ov7740_priv {
 	struct v4l2_subdev		subdev;
 	struct v4l2_ctrl_handler	hdl;
 	enum v4l2_mbus_pixelcode	cfmt_code;
+	struct v4l2_clk			*clk;
 	const struct ov7740_win_size	*win;
 };
 
@@ -342,8 +344,9 @@ static int ov7740_s_power(struct v4l2_subdev *sd, int on)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
+	struct ov7740_priv *priv = to_ov7740(client);
 
-	return soc_camera_set_power(&client->dev, ssdd, on);
+	return soc_camera_set_power(&client->dev, ssdd, priv->clk, on);
 }
 
 /* Select the nearest higher resolution for capture */
@@ -607,6 +610,10 @@ static int ov7740_probe(struct i2c_client *client,
 		return -ENOMEM;
 	}
 
+	priv->clk = v4l2_clk_get(&client->dev, "mclk");
+	if (IS_ERR(priv->clk))
+		return -EPROBE_DEFER;
+
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov7740_subdev_ops);
 	v4l2_ctrl_handler_init(&priv->hdl, 2);
 	v4l2_ctrl_new_std(&priv->hdl, &ov7740_ctrl_ops,
@@ -614,15 +621,26 @@ static int ov7740_probe(struct i2c_client *client,
 	v4l2_ctrl_new_std(&priv->hdl, &ov7740_ctrl_ops,
 			V4L2_CID_HFLIP, 0, 1, 1, 0);
 	priv->subdev.ctrl_handler = &priv->hdl;
-	if (priv->hdl.error)
-		return priv->hdl.error;
+	if (priv->hdl.error) {
+		ret = priv->hdl.error;
+		goto err_clk;
+	}
 
 	ret = ov7740_video_probe(client);
 	if (ret)
-		v4l2_ctrl_handler_free(&priv->hdl);
-	else
-		dev_info(&adapter->dev, "OV7740 Probed\n");
+		goto err_handler;
 
+	ret = v4l2_async_register_subdev(&priv->subdev);
+	if (ret < 0)
+		goto err_handler;
+
+	dev_info(&adapter->dev, "OV7740 Probed\n");
+	return 0;
+
+err_handler:
+	v4l2_ctrl_handler_free(&priv->hdl);
+err_clk:
+	v4l2_clk_put(priv->clk);
 	return ret;
 }
 
@@ -630,6 +648,8 @@ static int ov7740_remove(struct i2c_client *client)
 {
 	struct ov7740_priv       *priv = to_ov7740(client);
 
+	v4l2_async_unregister_subdev(&priv->subdev);
+	v4l2_clk_put(priv->clk);
 	v4l2_device_unregister_subdev(&priv->subdev);
 	v4l2_ctrl_handler_free(&priv->hdl);
 	return 0;
