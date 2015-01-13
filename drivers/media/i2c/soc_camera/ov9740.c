@@ -11,8 +11,11 @@
  */
 
 #include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
+#include <linux/of_gpio.h>
 #include <linux/slab.h>
 #include <linux/v4l2-mediabus.h>
 
@@ -212,6 +215,10 @@ struct ov9740_priv {
 	/* For suspend/resume. */
 	struct v4l2_mbus_framefmt	current_mf;
 	bool				current_enable;
+
+	struct soc_camera_subdev_desc	ssdd_dt;
+	struct gpio_desc *resetb_gpio;
+	struct gpio_desc *pwdn_gpio;
 };
 
 static const struct ov9740_reg ov9740_defaults[] = {
@@ -871,6 +878,71 @@ static const struct v4l2_ctrl_ops ov9740_ctrl_ops = {
 	.s_ctrl = ov9740_s_ctrl,
 };
 
+/* OF probe functions */
+static int ov9740_hw_power(struct device *dev, int on)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct ov9740_priv *priv = to_ov9740(sd);
+
+	dev_dbg(&client->dev, "%s: %s the camera\n",
+			__func__, on ? "ENABLE" : "DISABLE");
+
+	if (priv->pwdn_gpio)
+		gpiod_direction_output(priv->pwdn_gpio, !on);
+
+	/* We need wait for ~1ms, then access the SCCB */
+	if (on)
+		usleep_range(1000, 2000);
+
+	return 0;
+}
+
+static int ov9740_hw_reset(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct ov9740_priv *priv = to_ov9740(sd);
+
+	if (priv->resetb_gpio) {
+		/* Active the resetb pin to perform a reset pulse */
+		gpiod_direction_output(priv->resetb_gpio, 1);
+		usleep_range(1000, 3000);
+		gpiod_direction_output(priv->resetb_gpio, 0);
+	}
+
+	usleep_range(1000, 2000);
+
+	return 0;
+}
+
+static int ov9740_probe_dt(struct i2c_client *client,
+		struct ov9740_priv *priv)
+{
+	/* Request the reset GPIO deasserted */
+	priv->resetb_gpio = devm_gpiod_get_optional(&client->dev, "resetb",
+			GPIOD_OUT_LOW);
+	if (!priv->resetb_gpio)
+		dev_dbg(&client->dev, "resetb gpio is not assigned!\n");
+	else if (IS_ERR(priv->resetb_gpio))
+		return PTR_ERR(priv->resetb_gpio);
+
+	/* Request the power down GPIO asserted */
+	priv->pwdn_gpio = devm_gpiod_get_optional(&client->dev, "pwdn",
+			GPIOD_OUT_HIGH);
+	if (!priv->pwdn_gpio)
+		dev_dbg(&client->dev, "pwdn gpio is not assigned!\n");
+	else if (IS_ERR(priv->pwdn_gpio))
+		return PTR_ERR(priv->pwdn_gpio);
+
+	/* Initialize the soc_camera_subdev_desc */
+	priv->ssdd_dt.power = ov9740_hw_power;
+	priv->ssdd_dt.reset = ov9740_hw_reset;
+	client->dev.platform_data = &priv->ssdd_dt;
+
+	return 0;
+}
+
 /*
  * i2c_driver function
  */
@@ -881,11 +953,6 @@ static int ov9740_probe(struct i2c_client *client,
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
 	int ret;
 
-	if (!ssdd) {
-		dev_err(&client->dev, "Missing platform_data for driver\n");
-		return -EINVAL;
-	}
-
 	priv = devm_kzalloc(&client->dev, sizeof(struct ov9740_priv), GFP_KERNEL);
 	if (!priv) {
 		dev_err(&client->dev, "Failed to allocate private data!\n");
@@ -895,6 +962,18 @@ static int ov9740_probe(struct i2c_client *client,
 	priv->clk = v4l2_clk_get(&client->dev, "mclk");
 	if (IS_ERR(priv->clk)) {
 		return -EPROBE_DEFER;
+	}
+
+	if (!ssdd && !client->dev.of_node) {
+		dev_err(&client->dev, "Missing platform_data for driver\n");
+		ret = -EINVAL;
+		goto err_clk;
+	}
+
+	if (!ssdd) {
+		ret = ov9740_probe_dt(client, priv);
+		if (ret)
+			goto err_clk;
 	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov9740_subdev_ops);
@@ -944,9 +1023,16 @@ static const struct i2c_device_id ov9740_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, ov9740_id);
 
+static const struct of_device_id ov9740_of_match[] = {
+	{.compatible = "ovti,ov9740", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, ov9740_of_match);
+
 static struct i2c_driver ov9740_i2c_driver = {
 	.driver = {
 		.name = "ov9740",
+		.of_match_table = of_match_ptr(ov9740_of_match),
 	},
 	.probe    = ov9740_probe,
 	.remove   = ov9740_remove,
