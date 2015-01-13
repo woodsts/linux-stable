@@ -81,7 +81,6 @@
 					pinctrl-0 = <&pinctrl_pck1_as_isi_mck &pinctrl_sensor_power &pinctrl_sensor_reset>;
 					resetb-gpios = <&pioE 24 GPIO_ACTIVE_LOW>;
 					pwdn-gpios = <&pioE 29 GPIO_ACTIVE_HIGH>;
-					/* use pck1 for the master clock of ov2640 */
 					clocks = <&pck1>;
 					clock-names = "xvclk";
 					assigned-clocks = <&pck1>;
