@@ -32,13 +32,13 @@
 				status = "okay";
 			};
 
-			isi: isi@f0034000 {
-				status = "okay";
-			};
-
 			macb1: ethernet@f802c000 {
 				status = "okay";
 			};
+		};
+
+		isi: isi@f0034000 {
+			status = "okay";
 		};
 	};
 

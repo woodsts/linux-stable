@@ -142,30 +142,6 @@
 				status = "okay";
 			};
 
-			isi: isi@f0034000 {
-				port {
-					isi_0: endpoint@0 {
-						remote-endpoint = <&ov2640_0>;
-						bus-width = <8>;
-					};
-
-					isi_1: endpoint@1 {
-						remote-endpoint = <&ov5640_0>;
-						bus-width = <8>;
-					};
-
-					isi_2: endpoint@2 {
-						remote-endpoint = <&ov7740_0>;
-						bus-width = <8>;
-					};
-
-					isi_3: endpoint@3 {
-						remote-endpoint = <&ov9740_0>;
-						bus-width = <8>;
-					};
-				};
-			};
-
 			mmc1: mmc@f8000000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_mmc1_clk_cmd_dat0 &pinctrl_mmc1_dat1_3 &pinctrl_mmc1_cd>;
@@ -269,6 +245,30 @@
 
 		usb2: ehci@00700000 {
 			status = "okay";
+		};
+
+		isi: isi@f0034000 {
+			port {
+				isi_0: endpoint@0 {
+					remote-endpoint = <&ov2640_0>;
+					bus-width = <8>;
+				};
+
+				isi_1: endpoint@1 {
+					remote-endpoint = <&ov5640_0>;
+					bus-width = <8>;
+				};
+
+				isi_2: endpoint@2 {
+					remote-endpoint = <&ov7740_0>;
+					bus-width = <8>;
+				};
+
+				isi_3: endpoint@3 {
+					remote-endpoint = <&ov9740_0>;
+					bus-width = <8>;
+				};
+			};
 		};
 	};
 
