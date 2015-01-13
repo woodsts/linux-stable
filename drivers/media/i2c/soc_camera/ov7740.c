@@ -11,17 +11,19 @@
  */
 
 #include <linux/init.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
 #include <linux/delay.h>
+#include <linux/gpio.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/of_gpio.h>
+#include <linux/slab.h>
 #include <linux/v4l2-mediabus.h>
 #include <linux/videodev2.h>
 
 #include <media/soc_camera.h>
 #include <media/v4l2-clk.h>
-#include <media/v4l2-subdev.h>
 #include <media/v4l2-ctrls.h>
+#include <media/v4l2-subdev.h>
 
 #define VAL_SET(x, mask, rshift, lshift)  \
 		((((x) >> rshift) & mask) << lshift)
@@ -72,6 +74,10 @@ struct ov7740_priv {
 	u32				cfmt_code;
 	struct v4l2_clk			*clk;
 	const struct ov7740_win_size	*win;
+
+	struct soc_camera_subdev_desc	ssdd_dt;
+	struct gpio_desc *resetb_gpio;
+	struct gpio_desc *pwdn_gpio;
 };
 
 /*
@@ -580,6 +586,70 @@ static struct v4l2_subdev_ops ov7740_subdev_ops = {
 	.video	= &ov7740_subdev_video_ops,
 };
 
+/* OF probe functions */
+static int ov7740_hw_power(struct device *dev, int on)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct ov7740_priv *priv = to_ov7740(client);
+
+	dev_dbg(&client->dev, "%s: %s the camera\n",
+			__func__, on ? "ENABLE" : "DISABLE");
+
+	if (priv->pwdn_gpio)
+		gpiod_direction_output(priv->pwdn_gpio, !on);
+
+	/* We need wait for ~1ms, then access the SCCB */
+	if (on)
+		usleep_range(1000, 2000);
+
+	return 0;
+}
+
+static int ov7740_hw_reset(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct ov7740_priv *priv = to_ov7740(client);
+
+	if (priv->resetb_gpio) {
+		/* Active the resetb pin to perform a reset pulse */
+		gpiod_direction_output(priv->resetb_gpio, 1);
+		usleep_range(1000, 3000);
+		gpiod_direction_output(priv->resetb_gpio, 0);
+	}
+
+	/* We need wait for ~20ms, then access the SCCB */
+	usleep_range(20000, 21000);
+
+	return 0;
+}
+
+static int ov7740_probe_dt(struct i2c_client *client,
+		struct ov7740_priv *priv)
+{
+	/* Request the reset GPIO deasserted */
+	priv->resetb_gpio = devm_gpiod_get_optional(&client->dev, "resetb",
+			GPIOD_OUT_LOW);
+	if (!priv->resetb_gpio)
+		dev_dbg(&client->dev, "resetb gpio is not assigned!\n");
+	else if (IS_ERR(priv->resetb_gpio))
+		return PTR_ERR(priv->resetb_gpio);
+
+	/* Request the power down GPIO asserted */
+	priv->pwdn_gpio = devm_gpiod_get_optional(&client->dev, "pwdn",
+			GPIOD_OUT_HIGH);
+	if (!priv->pwdn_gpio)
+		dev_dbg(&client->dev, "pwdn gpio is not assigned!\n");
+	else if (IS_ERR(priv->pwdn_gpio))
+		return PTR_ERR(priv->pwdn_gpio);
+
+	/* Initialize the soc_camera_subdev_desc */
+	priv->ssdd_dt.power = ov7740_hw_power;
+	priv->ssdd_dt.reset = ov7740_hw_reset;
+	client->dev.platform_data = &priv->ssdd_dt;
+
+	return 0;
+}
+
 /*
  * i2c_driver functions
  */
@@ -590,12 +660,6 @@ static int ov7740_probe(struct i2c_client *client,
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
 	struct i2c_adapter	*adapter = to_i2c_adapter(client->dev.parent);
 	int			ret;
-
-	if (!ssdd) {
-		dev_err(&adapter->dev,
-			"OV7740: Missing platform_data for driver\n");
-		return -EINVAL;
-	}
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&adapter->dev,
@@ -613,6 +677,19 @@ static int ov7740_probe(struct i2c_client *client,
 	priv->clk = v4l2_clk_get(&client->dev, "mclk");
 	if (IS_ERR(priv->clk))
 		return -EPROBE_DEFER;
+
+	if (!ssdd && !client->dev.of_node) {
+		dev_err(&adapter->dev,
+			"OV7740: Missing platform_data for driver\n");
+		ret = -EINVAL;
+		goto err_clk;
+	}
+
+	if (!ssdd) {
+		ret = ov7740_probe_dt(client, priv);
+		if (ret)
+			goto err_clk;
+	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov7740_subdev_ops);
 	v4l2_ctrl_handler_init(&priv->hdl, 2);
@@ -661,9 +738,16 @@ static const struct i2c_device_id ov7740_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, ov7740_id);
 
+static const struct of_device_id ov7740_of_match[] = {
+	{.compatible = "ovti,ov7740", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, ov7740_of_match);
+
 static struct i2c_driver ov7740_i2c_driver = {
 	.driver = {
 		.name = "ov7740",
+		.of_match_table = of_match_ptr(ov7740_of_match),
 	},
 	.probe    = ov7740_probe,
 	.remove   = ov7740_remove,
