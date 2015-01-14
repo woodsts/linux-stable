@@ -1049,17 +1049,6 @@
 				};
 			};
 
-			isi@fffb4000 {
-				compatible = "atmel,at91sam9g45-isi";
-				reg = <0xfffb4000 0x4000>;
-				interrupts = <26 IRQ_TYPE_LEVEL_HIGH 5>;
-				clocks = <&isi_clk>;
-				clock-names = "isi_clk";
-				pinctrl-names = "default";
-				pinctrl-0 = <&pinctrl_isi>;
-				status = "disabled";
-			};
-
 			pwm0: pwm@fffb8000 {
 				compatible = "atmel,at91sam9rl-pwm";
 				reg = <0xfffb8000 0x300>;
@@ -1273,6 +1262,17 @@
 				 &pioC 14 GPIO_ACTIVE_HIGH
 				 0
 				>;
+			status = "disabled";
+		};
+
+		isi: isi@fffb4000 {
+			compatible = "atmel,at91sam9g45-isi";
+			reg = <0xfffb4000 0x4000>;
+			interrupts = <26 IRQ_TYPE_LEVEL_HIGH 5>;
+			clocks = <&isi_clk>;
+			clock-names = "isi_clk";
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_isi>;
 			status = "disabled";
 		};
 
