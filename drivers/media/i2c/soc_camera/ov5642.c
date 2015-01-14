@@ -5763,7 +5763,7 @@ static int ov5642_probe(struct i2c_client *client,
 
 	if (!ssdd && !client->dev.of_node) {
 		dev_err(&client->dev, "OV5642: missing platform data!\n");
-		return -EINVAL;
+		ret = -EINVAL;
 		goto err_clk;
 	}
 

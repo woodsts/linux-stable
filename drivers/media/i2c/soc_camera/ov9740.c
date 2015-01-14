@@ -10,9 +10,13 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/clk.h>
 #include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/gpio.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
+#include <linux/of_gpio.h>
 #include <linux/slab.h>
 #include <linux/v4l2-mediabus.h>
 
@@ -187,6 +191,9 @@
 #define OV9740_MAX_WIDTH		1280
 #define OV9740_MAX_HEIGHT		720
 
+#define OV9740_DEFAULT_WIDTH		640
+#define OV9740_DEFAULT_HEIGHT		360
+
 /* Misc. structures */
 struct ov9740_reg {
 	u16				reg;
@@ -197,6 +204,7 @@ struct ov9740_priv {
 	struct v4l2_subdev		subdev;
 	struct v4l2_ctrl_handler	hdl;
 	struct v4l2_clk			*clk;
+	struct clk			*xvclk;
 
 	u16				model;
 	u8				revision;
@@ -209,6 +217,10 @@ struct ov9740_priv {
 	/* For suspend/resume. */
 	struct v4l2_mbus_framefmt	current_mf;
 	bool				current_enable;
+
+	struct soc_camera_subdev_desc	ssdd_dt;
+	struct gpio_desc *resetb_gpio;
+	struct gpio_desc *pwdn_gpio;
 };
 
 static const struct ov9740_reg ov9740_defaults[] = {
@@ -305,9 +317,9 @@ static const struct ov9740_reg ov9740_defaults[] = {
 	/* Output Select */
 	{ OV9740_IO_OUTPUT_SEL01,	0x00 },
 	{ OV9740_IO_OUTPUT_SEL02,	0x00 },
-	{ OV9740_IO_CREL00,		0x00 },
-	{ OV9740_IO_CREL01,		0x00 },
-	{ OV9740_IO_CREL02,		0x00 },
+	{ OV9740_IO_CREL00,		0xe8 },
+	{ OV9740_IO_CREL01,		0x03 },
+	{ OV9740_IO_CREL02,		0xff },
 
 	/* AWB Control */
 	{ OV9740_AWB_MANUAL_CTRL,	0x00 },
@@ -378,18 +390,36 @@ static const struct ov9740_reg ov9740_defaults[] = {
 	{ OV9740_LN_LENGTH_PCK_HI,	0x06 },
 	{ OV9740_LN_LENGTH_PCK_LO,	0x62 },
 
-	/* MIPI Control */
-	{ OV9740_MIPI_CTRL00,		0x44 }, /* 0x64 for discontinuous clk */
-	{ OV9740_MIPI_3837,		0x01 },
-	{ OV9740_MIPI_CTRL01,		0x0f },
-	{ OV9740_MIPI_CTRL03,		0x05 },
-	{ OV9740_MIPI_CTRL05,		0x10 },
-	{ OV9740_VFIFO_RD_CTRL,		0x16 },
-	{ OV9740_MIPI_CTRL_3012,	0x70 },
-	{ OV9740_SC_CMMM_MIPI_CTR,	0x01 },
+	{ OV9740_ISP_CTRL00,		0xff},
+	{ OV9740_ISP_CTRL01,		0xef},
+	{ OV9740_ISP_CTRL03,		0xff},
+};
 
-	/* YUYV order */
-	{ OV9740_ISP_CTRL19,		0x02 },
+static const struct ov9740_reg ov9740_hvgaw_setting[] = {
+	/* Binning Enable */
+	{0x381a, 0x44},
+
+	/* Resolution */
+	/* X/Y_ADDR_START is empty */
+	{ OV9740_Y_ADDR_END_HI,		0x02},
+	{ OV9740_Y_ADDR_END_LO,		0xd3},
+	{ OV9740_X_OUTPUT_SIZE_HI,	0x02},
+	{ OV9740_X_OUTPUT_SIZE_LO,	0x80},
+	{ OV9740_Y_OUTPUT_SIZE_HI,	0x01},
+	{ OV9740_Y_OUTPUT_SIZE_LO,	0x68},
+
+	{OV9740_MODE_SELECT,		0x01},
+};
+
+static const struct ov9740_reg ov9740_sxga_setting[] = {
+	/* X/Y_ADDR_START is empty */
+	{OV9740_Y_ADDR_END_LO,		0xd1},
+	{OV9740_X_OUTPUT_SIZE_HI,	0x05},
+	{OV9740_X_OUTPUT_SIZE_LO,	0x00},
+	{OV9740_Y_OUTPUT_SIZE_HI,	0x02},
+	{OV9740_Y_OUTPUT_SIZE_LO,	0xd0},
+
+	{OV9740_MODE_SELECT,		0x01},
 };
 
 static u32 ov9740_codes[] = {
@@ -550,121 +580,13 @@ static void ov9740_res_roundup(u32 *width, u32 *height)
 	*width = ALIGN(*width, 4);
 
 	/* Max resolution is 1280x720 (720p). */
-	if (*width > OV9740_MAX_WIDTH)
-		*width = OV9740_MAX_WIDTH;
-
-	if (*height > OV9740_MAX_HEIGHT)
-		*height = OV9740_MAX_HEIGHT;
-}
-
-/* Setup registers according to resolution and color encoding */
-static int ov9740_set_res(struct i2c_client *client, u32 width, u32 height)
-{
-	u32 x_start;
-	u32 y_start;
-	u32 x_end;
-	u32 y_end;
-	bool scaling = false;
-	u32 scale_input_x;
-	u32 scale_input_y;
-	int ret;
-
-	if ((width != OV9740_MAX_WIDTH) || (height != OV9740_MAX_HEIGHT))
-		scaling = true;
-
-	/*
-	 * Try to use as much of the sensor area as possible when supporting
-	 * smaller resolutions.  Depending on the aspect ratio of the
-	 * chosen resolution, we can either use the full width of the sensor,
-	 * or the full height of the sensor (or both if the aspect ratio is
-	 * the same as 1280x720.
-	 */
-	if ((OV9740_MAX_WIDTH * height) > (OV9740_MAX_HEIGHT * width)) {
-		scale_input_x = (OV9740_MAX_HEIGHT * width) / height;
-		scale_input_y = OV9740_MAX_HEIGHT;
+	if (*width <= OV9740_DEFAULT_WIDTH) {
+		*width = OV9740_DEFAULT_WIDTH;
+		*height = OV9740_DEFAULT_HEIGHT;
 	} else {
-		scale_input_x = OV9740_MAX_WIDTH;
-		scale_input_y = (OV9740_MAX_WIDTH * height) / width;
+		*width = OV9740_MAX_WIDTH;
+		*height = OV9740_MAX_HEIGHT;
 	}
-
-	/* These describe the area of the sensor to use. */
-	x_start = (OV9740_MAX_WIDTH - scale_input_x) / 2;
-	y_start = (OV9740_MAX_HEIGHT - scale_input_y) / 2;
-	x_end = x_start + scale_input_x - 1;
-	y_end = y_start + scale_input_y - 1;
-
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_START_HI, x_start >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_START_LO, x_start & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_START_HI, y_start >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_START_LO, y_start & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_END_HI, x_end >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_X_ADDR_END_LO, x_end & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_END_HI, y_end >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_ADDR_END_LO, y_end & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_X_OUTPUT_SIZE_HI, width >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_X_OUTPUT_SIZE_LO, width & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_OUTPUT_SIZE_HI, height >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_Y_OUTPUT_SIZE_LO, height & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL1E, scale_input_x >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL1F, scale_input_x & 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL20, scale_input_y >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL21, scale_input_y & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_VFIFO_READ_START_HI,
-			       (scale_input_x - width) >> 8);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_VFIFO_READ_START_LO,
-			       (scale_input_x - width) & 0xff);
-	if (ret)
-		goto done;
-
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL00, 0xff);
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL01, 0xef |
-							  (scaling << 4));
-	if (ret)
-		goto done;
-	ret = ov9740_reg_write(client, OV9740_ISP_CTRL03, 0xff);
-
-done:
-	return ret;
 }
 
 /* set the format we will capture in */
@@ -692,7 +614,13 @@ static int ov9740_s_fmt(struct v4l2_subdev *sd,
 	if (ret < 0)
 		return ret;
 
-	ret = ov9740_set_res(client, mf->width, mf->height);
+	/* Set Registers by Resolution */
+	if (mf->width == OV9740_MAX_WIDTH && mf->height == OV9740_MAX_HEIGHT)
+		ret = ov9740_reg_write_array(client, ov9740_sxga_setting,
+				     ARRAY_SIZE(ov9740_sxga_setting));
+	else
+		ret = ov9740_reg_write_array(client, ov9740_hvgaw_setting,
+				     ARRAY_SIZE(ov9740_hvgaw_setting));
 	if (ret < 0)
 		return ret;
 
@@ -715,6 +643,28 @@ static int ov9740_try_fmt(struct v4l2_subdev *sd,
 
 	return 0;
 }
+
+static int ov9740_g_fmt(struct v4l2_subdev *sd,
+			struct v4l2_mbus_framefmt *mf)
+{
+	static int first_time = 1;
+
+	mf->code	= ov9740_codes[0];
+	mf->colorspace = V4L2_COLORSPACE_SRGB;
+	mf->field	= V4L2_FIELD_NONE;
+
+	if (first_time) {
+		/* Initial setting is 640x360 */
+		mf->width = OV9740_DEFAULT_WIDTH;
+		mf->height = OV9740_DEFAULT_HEIGHT;
+		first_time = 0;
+	} else {
+		ov9740_res_roundup(&mf->width, &mf->height);
+	}
+
+	return 0;
+}
+
 
 static int ov9740_enum_fmt(struct v4l2_subdev *sd, unsigned int index,
 			   u32 *code)
@@ -780,6 +730,8 @@ static int ov9740_s_power(struct v4l2_subdev *sd, int on)
 	int ret;
 
 	if (on) {
+		clk_prepare_enable(priv->xvclk);
+
 		ret = soc_camera_power_on(&client->dev, ssdd, priv->clk);
 		if (ret < 0)
 			return ret;
@@ -795,6 +747,8 @@ static int ov9740_s_power(struct v4l2_subdev *sd, int on)
 		}
 
 		soc_camera_power_off(&client->dev, ssdd, priv->clk);
+
+		clk_disable_unprepare(priv->xvclk);
 	}
 
 	return 0;
@@ -905,6 +859,7 @@ static int ov9740_g_mbus_config(struct v4l2_subdev *sd,
 static struct v4l2_subdev_video_ops ov9740_video_ops = {
 	.s_stream	= ov9740_s_stream,
 	.s_mbus_fmt	= ov9740_s_fmt,
+	.g_mbus_fmt	= ov9740_g_fmt,
 	.try_mbus_fmt	= ov9740_try_fmt,
 	.enum_mbus_fmt	= ov9740_enum_fmt,
 	.cropcap	= ov9740_cropcap,
@@ -929,6 +884,71 @@ static const struct v4l2_ctrl_ops ov9740_ctrl_ops = {
 	.s_ctrl = ov9740_s_ctrl,
 };
 
+/* OF probe functions */
+static int ov9740_hw_power(struct device *dev, int on)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct ov9740_priv *priv = to_ov9740(sd);
+
+	dev_dbg(&client->dev, "%s: %s the camera\n",
+			__func__, on ? "ENABLE" : "DISABLE");
+
+	if (priv->pwdn_gpio)
+		gpiod_direction_output(priv->pwdn_gpio, !on);
+
+	/* We need wait for ~1ms, then access the SCCB */
+	if (on)
+		usleep_range(1000, 2000);
+
+	return 0;
+}
+
+static int ov9740_hw_reset(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+	struct ov9740_priv *priv = to_ov9740(sd);
+
+	if (priv->resetb_gpio) {
+		/* Active the resetb pin to perform a reset pulse */
+		gpiod_direction_output(priv->resetb_gpio, 1);
+		usleep_range(1000, 3000);
+		gpiod_direction_output(priv->resetb_gpio, 0);
+	}
+
+	usleep_range(1000, 2000);
+
+	return 0;
+}
+
+static int ov9740_probe_dt(struct i2c_client *client,
+		struct ov9740_priv *priv)
+{
+	/* Request the reset GPIO deasserted */
+	priv->resetb_gpio = devm_gpiod_get_optional(&client->dev, "resetb",
+			GPIOD_OUT_LOW);
+	if (!priv->resetb_gpio)
+		dev_dbg(&client->dev, "resetb gpio is not assigned!\n");
+	else if (IS_ERR(priv->resetb_gpio))
+		return PTR_ERR(priv->resetb_gpio);
+
+	/* Request the power down GPIO asserted */
+	priv->pwdn_gpio = devm_gpiod_get_optional(&client->dev, "pwdn",
+			GPIOD_OUT_HIGH);
+	if (!priv->pwdn_gpio)
+		dev_dbg(&client->dev, "pwdn gpio is not assigned!\n");
+	else if (IS_ERR(priv->pwdn_gpio))
+		return PTR_ERR(priv->pwdn_gpio);
+
+	/* Initialize the soc_camera_subdev_desc */
+	priv->ssdd_dt.power = ov9740_hw_power;
+	priv->ssdd_dt.reset = ov9740_hw_reset;
+	client->dev.platform_data = &priv->ssdd_dt;
+
+	return 0;
+}
+
 /*
  * i2c_driver function
  */
@@ -939,15 +959,33 @@ static int ov9740_probe(struct i2c_client *client,
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
 	int ret;
 
-	if (!ssdd) {
-		dev_err(&client->dev, "Missing platform_data for driver\n");
-		return -EINVAL;
-	}
-
 	priv = devm_kzalloc(&client->dev, sizeof(struct ov9740_priv), GFP_KERNEL);
 	if (!priv) {
 		dev_err(&client->dev, "Failed to allocate private data!\n");
 		return -ENOMEM;
+	}
+
+	priv->clk = v4l2_clk_get(&client->dev, "mclk");
+	if (IS_ERR(priv->clk)) {
+		return -EPROBE_DEFER;
+	}
+
+	if (!ssdd && !client->dev.of_node) {
+		dev_err(&client->dev, "Missing platform_data for driver\n");
+		ret = -EINVAL;
+		goto err_clk;
+	}
+
+	if (!ssdd) {
+		ret = ov9740_probe_dt(client, priv);
+		if (ret)
+			goto err_clk;
+	}
+
+	priv->xvclk = devm_clk_get(&client->dev, "xvclk");
+	if (IS_ERR(priv->xvclk)) {
+		ret = PTR_ERR(priv->xvclk);
+		goto err_clk;
 	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov9740_subdev_ops);
@@ -955,23 +993,27 @@ static int ov9740_probe(struct i2c_client *client,
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
 			V4L2_CID_VFLIP, 0, 1, 1, 0);
 	v4l2_ctrl_new_std(&priv->hdl, &ov9740_ctrl_ops,
-			V4L2_CID_HFLIP, 0, 1, 1, 0);
+			V4L2_CID_HFLIP, 0, 1, 1, 1);
 	priv->subdev.ctrl_handler = &priv->hdl;
-	if (priv->hdl.error)
-		return priv->hdl.error;
-
-	priv->clk = v4l2_clk_get(&client->dev, "mclk");
-	if (IS_ERR(priv->clk)) {
-		ret = PTR_ERR(priv->clk);
-		goto eclkget;
+	if (priv->hdl.error) {
+		ret = priv->hdl.error;
+		goto err_clk;
 	}
 
 	ret = ov9740_video_probe(client);
-	if (ret < 0) {
-		v4l2_clk_put(priv->clk);
-eclkget:
-		v4l2_ctrl_handler_free(&priv->hdl);
-	}
+	if (ret < 0)
+		goto err_handler;
+
+	ret = v4l2_async_register_subdev(&priv->subdev);
+	if (ret < 0)
+		goto err_handler;
+
+	return 0;
+
+err_handler:
+	v4l2_ctrl_handler_free(&priv->hdl);
+err_clk:
+	v4l2_clk_put(priv->clk);
 
 	return ret;
 }
@@ -980,6 +1022,7 @@ static int ov9740_remove(struct i2c_client *client)
 {
 	struct ov9740_priv *priv = i2c_get_clientdata(client);
 
+	v4l2_async_unregister_subdev(&priv->subdev);
 	v4l2_clk_put(priv->clk);
 	v4l2_device_unregister_subdev(&priv->subdev);
 	v4l2_ctrl_handler_free(&priv->hdl);
@@ -992,9 +1035,16 @@ static const struct i2c_device_id ov9740_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, ov9740_id);
 
+static const struct of_device_id ov9740_of_match[] = {
+	{.compatible = "ovti,ov9740", },
+	{},
+};
+MODULE_DEVICE_TABLE(of, ov9740_of_match);
+
 static struct i2c_driver ov9740_i2c_driver = {
 	.driver = {
 		.name = "ov9740",
+		.of_match_table = of_match_ptr(ov9740_of_match),
 	},
 	.probe    = ov9740_probe,
 	.remove   = ov9740_remove,
