@@ -1283,6 +1283,10 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_isi_data_0_7>;
 			status = "disabled";
+			port {
+				#address-cells = <1>;
+				#size-cells = <0>;
+			};
 		};
 
 		usb0: ohci@00700000 {
