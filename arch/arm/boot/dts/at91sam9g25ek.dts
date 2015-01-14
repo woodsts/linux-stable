@@ -20,6 +20,18 @@
 				phy-mode = "rmii";
 				status = "okay";
 			};
+
+			spi0: spi@f0000000 {
+				status = "disabled";
+			};
+
+			mmc1: mmc@f000c000 {
+				status = "disabled";
+			};
+		};
+
+		isi: isi@f8048000 {
+			status = "okay";
 		};
 	};
 };

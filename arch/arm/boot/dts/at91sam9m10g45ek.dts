@@ -62,6 +62,85 @@
 
 			i2c0: i2c@fff84000 {
 				status = "okay";
+				ov2640: camera@0x30 {
+					compatible = "ovti,ov2640";
+					reg = <0x30>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_pck1_as_isi_mck &pinctrl_sensor_power &pinctrl_sensor_reset>;
+					resetb-gpios = <&pioD 12 GPIO_ACTIVE_LOW>;
+					pwdn-gpios = <&pioD 13 GPIO_ACTIVE_HIGH>;
+					clocks = <&pck1>;
+					clock-names = "xvclk";
+					assigned-clocks = <&pck1>;
+					assigned-clock-rates = <25000000>;
+
+					port {
+						ov2640_0: endpoint {
+							remote-endpoint = <&isi_0>;
+							bus-width = <8>;
+						};
+					};
+				};
+
+				ov5640: camera@0x3c {
+					compatible = "ovti,ov5642";
+					reg = <0x3c>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_pck1_as_isi_mck &pinctrl_sensor_power &pinctrl_sensor_reset>;
+					resetb-gpios = <&pioD 12 GPIO_ACTIVE_LOW>;
+					pwdn-gpios = <&pioD 13 GPIO_ACTIVE_HIGH>;
+					clocks = <&pck1>;
+					clock-names = "xvclk";
+					assigned-clocks = <&pck1>;
+					assigned-clock-rates = <25000000>;
+
+					port {
+						ov5640_0: endpoint {
+							remote-endpoint = <&isi_1>;
+							bus-width = <8>;
+						};
+					};
+				};
+
+				ov7740: camera@0x21 {
+					compatible = "ovti,ov7740";
+					reg = <0x21>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_pck1_as_isi_mck &pinctrl_sensor_power &pinctrl_sensor_reset>;
+					resetb-gpios = <&pioD 12 GPIO_ACTIVE_LOW>;
+					pwdn-gpios = <&pioD 13 GPIO_ACTIVE_HIGH>;
+					clocks = <&pck1>;
+					clock-names = "xvclk";
+					assigned-clocks = <&pck1>;
+					assigned-clock-rates = <25000000>;
+
+					port {
+						ov7740_0: endpoint {
+							remote-endpoint = <&isi_2>;
+							bus-width = <8>;
+						};
+					};
+				};
+
+				ov9740: camera@0x10 {
+					compatible = "ovti,ov9740";
+					reg = <0x10>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_pck1_as_isi_mck &pinctrl_sensor_power &pinctrl_sensor_reset>;
+					resetb-gpios = <&pioD 12 GPIO_ACTIVE_LOW>;
+					pwdn-gpios = <&pioD 13 GPIO_ACTIVE_HIGH>;
+					clocks = <&pck1>;
+					clock-names = "xvclk";
+					assigned-clocks = <&pck1>;
+					assigned-clock-rates = <25000000>;
+
+					port {
+						ov9740_0: endpoint {
+							remote-endpoint = <&isi_3>;
+							bus-width = <8>;
+						};
+					};
+				};
 			};
 
 			i2c1: i2c@fff88000 {
@@ -120,6 +199,23 @@
 						atmel,pins =
 							<AT91_PIOD 0  AT91_PERIPH_B AT91_PINCTRL_PULL_UP	/* PD0 periph B */
 							 AT91_PIOD 31 AT91_PERIPH_B AT91_PINCTRL_PULL_UP>;	/* PD31 periph B */
+					};
+				};
+
+				camera_sensor {
+					pinctrl_pck1_as_isi_mck: pck1_as_isi_mck-0 {
+						atmel,pins =
+							<AT91_PIOB 31 AT91_PERIPH_B AT91_PINCTRL_NONE>;	/* PB31 periph B ISI_MCK */
+					};
+
+					pinctrl_sensor_reset: sensor_reset-0 {
+						atmel,pins =
+							<AT91_PIOD 12 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;   /* PD12 gpio */
+					};
+
+					pinctrl_sensor_power: sensor_power-0 {
+						atmel,pins =
+							<AT91_PIOD 13 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>; /* PD13 gpio */
 					};
 				};
 			};
@@ -223,6 +319,31 @@
 			data@4000000 {
 				label = "data";
 				reg = <0x4000000 0xC000000>;
+			};
+		};
+
+		isi: isi@fffb4000 {
+			status = "okay";
+			port {
+				isi_0: endpoint@0 {
+					remote-endpoint = <&ov2640_0>;
+					bus-width = <8>;
+				};
+
+				isi_1: endpoint@1 {
+					remote-endpoint = <&ov5640_0>;
+					bus-width = <8>;
+				};
+
+				isi_2: endpoint@2 {
+					remote-endpoint = <&ov7740_0>;
+					bus-width = <8>;
+				};
+
+				isi_3: endpoint@3 {
+					remote-endpoint = <&ov9740_0>;
+					bus-width = <8>;
+				};
 			};
 		};
 
