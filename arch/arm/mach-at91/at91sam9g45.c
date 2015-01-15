@@ -20,11 +20,6 @@
  *  AT91SAM9G45 processor initialization
  * -------------------------------------------------------------------- */
 
-static void __init at91sam9g45_map_io(void)
-{
-	at91_init_sram(0, AT91SAM9G45_SRAM_BASE, AT91SAM9G45_SRAM_SIZE);
-}
-
 static void __init at91sam9g45_initialize(void)
 {
 	arm_pm_idle = at91sam9_idle;
@@ -34,6 +29,5 @@ static void __init at91sam9g45_initialize(void)
 }
 
 AT91_SOC_START(at91sam9g45)
-	.map_io = at91sam9g45_map_io,
 	.init = at91sam9g45_initialize,
 AT91_SOC_END
