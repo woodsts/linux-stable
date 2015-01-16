@@ -1,5 +1,5 @@
 /*
- * arch/arm/mach-at91/pm_slow_clock.S
+ * arch/arm/mach-at91/pm_suspend.S
  *
  *  Copyright (C) 2006 Savin Zlobec
  *
