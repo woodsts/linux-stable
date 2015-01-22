@@ -46,7 +46,7 @@ static void __init sama5_dt_device_init(void)
 						ksz8081_phy_fixup);
 	}
 
-	at91_sam9260_pm_init();
+	at91_sam9x5_pm_init();
 	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
 }
 
