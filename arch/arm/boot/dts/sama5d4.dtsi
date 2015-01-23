@@ -297,6 +297,21 @@
 			};
 		};
 
+		isi: isi@f0008000 {
+			compatible = "atmel,at91sam9g45-isi";
+			reg = <0xf0008000 0x4000>;
+			interrupts = <52 IRQ_TYPE_LEVEL_HIGH 5>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_isi_data_0_7>;
+			clocks = <&isi_clk>;
+			clock-names = "isi_clk";
+			status = "disabled";
+			port {
+				#address-cells = <1>;
+				#size-cells = <0>;
+			};
+		};
+
 		apb {
 			compatible = "simple-bus";
 			#address-cells = <1>;
@@ -1244,6 +1259,35 @@
 							 AT91_PIOC 10 AT91_PERIPH_A AT91_PINCTRL_NONE	/* PC10 Data bit 5 */
 							 AT91_PIOC 11 AT91_PERIPH_A AT91_PINCTRL_NONE	/* PC11 periph A Data bit 6 */
 							 AT91_PIOC 12 AT91_PERIPH_A AT91_PINCTRL_NONE>;	/* PC12 periph A Data bit 7 */
+					};
+				};
+
+				isi {
+					pinctrl_isi_data_0_7: isi-0-data-0-7 {
+						atmel,pins =
+							<AT91_PIOC 19 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D0 */
+							 AT91_PIOC 20 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D1 */
+							 AT91_PIOC 21 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D2 */
+							 AT91_PIOC 22 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D3 */
+							 AT91_PIOC 23 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D4 */
+							 AT91_PIOC 24 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D5 */
+							 AT91_PIOC 25 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D6 */
+							 AT91_PIOC 26 AT91_PERIPH_A AT91_PINCTRL_NONE	/* ISI_D7 */
+							 AT91_PIOB  1 AT91_PERIPH_C AT91_PINCTRL_NONE	/* ISI_PCK, conflict with G0_RXCK */
+							 AT91_PIOB  3 AT91_PERIPH_C AT91_PINCTRL_NONE	/* ISI_VSYNC */
+							 AT91_PIOB  4 AT91_PERIPH_C AT91_PINCTRL_NONE>;	/* ISI_HSYNC */
+					};
+
+					pinctrl_isi_data_8_9: isi-0-data-8-9 {
+						atmel,pins =
+							<AT91_PIOC 0 AT91_PERIPH_C AT91_PINCTRL_NONE	/* PC0 periph C ISI_D8, conflicts with SPI0_MISO, PWMH2 */
+							AT91_PIOC 1 AT91_PERIPH_C AT91_PINCTRL_NONE>;	/* PC1 periph C ISI_D9, conflicts with SPI0_MOSI, PWML2 */
+					};
+
+					pinctrl_isi_data_10_11: isi-0-data-10-11 {
+						atmel,pins =
+							<AT91_PIOC 2 AT91_PERIPH_C AT91_PINCTRL_NONE	/* PC2 periph C ISI_D10, conflicts with SPI0_SPCK, PWMH3 */
+							AT91_PIOC 3 AT91_PERIPH_C AT91_PINCTRL_NONE>;	/* PC3 periph C ISI_D11, conflicts with SPI0_NPCS0, PWML3 */
 					};
 				};
 
