@@ -47,7 +47,7 @@ static void __init sama5_dt_device_init(void)
 	}
 
 	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
-	at91_sam9x5_pm_init();
+	at91sam9x5_pm_init();
 }
 
 static const char *sama5_dt_board_compat[] __initconst = {
@@ -55,7 +55,7 @@ static const char *sama5_dt_board_compat[] __initconst = {
 	NULL
 };
 
-DT_MACHINE_START(sama5_dt, "Atmel SAMA5 (Device Tree)")
+DT_MACHINE_START(sama5_dt, "Atmel SAMA5")
 	/* Maintainer: Atmel */
 	.map_io		= at91_map_io,
 	.init_early	= at91_dt_initialize,
@@ -68,7 +68,7 @@ static const char *sama5_alt_dt_board_compat[] __initconst = {
 	NULL
 };
 
-DT_MACHINE_START(sama5_alt_dt, "Atmel SAMA5 (Device Tree)")
+DT_MACHINE_START(sama5_alt_dt, "Atmel SAMA5")
 	/* Maintainer: Atmel */
 	.map_io		= at91_alt_map_io,
 	.init_early	= at91_dt_initialize,
