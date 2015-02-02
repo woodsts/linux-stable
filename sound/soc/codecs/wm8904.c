@@ -1862,9 +1862,6 @@ static int wm8904_set_bias_level(struct snd_soc_codec *codec,
 				return ret;
 			}
 
-			regcache_cache_only(wm8904->regmap, false);
-			regcache_sync(wm8904->regmap);
-
 			/* Enable bias */
 			snd_soc_update_bits(codec, WM8904_BIAS_CONTROL_0,
 					    WM8904_BIAS_ENA, WM8904_BIAS_ENA);
@@ -1898,9 +1895,6 @@ static int wm8904_set_bias_level(struct snd_soc_codec *codec,
 		/* Stop bias generation */
 		snd_soc_update_bits(codec, WM8904_BIAS_CONTROL_0,
 				    WM8904_BIAS_ENA, 0);
-
-		regcache_cache_only(wm8904->regmap, true);
-		regcache_mark_dirty(wm8904->regmap);
 
 		regulator_bulk_disable(ARRAY_SIZE(wm8904->supplies),
 				       wm8904->supplies);
@@ -2100,7 +2094,6 @@ static const struct regmap_config wm8904_regmap = {
 	.volatile_reg = wm8904_volatile_register,
 	.readable_reg = wm8904_readable_register,
 
-	.cache_type = REGCACHE_RBTREE,
 	.reg_defaults = wm8904_reg_defaults,
 	.num_reg_defaults = ARRAY_SIZE(wm8904_reg_defaults),
 };
@@ -2261,7 +2254,6 @@ static int wm8904_i2c_probe(struct i2c_client *i2c,
 			    WM8904_POBCTRL, 0);
 
 	/* Can leave the device powered off until we need it */
-	regcache_cache_only(wm8904->regmap, true);
 	regulator_bulk_disable(ARRAY_SIZE(wm8904->supplies), wm8904->supplies);
 
 	ret = snd_soc_register_codec(&i2c->dev,
