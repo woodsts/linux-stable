@@ -14,6 +14,7 @@
 #include <linux/of_device.h>
 
 #include <sound/soc.h>
+#include <sound/pcm_params.h>
 
 #include "../codecs/wm8904.h"
 #include "atmel_ssc_dai.h"
@@ -29,6 +30,8 @@ static int atmel_asoc_wm8904_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+	unsigned int div;
 	int ret;
 
 	ret = snd_soc_dai_set_pll(codec_dai, WM8904_FLL_MCLK, WM8904_FLL_MCLK,
@@ -50,6 +53,12 @@ static int atmel_asoc_wm8904_hw_params(struct snd_pcm_substream *substream,
 		return ret;
 	}
 
+	div = (params_channels(params) * params_width(params) >> 1) - 1;
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		snd_soc_dai_set_clkdiv(cpu_dai, ATMEL_SSC_TCMR_PERIOD, div);
+	else
+		snd_soc_dai_set_clkdiv(cpu_dai, ATMEL_SSC_RCMR_PERIOD, div);
+
 	return 0;
 }
 
@@ -63,7 +72,7 @@ static struct snd_soc_dai_link atmel_asoc_wm8904_dailink = {
 	.codec_dai_name = "wm8904-hifi",
 	.dai_fmt = SND_SOC_DAIFMT_I2S
 		| SND_SOC_DAIFMT_NB_NF
-		| SND_SOC_DAIFMT_CBM_CFM,
+		| SND_SOC_DAIFMT_CBM_CFS,
 	.ops = &atmel_asoc_wm8904_ops,
 };
 
