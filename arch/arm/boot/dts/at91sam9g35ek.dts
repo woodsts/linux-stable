@@ -20,6 +20,11 @@
 				phy-mode = "rmii";
 				status = "okay";
 			};
+
+			mmc1: mmc@f000c000 {
+				/* mmc1 pins is conflicted with spi0 pins */
+				status = "disabled";
+			};
 		};
 	};
 };

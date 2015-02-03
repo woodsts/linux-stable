@@ -13,4 +13,13 @@
 / {
 	model = "Atmel AT91SAM9G15-EK";
 	compatible = "atmel,at91sam9g15ek", "atmel,at91sam9x5ek", "atmel,at91sam9x5", "atmel,at91sam9";
+
+	ahb {
+		apb {
+			mmc1: mmc@f000c000 {
+				/* mmc1 pins is conflicted with spi0 pins */
+				status = "disabled";
+			};
+		};
+	};
 };
