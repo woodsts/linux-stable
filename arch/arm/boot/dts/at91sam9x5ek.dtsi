@@ -16,6 +16,14 @@
 		bootargs = "console=ttyS0,115200 root=/dev/mtdblock1 rw rootfstype=ubifs ubi.mtd=1 root=ubi0:rootfs";
 	};
 
+	clocks {
+		wm8731_xtal: wm8731_xtal {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <12288000>;
+		};
+	};
+
 	ahb {
 		apb {
 			mmc0: mmc@f0008000 {
@@ -63,6 +71,8 @@
 				wm8731: wm8731@1a {
 					compatible = "wm8731";
 					reg = <0x1a>;
+					clocks = <&wm8731_xtal>;
+					clock-names = "mclk";
 				};
 			};
 
