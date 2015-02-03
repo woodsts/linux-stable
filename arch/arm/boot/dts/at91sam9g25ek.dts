@@ -28,6 +28,21 @@
 			mmc1: mmc@f000c000 {
 				status = "disabled";
 			};
+
+			i2c0: i2c@f8010000 {
+				ov2640: camera@0x30 {
+					status = "okay";
+				};
+				ov5640: camera@0x3c {
+					status = "okay";
+				};
+				ov7740: camera@0x21 {
+					status = "okay";
+				};
+				ov9740: camera@0x10 {
+					status = "okay";
+				};
+			};
 		};
 
 		isi: isi@f8048000 {
