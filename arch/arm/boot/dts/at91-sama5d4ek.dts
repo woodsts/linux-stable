@@ -115,6 +115,10 @@
 				};
 			};
 
+			ssc0: ssc@f8008000 {
+				status = "okay";
+			};
+
 			spi0: spi@f8010000 {
 				cs-gpios = <&pioC 3 0>, <0>, <0>, <0>;
 				status = "okay";
@@ -127,6 +131,13 @@
 
 			i2c0: i2c@f8014000 {
 				status = "okay";
+
+				wm8904: codec@1a {
+					compatible = "wlf,wm8904";
+					reg = <0x1a>;
+					clocks = <&pck2>;
+					clock-names = "mclk";
+				};
 
 				ov2640: camera@0x30 {
 					compatible = "ovti,ov2640";
@@ -255,6 +266,10 @@
 						atmel,pins =
 							<AT91_PIOE 13 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>; /* PE13 gpio */
 					};
+					pinctrl_pck2_as_audio_mck: pck2_as_audio_mck {
+						atmel,pins =
+							<AT91_PIOB 10 AT91_PERIPH_B AT91_PINCTRL_NONE>;
+					};
 					pinctrl_pck1_as_isi_mck: pck1_as_isi_mck-0 {
 						atmel,pins =
 							<AT91_PIOC 4 AT91_PERIPH_C AT91_PINCTRL_NONE>;	/* PC4 periph C PCK1, conflicted with SPI0_NPCS1, MCI0_CK */
@@ -369,5 +384,21 @@
 			linux,code = <0x100>;
 			gpio-key,wakeup;
 		};
+	};
+
+	sound {
+		compatible = "atmel,asoc-wm8904";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pck2_as_audio_mck>;
+
+		atmel,model = "wm8904 @ SAMA5D4EK";
+		atmel,audio-routing =
+			"Headphone Jack", "HPOUTL",
+			"Headphone Jack", "HPOUTR",
+			"IN1L", "Line In Jack",
+			"IN1R", "Line In Jack";
+
+		atmel,ssc-controller = <&ssc0>;
+		atmel,audio-codec = <&wm8904>;
 	};
 };
