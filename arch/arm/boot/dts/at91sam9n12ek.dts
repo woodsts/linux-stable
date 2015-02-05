@@ -71,6 +71,7 @@
 			};
 
 			i2c1: i2c@f8014000 {
+				dmas = <0>;
 				status = "okay";
 			};
 
