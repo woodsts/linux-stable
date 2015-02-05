@@ -1,5 +1,5 @@
 /*
- * sama5d35ek.dts - Device Tree file for SAMA5D35-EK board
+ * sama5d35ek_revc.dts - Device Tree file for SAMA5D35-EK with rev.C MB
  *
  *  Copyright (C) 2013 Atmel,
  *                2013 Ludovic Desroches <ludovic.desroches@atmel.com>

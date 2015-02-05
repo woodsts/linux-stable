@@ -1,5 +1,5 @@
 /*
- * sama5d33ek.dts - Device Tree file for SAMA5D33-EK board
+ * sama5d34ek_revc.dts - Device Tree file for SAMA5D34-EK with rev.C MB
  *
  *  Copyright (C) 2013 Atmel,
  *                2013 Ludovic Desroches <ludovic.desroches@atmel.com>
@@ -7,14 +7,14 @@
  * Licensed under GPLv2 or later.
  */
 /dts-v1/;
-#include "sama5d33.dtsi"
+#include "sama5d34.dtsi"
 #include "sama5d3xmb.dtsi"
 #include "sama5d3xmb_revc_audio.dtsi"
 #include "sama5d3xdm.dtsi"
 
 / {
-	model = "Atmel SAMA5D33-EK";
-	compatible = "atmel,sama5d33ek", "atmel,sama5d3xmb", "atmel,sama5d3xcm", "atmel,sama5d33", "atmel,sama5d3", "atmel,sama5";
+	model = "Atmel SAMA5D34-EK";
+	compatible = "atmel,sama5d34ek", "atmel,sama5d3xmb", "atmel,sama5d3xcm", "atmel,sama5d34", "atmel,sama5d3", "atmel,sama5";
 
 	ahb {
 		apb {
@@ -26,12 +26,22 @@
 				status = "okay";
 			};
 
+			can0: can@f000c000 {
+				status = "okay";
+			};
+
 			i2c0: i2c@f0014000 {
 				status = "okay";
 			};
 
 			i2c1: i2c@f0018000 {
 				status = "okay";
+
+				24c256@50 {
+					compatible = "24c256";
+					reg = <0x50>;
+					pagesize = <64>;
+				};
 			};
 
 			macb0: ethernet@f0028000 {
@@ -41,6 +51,13 @@
 			hlcdc: hlcdc@f0030000 {
 				status = "okay";
 			};
+		};
+	};
+
+	leds {
+		d3 {
+			label = "d3";
+			gpios = <&pioE 24 GPIO_ACTIVE_HIGH>;
 		};
 	};
 
