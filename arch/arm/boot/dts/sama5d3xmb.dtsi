@@ -38,20 +38,6 @@
 				atmel,clk-from-rk-pin;
 			};
 
-			/*
-			 * i2c0 conflicts with ISI:
-			 * disable it to allow the use of ISI
-			 * can not enable audio when i2c0 disabled
-			 */
-			i2c0: i2c@f0014000 {
-				wm8904: wm8904@1a {
-					compatible = "wlf,wm8904";
-					reg = <0x1a>;
-					clocks = <&pck0>;
-					clock-names = "mclk";
-				};
-			};
-
 			usart1: serial@f0020000 {
 				dmas = <0>, <0>;	/*  Do not use DMA for usart1 */
 				pinctrl-names = "default";
@@ -163,25 +149,5 @@
 		usb2: ehci@00700000 {
 			status = "okay";
 		};
-	};
-
-	sound {
-		compatible = "atmel,asoc-wm8904";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_pck0_as_audio_mck>;
-
-		atmel,model = "wm8904 @ SAMA5D3EK";
-		atmel,audio-routing =
-			"Headphone Jack", "HPOUTL",
-			"Headphone Jack", "HPOUTR",
-			"IN2L", "Line In Jack",
-			"IN2R", "Line In Jack",
-			"Mic", "MICBIAS",
-			"IN1L", "Mic";
-
-		atmel,ssc-controller = <&ssc0>;
-		atmel,audio-codec = <&wm8904>;
-
-		status = "disabled";
 	};
 };
