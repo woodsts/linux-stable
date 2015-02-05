@@ -1,0 +1,43 @@
+/*
+ * sama5d3xmb_audio.dtsi - Device Tree file for audio on mother board
+ *
+ *  Copyright (C) 2015 Atmel,
+ *                2015 Bo Shen <voice.shen@atmel.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/ {
+	ahb {
+		apb {
+			i2c1: i2c@f0018000 {
+				wm8904: wm8904@1a {
+					compatible = "wlf,wm8904";
+					reg = <0x1a>;
+					clocks = <&pck0>;
+					clock-names = "mclk";
+				};
+			};
+		};
+	};
+
+	sound {
+		compatible = "atmel,asoc-wm8904";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pck0_as_audio_mck>;
+
+		atmel,model = "wm8904 @ SAMA5D3EK";
+		atmel,audio-routing =
+			"Headphone Jack", "HPOUTL",
+			"Headphone Jack", "HPOUTR",
+			"IN2L", "Line In Jack",
+			"IN2R", "Line In Jack",
+			"MICBIAS", "IN1L",
+			"IN1L", "Mic";
+
+		atmel,ssc-controller = <&ssc0>;
+		atmel,audio-codec = <&wm8904>;
+
+		status = "disabled";
+	};
+};
