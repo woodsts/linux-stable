@@ -182,31 +182,6 @@ static int at91sam9g20ek_audio_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	/*
-	 * Codec MCLK is supplied by PCK0 - set it up.
-	 */
-	mclk = clk_get(NULL, "pck0");
-	if (IS_ERR(mclk)) {
-		printk(KERN_ERR "ASoC: Failed to get MCLK\n");
-		ret = PTR_ERR(mclk);
-		goto err;
-	}
-
-	pllb = clk_get(NULL, "pllb");
-	if (IS_ERR(pllb)) {
-		printk(KERN_ERR "ASoC: Failed to get PLLB\n");
-		ret = PTR_ERR(pllb);
-		goto err_mclk;
-	}
-	ret = clk_set_parent(mclk, pllb);
-	clk_put(pllb);
-	if (ret != 0) {
-		printk(KERN_ERR "ASoC: Failed to set MCLK parent\n");
-		goto err_mclk;
-	}
-
-	clk_set_rate(mclk, MCLK_RATE);
-
 	card->dev = &pdev->dev;
 
 	/* Parse device node info */
