@@ -13,6 +13,7 @@
  * published by the Free Software Foundation.
  */
 
+#include <linux/clk.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/init.h>
@@ -24,6 +25,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/spi/spi.h>
 #include <linux/of_device.h>
+#include <linux/mutex.h>
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
@@ -44,12 +46,15 @@ static const char *wm8731_supply_names[WM8731_NUM_SUPPLIES] = {
 /* codec private data */
 struct wm8731_priv {
 	struct regmap *regmap;
+	struct clk *mclk;
 	struct regulator_bulk_data supplies[WM8731_NUM_SUPPLIES];
 	const struct snd_pcm_hw_constraint_list *constraints;
 	unsigned int sysclk;
 	int sysclk_type;
 	int playback_fs;
 	bool deemph;
+
+	struct mutex lock;
 };
 
 
@@ -138,7 +143,7 @@ static int wm8731_put_deemph(struct snd_kcontrol *kcontrol,
 	if (deemph > 1)
 		return -EINVAL;
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&wm8731->lock);
 	if (wm8731->deemph != deemph) {
 		wm8731->deemph = deemph;
 
@@ -146,7 +151,7 @@ static int wm8731_put_deemph(struct snd_kcontrol *kcontrol,
 
 		ret = 1;
 	}
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&wm8731->lock);
 
 	return ret;
 }
@@ -386,6 +391,9 @@ static int wm8731_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	switch (clk_id) {
 	case WM8731_SYSCLK_XTAL:
 	case WM8731_SYSCLK_MCLK:
+		if (IS_ENABLED(CONFIG_COMMON_CLK))
+			if (clk_set_rate(wm8731->mclk, freq))
+				return -EINVAL;
 		wm8731->sysclk_type = clk_id;
 		break;
 	default:
@@ -487,6 +495,9 @@ static int wm8731_set_bias_level(struct snd_soc_codec *codec,
 
 	switch (level) {
 	case SND_SOC_BIAS_ON:
+		if (IS_ENABLED(CONFIG_COMMON_CLK))
+			if (clk_prepare_enable(wm8731->mclk))
+				return -EINVAL;
 		break;
 	case SND_SOC_BIAS_PREPARE:
 		break;
@@ -505,6 +516,8 @@ static int wm8731_set_bias_level(struct snd_soc_codec *codec,
 		snd_soc_write(codec, WM8731_PWR, reg | 0x0040);
 		break;
 	case SND_SOC_BIAS_OFF:
+		if (IS_ENABLED(CONFIG_COMMON_CLK))
+			clk_disable_unprepare(wm8731->mclk);
 		snd_soc_write(codec, WM8731_PWR, 0xffff);
 		regulator_bulk_disable(ARRAY_SIZE(wm8731->supplies),
 				       wm8731->supplies);
@@ -558,25 +571,6 @@ static struct snd_soc_dai_driver wm8731_dai = {
 	.ops = &wm8731_dai_ops,
 	.symmetric_rates = 1,
 };
-
-#ifdef CONFIG_PM
-static int wm8731_suspend(struct snd_soc_codec *codec)
-{
-	wm8731_set_bias_level(codec, SND_SOC_BIAS_OFF);
-
-	return 0;
-}
-
-static int wm8731_resume(struct snd_soc_codec *codec)
-{
-	wm8731_set_bias_level(codec, SND_SOC_BIAS_STANDBY);
-
-	return 0;
-}
-#else
-#define wm8731_suspend NULL
-#define wm8731_resume NULL
-#endif
 
 static int wm8731_probe(struct snd_soc_codec *codec)
 {
@@ -633,8 +627,6 @@ static int wm8731_remove(struct snd_soc_codec *codec)
 {
 	struct wm8731_priv *wm8731 = snd_soc_codec_get_drvdata(codec);
 
-	wm8731_set_bias_level(codec, SND_SOC_BIAS_OFF);
-
 	regulator_bulk_disable(ARRAY_SIZE(wm8731->supplies), wm8731->supplies);
 
 	return 0;
@@ -643,9 +635,9 @@ static int wm8731_remove(struct snd_soc_codec *codec)
 static struct snd_soc_codec_driver soc_codec_dev_wm8731 = {
 	.probe =	wm8731_probe,
 	.remove =	wm8731_remove,
-	.suspend =	wm8731_suspend,
-	.resume =	wm8731_resume,
 	.set_bias_level = wm8731_set_bias_level,
+	.suspend_bias_off = true,
+
 	.dapm_widgets = wm8731_dapm_widgets,
 	.num_dapm_widgets = ARRAY_SIZE(wm8731_dapm_widgets),
 	.dapm_routes = wm8731_intercon,
@@ -680,10 +672,20 @@ static int wm8731_spi_probe(struct spi_device *spi)
 	struct wm8731_priv *wm8731;
 	int ret;
 
-	wm8731 = devm_kzalloc(&spi->dev, sizeof(struct wm8731_priv),
-			      GFP_KERNEL);
+	wm8731 = devm_kzalloc(&spi->dev, sizeof(*wm8731), GFP_KERNEL);
 	if (wm8731 == NULL)
 		return -ENOMEM;
+
+	if (IS_ENABLED(CONFIG_COMMON_CLK)) {
+		wm8731->mclk = devm_clk_get(&spi->dev, "mclk");
+		if (IS_ERR(wm8731->mclk)) {
+			ret = PTR_ERR(wm8731->mclk);
+			dev_err(&spi->dev, "Failed to get MCLK\n");
+			return ret;
+		}
+	}
+
+	mutex_init(&wm8731->lock);
 
 	wm8731->regmap = devm_regmap_init_spi(spi, &wm8731_regmap);
 	if (IS_ERR(wm8731->regmap)) {
@@ -733,6 +735,17 @@ static int wm8731_i2c_probe(struct i2c_client *i2c,
 			      GFP_KERNEL);
 	if (wm8731 == NULL)
 		return -ENOMEM;
+
+	if (IS_ENABLED(CONFIG_COMMON_CLK)) {
+		wm8731->mclk = devm_clk_get(&i2c->dev, "mclk");
+		if (IS_ERR(wm8731->mclk)) {
+			ret = PTR_ERR(wm8731->mclk);
+			dev_err(&i2c->dev, "Failed to get MCLK\n");
+			return ret;
+		}
+	}
+
+	mutex_init(&wm8731->lock);
 
 	wm8731->regmap = devm_regmap_init_i2c(i2c, &wm8731_regmap);
 	if (IS_ERR(wm8731->regmap)) {
