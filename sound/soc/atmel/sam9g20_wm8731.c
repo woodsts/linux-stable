@@ -145,7 +145,7 @@ static struct snd_soc_dai_link at91sam9g20ek_dai = {
 	.init = at91sam9g20ek_wm8731_init,
 	.platform_name = "at91rm9200_ssc.0",
 	.codec_name = "wm8731.0-001b",
-	.dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
+	.dai_fmt = SND_SOC_DAIFMT_DSP_A | SND_SOC_DAIFMT_NB_NF |
 		   SND_SOC_DAIFMT_CBM_CFM,
 };
 
