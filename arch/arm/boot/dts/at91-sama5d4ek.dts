@@ -139,6 +139,16 @@
 					clock-names = "mclk";
 				};
 
+				qt1070:keyboard@1b {
+					compatible = "qt1070";
+					reg = <0x1b>;
+					interrupt-parent = <&pioE>;
+					interrupts = <25 0x0>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_qt1070_irq>;
+					wakeup-source;
+				};
+
 				ov2640: camera@0x30 {
 					compatible = "ovti,ov2640";
 					reg = <0x30>;
@@ -218,6 +228,15 @@
 						};
 					};
 				};
+
+				atmel_mxt_ts@4c {
+					compatible = "atmel,atmel_mxt_ts";
+					reg = <0x4c>;
+					interrupt-parent = <&pioE>;
+					interrupts = <24 0x0>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_mxt_ts>;
+				};
 			};
 
 			macb0: ethernet@f8020000 {
@@ -258,6 +277,10 @@
 						atmel,pins =
 							<AT91_PIOE 6 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 					};
+					pinctrl_mxt_ts: mxt_irq {
+						atmel,pins =
+							<AT91_PIOE 24 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
+					};
 					pinctrl_usba_vbus: usba_vbus {
 						atmel,pins =
 							<AT91_PIOE 31 AT91_PERIPH_GPIO AT91_PINCTRL_DEGLITCH>;
@@ -273,6 +296,10 @@
 					pinctrl_pck1_as_isi_mck: pck1_as_isi_mck-0 {
 						atmel,pins =
 							<AT91_PIOC 4 AT91_PERIPH_C AT91_PINCTRL_NONE>;	/* PC4 periph C PCK1, conflicted with SPI0_NPCS1, MCI0_CK */
+					};
+					pinctrl_qt1070_irq: qt1070_irq {
+						atmel,pins =
+							<AT91_PIOE 25 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 					};
 					pinctrl_sensor_reset: sensor_reset-0 {
 						atmel,pins =

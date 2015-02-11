@@ -67,6 +67,7 @@
 		tcb0 = &tcb0;
 		tcb1 = &tcb1;
 		i2c2 = &i2c2;
+		pwm0 = &pwm0;
 		ssc0 = &ssc0;
 		ssc1 = &ssc1;
 	};
@@ -829,6 +830,15 @@
 				status = "disabled";
 			};
 
+			pwm0: pwm@f800c000 {
+				compatible = "atmel,sama5d3-pwm";
+				reg = <0xf800c000 0x300>;
+				interrupts = <43 IRQ_TYPE_LEVEL_HIGH 4>;
+				#pwm-cells = <3>;
+				clocks = <&pwm_clk>;
+				status = "disabled";
+			};
+
 			spi0: spi@f8010000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -886,6 +896,46 @@
 				#size-cells = <0>;
 				clocks = <&macb0_clk>, <&macb0_clk>;
 				clock-names = "hclk", "pclk";
+				status = "disabled";
+			};
+
+			sha@fc050000 {
+				compatible = "atmel,at91sam9g46-sha";
+				reg = <0xfc050000 0x100>;
+				interrupts = <15 IRQ_TYPE_LEVEL_HIGH 0>;
+				dmas = <&dma0 (AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(44)>;
+				dma-names = "tx";
+				clocks = <&sha_clk>;
+				clock-names = "sha_clk";
+				status = "disabled";
+			};
+
+			aes@fc044000 {
+				compatible = "atmel,at91sam9g46-aes";
+				reg = <0xfc044000 0x100>;
+				interrupts = <12 IRQ_TYPE_LEVEL_HIGH 0>;
+				dmas = <&dma0 (AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(41)>,
+				       <&dma0 (AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(40)>;
+				dma-names = "tx", "rx";
+				clocks = <&aes_clk>;
+				clock-names = "aes_clk";
+				status = "disabled";
+			};
+
+			tdes@fc04c000 {
+				compatible = "atmel,at91sam9g46-tdes";
+				reg = <0xfc04c000 0x100>;
+				interrupts = <14 IRQ_TYPE_LEVEL_HIGH 0>;
+				dmas = <&dma0 (AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(42)>,
+				       <&dma0 (AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(43)>;
+				dma-names = "tx", "rx";
+				clocks = <&tdes_clk>;
+				clock-names = "tdes_clk";
 				status = "disabled";
 			};
 
