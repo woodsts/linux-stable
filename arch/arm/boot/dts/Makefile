@@ -54,6 +54,7 @@ dtb-$(CONFIG_ARCH_AT91)	+= sama5d35ek_revc.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= sama5d36ek_revc.dtb
 # sama5d4
+dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d4_xplained.dtb
 dtb-$(CONFIG_ARCH_AT91)	+= at91-sama5d4ek.dtb
 
 dtb-$(CONFIG_ARCH_ATLAS6) += atlas6-evb.dtb
