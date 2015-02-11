@@ -41,6 +41,8 @@
 static struct {
 	unsigned long uhp_udp_mask;
 	int memctrl;
+	unsigned int ddrc_pid;
+	bool is_sama5d4;
 } at91_pm_data;
 
 void __iomem *at91_ramc_base[2];
@@ -360,5 +362,24 @@ void __init at91sam9x5_pm_init(void)
 	at91_dt_ramc();
 	at91_pm_data.uhp_udp_mask = AT91SAM926x_PMC_UHP | AT91SAM926x_PMC_UDP;
 	at91_pm_data.memctrl = AT91_MEMCTRL_DDRSDR;
+	return at91_pm_init();
+}
+
+void __init sam5d3_pm_init(void)
+{
+	at91_dt_ramc();
+	at91_pm_data.uhp_udp_mask = AT91SAM926x_PMC_UHP | AT91SAM926x_PMC_UDP;
+	at91_pm_data.memctrl = AT91_MEMCTRL_DDRSDR;
+	at91_pm_data.ddrc_pid = SAMA5D3_ID_MPDDRC;
+	return at91_pm_init();
+}
+
+void __init sam5d4_pm_init(void)
+{
+	at91_dt_ramc();
+	at91_pm_data.uhp_udp_mask = AT91SAM926x_PMC_UHP | AT91SAM926x_PMC_UDP;
+	at91_pm_data.memctrl = AT91_MEMCTRL_DDRSDR;
+	at91_pm_data.ddrc_pid = SAMA5D4_ID_MPDDRC;
+	at91_pm_data.is_sama5d4 = true;
 	return at91_pm_init();
 }

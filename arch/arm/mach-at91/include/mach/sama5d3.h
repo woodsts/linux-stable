@@ -63,6 +63,7 @@
 #define SAMA5D3_ID_TDES		44	/* Triple Data Encryption Standard */
 #define SAMA5D3_ID_TRNG		45	/* True Random Generator Number */
 #define SAMA5D3_ID_IRQ0		47	/* Advanced Interrupt Controller (IRQ0) */
+#define SAMA5D3_ID_MPDDRC	49	/* MPDDR controller */
 
 /*
  * User Peripheral physical base addresses.
