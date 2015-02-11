@@ -20,6 +20,9 @@
 #define	SRAMC_SELF_FRESH_ACTIVE		0x01
 #define	SRAMC_SELF_FRESH_EXIT		0x00
 
+#define	DDR_CLOCK_ENABLE		0x01
+#define	DDR_CLOCK_DISABLE		0x00
+
 pmc	.req	r0
 tmp1	.req	r4
 tmp2	.req	r5
@@ -99,10 +102,28 @@ ENTRY(at91_pm_suspend_in_sram)
 	and	r0, r0, #AT91_PM_MODE_MASK
 	str	r0, .pm_mode
 
+	lsr	r0, r3, #AT91_PM_DDRC_PID_OFFSET
+	and	r0, r0, #AT91_PM_DDRC_PID_MASK
+	str	r0, .ddrc_pid
+
+	lsr	r0, r3, #AT91_PM_SAMA5D4_MASK
+	and	r0, r0, #AT91_PM_SAMA5D4_OFFSET
+	str	r0, .sama5d4_bit
+
 	/* Active the self-refresh mode */
 	mov	r0, #SRAMC_SELF_FRESH_ACTIVE
 	bl	at91_sramc_self_refresh
 
+	/* If the cpu isn't sama5d4, disable the ddr clock here */
+	ldr	r0, .sama5d4_bit
+	tst	r0, #AT91_PM_SAMA5D4_BIT
+	bne	skip_ddr_clock
+
+	/* Disable DDR clock */
+	mov	r0, #DDR_CLOCK_DISABLE
+	bl	at91_ddr_clock
+
+skip_ddr_clock:
 	ldr	r0, .pm_mode
 	tst	r0, #AT91_PM_SLOW_CLOCK
 	beq	skip_disable_main_clock
@@ -134,6 +155,15 @@ ENTRY(at91_pm_suspend_in_sram)
 	bic	tmp1, tmp1, #AT91_PMC_MOSCEN
 	orr	tmp1, tmp1, #AT91_PMC_KEY
 	str	tmp1, [pmc, #AT91_CKGR_MOR]
+
+	/* If the cpu is the sama5d4, disable the ddr clock here */
+	ldr	r0, .sama5d4_bit
+	tst	r0, #AT91_PM_SAMA5D4_BIT
+	beq	skip_disable_main_clock
+
+	/* Disable DDR clock */
+	mov	r0, #DDR_CLOCK_DISABLE
+	bl	at91_ddr_clock
 
 skip_disable_main_clock:
 	ldr	pmc, .pmc_base
@@ -176,6 +206,10 @@ skip_disable_main_clock:
 	wait_mckrdy
 
 skip_enable_main_clock:
+	/* Enable DDR clock */
+	mov	r0, #DDR_CLOCK_ENABLE
+	bl	at91_ddr_clock
+
 	/* Exit the self-refresh mode */
 	mov	r0, #SRAMC_SELF_FRESH_EXIT
 	bl	at91_sramc_self_refresh
@@ -310,6 +344,51 @@ exit_sramc_sf:
 	mov	pc, lr
 ENDPROC(at91_sramc_self_refresh)
 
+/*
+ * void at91_ddr_clock(unsigned char is_enable)
+ *
+ * @input param
+ *	@r0: 0x01 - enable DDR clock
+ *	     0x00 - disable DDR clock
+ * register usage:
+ * 	@r1: ddrc peripheral id
+ *	@r2: base address of the pmc
+ */
+ENTRY(at91_ddr_clock)
+	ldr	r1, .ddrc_pid
+	ldr	r2, .pmc_base
+
+	/* DDRC peripheral clock */
+	cmp	r1, #0
+	beq	ddr_sys_clk
+
+	and	r1, r1, #AT91_PMC_PCR_PID
+	orr	r1, r1, #AT91_PMC_PCR_CMD
+
+	tst	r0, #DDR_CLOCK_ENABLE
+	beq	ddrc_clk
+	orr	r1, r1, #AT91_PMC_PCR_EN
+
+ddrc_clk:
+	str	r1, [r2, #AT91_PMC_PCR]
+
+ddr_sys_clk:
+	/* DDR system clock */
+	mov 	r3, #AT91_PMC_SYS_DDR
+
+	tst	r0, #DDR_CLOCK_ENABLE
+	beq	disable_sys_clk
+
+	str	r3, [r2, #AT91_PMC_SCER]
+	b	exit_ddr_clock
+
+disable_sys_clk:
+	str	r3, [r2, #AT91_PMC_SCDR]
+
+exit_ddr_clock:
+	mov	pc, lr
+ENDPROC(at91_ddr_clock)
+
 .pmc_base:
 	.word 0
 .sramc_base:
@@ -319,6 +398,10 @@ ENDPROC(at91_sramc_self_refresh)
 .memtype:
 	.word 0
 .pm_mode:
+	.word 0
+.ddrc_pid:
+	.word 0
+.sama5d4_bit:
 	.word 0
 .saved_mckr:
 	.word 0

@@ -148,6 +148,10 @@ static void at91_pm_suspend(suspend_state_t state)
 	pm_data |= (state == PM_SUSPEND_MEM) ?
 				AT91_PM_MODE(AT91_PM_SLOW_CLOCK) : 0;
 
+	pm_data |= AT91_PM_DDRC_PID(at91_pm_data.ddrc_pid);
+	pm_data |= at91_pm_data.is_sama5d4 ?
+			AT91_PM_IS_SAMA5D4(AT91_PM_SAMA5D4_BIT) : 0;
+
 	flush_cache_all();
 	outer_disable();
 
