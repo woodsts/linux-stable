@@ -1,6 +1,6 @@
 #define PID_OV2643	0x2643
 
-const struct regval_list ov2643_yuv_uxga[]= {
+static const struct regval_list ov2643_yuv_uxga[]= {
 	{0x12, 0x80},
 	{0xc3, 0x1f},
 	{0xc4, 0xff},
@@ -285,7 +285,7 @@ const struct regval_list ov2643_yuv_uxga[]= {
 	{0xFF, 0xFF},
 };
 
-const struct regval_list ov2643_yuv_swvga[]= {
+static const struct regval_list ov2643_yuv_swvga[]= {
 	{0x12, 0x80},
 	{0xc3, 0x1f},
 	{0xc4, 0xff},
@@ -460,7 +460,7 @@ const struct regval_list ov2643_yuv_swvga[]= {
 	{0xFF, 0xFF},
 };
 
-const struct regval_list ov2643_yuv_vga[]= {
+static const struct regval_list ov2643_yuv_vga[]= {
 	{0x12, 0x80},
 	{0xc3, 0x1f},
 	{0xc4, 0xff},
