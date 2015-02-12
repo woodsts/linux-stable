@@ -1033,7 +1033,7 @@ static int atmel_prepare_rx_dma(struct uart_port *port)
 	spin_lock_init(&atmel_port->lock_rx);
 	sg_init_table(&atmel_port->sg_rx, 1);
 	/* UART circular rx buffer is an aligned page. */
-	BUG_ON((int)port->state->xmit.buf & ~PAGE_MASK);
+	BUG_ON((int)ring->buf & ~PAGE_MASK);
 	sg_set_page(&atmel_port->sg_rx,
 		    virt_to_page(ring->buf),
 		    ATMEL_SERIAL_RINGSIZE,
