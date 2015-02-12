@@ -1032,10 +1032,10 @@ static int atmel_prepare_rx_dma(struct uart_port *port)
 	spin_lock_init(&atmel_port->lock_rx);
 	sg_init_table(&atmel_port->sg_rx, 1);
 	/* UART circular rx buffer is an aligned page. */
-	BUG_ON((int)port->state->xmit.buf & ~PAGE_MASK);
+	BUG_ON((int)ring->buf & ~PAGE_MASK);
 	sg_set_page(&atmel_port->sg_rx,
 		    virt_to_page(ring->buf),
-		    ATMEL_SERIAL_RINGSIZE,
+		    sizeof(struct atmel_uart_char) * ATMEL_SERIAL_RINGSIZE,
 		    (int)ring->buf & ~PAGE_MASK);
 	nent = dma_map_sg(port->dev,
 			  &atmel_port->sg_rx,
@@ -1539,7 +1539,7 @@ static void atmel_tasklet_func(unsigned long data)
 	spin_unlock(&port->lock);
 }
 
-static int atmel_init_property(struct atmel_uart_port *atmel_port,
+static void atmel_init_property(struct atmel_uart_port *atmel_port,
 				struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
@@ -1580,7 +1580,6 @@ static int atmel_init_property(struct atmel_uart_port *atmel_port,
 		atmel_port->use_dma_tx  = false;
 	}
 
-	return 0;
 }
 
 static void atmel_init_rs485(struct atmel_uart_port *atmel_port,
@@ -1767,6 +1766,7 @@ static int atmel_startup(struct uart_port *port)
 	 * Initialize DMA (if necessary)
 	 */
 	atmel_init_property(atmel_port, pdev);
+	atmel_set_ops(port);
 
 	if (atmel_port->prepare_rx) {
 		retval = atmel_port->prepare_rx(port);
@@ -2270,8 +2270,8 @@ static int atmel_init_port(struct atmel_uart_port *atmel_port,
 	struct uart_port *port = &atmel_port->uart;
 	struct atmel_uart_data *pdata = dev_get_platdata(&pdev->dev);
 
-	if (!atmel_init_property(atmel_port, pdev))
-		atmel_set_ops(port);
+	atmel_init_property(atmel_port, pdev);
+	atmel_set_ops(port);
 
 	atmel_init_rs485(atmel_port, pdev);
 
