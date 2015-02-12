@@ -1036,7 +1036,7 @@ static int atmel_prepare_rx_dma(struct uart_port *port)
 	BUG_ON((int)ring->buf & ~PAGE_MASK);
 	sg_set_page(&atmel_port->sg_rx,
 		    virt_to_page(ring->buf),
-		    ATMEL_SERIAL_RINGSIZE,
+		    sizeof(struct atmel_uart_char) * ATMEL_SERIAL_RINGSIZE,
 		    (int)ring->buf & ~PAGE_MASK);
 	nent = dma_map_sg(port->dev,
 			  &atmel_port->sg_rx,
