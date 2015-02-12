@@ -41,15 +41,11 @@
 		};
 	};
 
-	bl_reg: backlight_regulator {
-		status = "okay";
-	};
-
-	panel_reg: panel_regulator {
-		status = "okay";
-	};
-
 	backlight: backlight {
+		status = "okay";
+	};
+
+	bl_reg: backlight_regulator {
 		status = "okay";
 	};
 
@@ -57,11 +53,8 @@
 		status = "okay";
 	};
 
-	leds {
-		d3 {
-			label = "d3";
-			gpios = <&pioE 24 GPIO_ACTIVE_HIGH>;
-		};
+	panel_reg: panel_regulator {
+		status = "okay";
 	};
 
 	sound {

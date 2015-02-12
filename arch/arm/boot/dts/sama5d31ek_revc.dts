@@ -44,6 +44,14 @@
 		};
 	};
 
+	backlight: backlight {
+		status = "okay";
+	};
+
+	bl_reg: backlight_regulator {
+		status = "okay";
+	};
+
 	leds {
 		d3 {
 			label = "d3";
@@ -51,19 +59,11 @@
 		};
 	};
 
-	bl_reg: backlight_regulator {
+	panel: panel {
 		status = "okay";
 	};
 
 	panel_reg: panel_regulator {
-		status = "okay";
-	};
-
-	backlight: backlight {
-		status = "okay";
-	};
-
-	panel: panel {
 		status = "okay";
 	};
 
