@@ -1,5 +1,6 @@
 /*
  * at91-sama5d4ek.dts - Device Tree file for SAMA5D4 Evaluation Kit
+ *                      EK with PDA TM70xx 7" LCD + touchscreen display
  *
  *  Copyright (C) 2014 Atmel,
  *                2014 Nicolas Ferre <nicolas.ferre@atmel.com>
@@ -78,23 +79,19 @@
 
 	ahb {
 		apb {
-			lcd_bus@f0000000 {
+			hlcdc: hlcdc@f0000000 {
 				status = "okay";
 
-				lcd@f0000000 {
-					status = "okay";
-				};
+				hlcdc-display-controller {
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_lcd_base &pinctrl_lcd_rgb666>;
 
-				lcdovl1@f0000140 {
-					status = "okay";
-				};
-
-				lcdovl2@f0000240 {
-					status = "okay";
-				};
-
-				lcdheo1@f0000340 {
-					status = "okay";
+					port@0 {
+						hlcdc_panel_output: endpoint@0 {
+							reg = <0>;
+							remote-endpoint = <&panel_input>;
+						};
+					};
 				};
 			};
 
@@ -401,6 +398,23 @@
 		};
 	};
 
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&hlcdc_pwm 0 50000 0>;
+		brightness-levels = <0 4 8 16 32 64 128 255>;
+		default-brightness-level = <6>;
+		power-supply = <&bl_reg>;
+		status = "okay";
+	};
+
+	bl_reg: backlight_regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "backlight-power-supply";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		status = "okay";
+	};
+
 	gpio_keys {
 		compatible = "gpio-keys";
 		#address-cells = <1>;
@@ -437,6 +451,34 @@
 			gpios = <&pioE 8 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
 		};
+	};
+
+	panel: panel {
+		compatible = "shelly,sca07010-bfn-lnn", "simple-panel";
+		backlight = <&backlight>;
+		power-supply = <&panel_reg>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "okay";
+
+		port@0 {
+			reg = <0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			panel_input: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&hlcdc_panel_output>;
+			};
+		};
+	};
+
+	panel_reg: panel_regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "panel-power-supply";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		status = "okay";
 	};
 
 	sound {
