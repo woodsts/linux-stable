@@ -1,22 +1,57 @@
 /*
- * sama5d4_xplained_pda4.dts - Device Tree file for SAMA5D4 Xplained ULTRA
- * with PDA4.
+ * Device Tree file for the SAMA5D4 Xplained board with PDA4 screen
  *
  *  Copyright (C) 2014 Atmel,
  *                2014 Josh Wu <josh.wu@atmel.com>
  *
- * Licensed under GPLv2 or later.
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
  */
 /dts-v1/;
 #include "sama5d4.dtsi"
 #include "at91-sama5d4_xplained_dm_pda4.dtsi"
 
 / {
-	model = "Atmel SAMA5D4-EK";
-	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5", "pda,tm43xx";
+	model = "Atmel SAMA5D4 Xplained TM43xx";
+	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5";
 
 	chosen {
-		bootargs = "console=ttyS0,115200 ignore_loglevel earlyprintk";
+		bootargs = "console=ttyS0,115200";
 	};
 
 	memory {
@@ -32,17 +67,18 @@
 			compatible = "atmel,osc", "fixed-clock";
 			clock-frequency = <12000000>;
 		};
+
+		slow_xtal {
+			clock-frequency = <32768>;
+		};
+
+		main_xtal {
+			clock-frequency = <12000000>;
+		};
 	};
 
 	ahb {
 		apb {
-			adc0: adc@fc034000 {
-				/* The vref depends on JP22 of EK. If connect 1-2 then use 3.3V. connect 2-3 use 3.0V */
-				atmel,adc-vref = <3300>;
-				/*atmel,adc-ts-wires = <4>;*/	/* Set up ADC touch screen */
-				status = "okay";		/* Enable ADC IIO support */
-			};
-
 			spi0: spi@f8010000 {
 				cs-gpios = <&pioC 3 0>, <0>, <0>, <0>;
 				status = "okay";
@@ -53,9 +89,19 @@
 				};
 			};
 
+			i2c0: i2c@f8014000 {
+				status = "okay";
+			};
+
 			macb0: ethernet@f8020000 {
 				phy-mode = "rmii";
 				status = "okay";
+
+				phy0: ethernet-phy@1 {
+					interrupt-parent = <&pioE>;
+					interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+					reg = <1>;
+				};
 			};
 
 			mmc1: mmc@fc000000 {
@@ -74,6 +120,11 @@
 			};
 
 			usart4: serial@fc010000 {
+				status = "okay";
+			};
+
+			adc0: adc@fc034000 {
+				atmel,adc-vref = <3300>;
 				status = "okay";
 			};
 
@@ -188,11 +239,9 @@
 			linux,default-trigger = "heartbeat";
 		};
 
-		/* pioD is secure, not enable yet
 		d10 {
 			label = "d10";
 			gpios = <&pioD 30 GPIO_ACTIVE_HIGH>;
-			status = "disabled";
-		}; */
+		};
 	};
 };
