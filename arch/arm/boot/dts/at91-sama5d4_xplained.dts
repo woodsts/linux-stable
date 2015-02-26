@@ -50,7 +50,7 @@
 	compatible = "atmel,sama5d4-xplained", "atmel,sama5d4", "atmel,sama5";
 
 	chosen {
-		bootargs = "console=ttyS0,115200 ignore_loglevel earlyprintk";
+		bootargs = "console=ttyS0,115200";
 	};
 
 	memory {
@@ -86,6 +86,10 @@
 					spi-max-frequency = <50000000>;
 					reg = <0>;
 				};
+			};
+
+			i2c0: i2c@f8014000 {
+				status = "okay";
 			};
 
 			macb0: ethernet@f8020000 {
@@ -139,7 +143,7 @@
 					};
 					pinctrl_key_gpio: key_gpio_0 {
 						atmel,pins =
-							<AT91_PIOE 8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>; /* PE13 gpio */
+							<AT91_PIOE 8 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 					};
 				};
 			};
