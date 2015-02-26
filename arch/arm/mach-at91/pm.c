@@ -42,7 +42,6 @@ static struct {
 	int memctrl;
 } at91_pm_data;
 
-static void (*at91_pm_standby)(void);
 void __iomem *at91_ramc_base[2];
 
 static int at91_pm_valid_state(suspend_state_t state)
@@ -219,10 +218,8 @@ static struct platform_device at91_cpuidle_device = {
 
 static void at91_pm_set_standby(void (*at91_standby)(void))
 {
-	if (at91_standby) {
+	if (at91_standby)
 		at91_cpuidle_device.dev.platform_data = at91_standby;
-		at91_pm_standby = at91_standby;
-	}
 }
 
 static struct of_device_id ramc_ids[] = {
