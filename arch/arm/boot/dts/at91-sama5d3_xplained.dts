@@ -10,7 +10,7 @@
 #include "sama5d36.dtsi"
 
 / {
-	model = "SAMA5D3 Xplained";
+	model = "Atmel SAMA5D3 Xplained";
 	compatible = "atmel,sama5d3-xplained", "atmel,sama5d3", "atmel,sama5";
 
 	chosen {
