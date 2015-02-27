@@ -23,6 +23,7 @@
 #define DRM_ATMEL_HLCDC_H
 
 #include <linux/clk.h>
+#include <linux/component.h>
 #include <linux/irqdomain.h>
 #include <linux/pwm.h>
 
@@ -208,6 +209,15 @@ void atmel_hlcdc_crtc_cancel_page_flip(struct drm_crtc *crtc,
 
 int atmel_hlcdc_crtc_create(struct drm_device *dev);
 
+int atmel_hlcdc_output_set_rgb_mode(struct drm_device *dev);
+
 int atmel_hlcdc_create_outputs(struct drm_device *dev);
+
+void atmel_hlcdc_destroy_outputs(struct drm_device *dev);
+
+bool atmel_hlcdc_output_panels_ready(struct device *dev);
+
+int atmel_hlcdc_find_output_components(struct device *dev,
+				       struct component_match **match);
 
 #endif /* DRM_ATMEL_HLCDC_H */

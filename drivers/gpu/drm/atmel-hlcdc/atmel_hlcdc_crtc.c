@@ -224,13 +224,52 @@ static void atmel_hlcdc_crtc_prepare(struct drm_crtc *crtc)
 
 static void atmel_hlcdc_crtc_commit(struct drm_crtc *crtc)
 {
+	atmel_hlcdc_output_set_rgb_mode(crtc->dev);
 	atmel_hlcdc_crtc_dpms(crtc, DRM_MODE_DPMS_ON);
 }
 
 static bool atmel_hlcdc_crtc_mode_fixup(struct drm_crtc *crtc,
 					const struct drm_display_mode *mode,
-					struct drm_display_mode *adjusted_mode)
+					struct drm_display_mode *adj)
 {
+	int timing;
+
+	timing = adj->vsync_start - adj->vdisplay;
+	if (timing > 0x40)
+		adj->vsync_start = adj->vdisplay + 0x40;
+	else if (timing < 1)
+		adj->vsync_start = adj->vdisplay + 1;
+
+	timing = adj->vsync_end - adj->vsync_start;
+	if (timing > 0x40)
+		adj->vsync_end = adj->vsync_start + 0x40;
+	else if (timing < 1)
+		adj->vsync_end = adj->vsync_start + 1;
+
+	timing = adj->vtotal - adj->vsync_end;
+	if (timing > 0x40)
+		adj->vtotal = adj->vsync_end + 0x40;
+	else if (timing < 0)
+		adj->vtotal = adj->vsync_end;
+
+	timing = adj->hsync_start - adj->hdisplay;
+	if (timing > 0x200)
+		adj->hsync_start = adj->hdisplay + 0x200;
+	else if (timing < 1)
+		adj->hsync_start = adj->hdisplay + 1;
+
+	timing = adj->hsync_end - adj->hsync_start;
+	if (timing > 0x40)
+		adj->hsync_end = adj->hsync_start + 0x40;
+	else if (timing < 1)
+		adj->hsync_end = adj->hsync_start + 1;
+
+	timing = adj->htotal - adj->hsync_end;
+	if (timing > 0x200)
+		adj->htotal = adj->hsync_end + 0x200;
+	else
+		adj->htotal = adj->hsync_end + 1;
+
 	return true;
 }
 
