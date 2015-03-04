@@ -91,6 +91,11 @@
 							reg = <0>;
 							remote-endpoint = <&panel_input>;
 						};
+
+						hlcdc_hdmi_output: endpoint@1 {
+							reg = <1>;
+							remote-endpoint = <&hdmi_input>;
+						};
 					};
 				};
 			};
@@ -162,6 +167,25 @@
 						ov2640_0: endpoint {
 							remote-endpoint = <&isi_0>;
 							bus-width = <8>;
+						};
+					};
+				};
+
+				sil9022: hdmi-encoder@39 {
+					compatible = "sil,sil9022";
+					reg = <0x39>;
+					reset-gpios = <&pioB 15 GPIO_ACTIVE_LOW>;
+					interrupts-extended = <&pioE 3 IRQ_TYPE_LEVEL_LOW>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_sil9022_irq>;
+
+					port {
+						#address-cells = <1>;
+						#size-cells = <0>;
+
+						hdmi_input: endpoint@0 {
+							reg = <0>;
+							remote-endpoint = <&hlcdc_hdmi_output>;
 						};
 					};
 				};
@@ -305,6 +329,10 @@
 					pinctrl_sensor_power: sensor_power-0 {
 						atmel,pins =
 							<AT91_PIOB 5 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>; /* PB5 gpio */
+					};
+					pinctrl_sil9022_irq: sil9022_irq-0 {
+						atmel,pins =
+							<AT91_PIOE 3 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
 					};
 				};
 			};
