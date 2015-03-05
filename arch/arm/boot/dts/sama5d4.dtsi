@@ -511,7 +511,7 @@
 
 					lcdck: lcdck {
 						#clock-cells = <0>;
-						reg = <4>;
+						reg = <3>;
 						clocks = <&mck>;
 					};
 

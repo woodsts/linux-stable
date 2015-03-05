@@ -20,6 +20,7 @@
  */
 
 #include <linux/clk.h>
+#include <linux/component.h>
 #include <linux/irq.h>
 #include <linux/irqchip.h>
 #include <linux/module.h>
@@ -434,18 +435,15 @@ static int atmel_hlcdc_dc_modeset_init(struct drm_device *dev)
 	int ret;
 	int i;
 
-	drm_mode_config_init(dev);
-
-	ret = atmel_hlcdc_create_outputs(dev);
-	if (ret) {
-		dev_err(dev->dev, "failed to create panel: %d\n", ret);
-		return ret;
-	}
+//	ret = atmel_hlcdc_create_outputs(dev);
+//	if (ret)
+//		return ret;
 
 	planes = atmel_hlcdc_create_planes(dev);
 	if (IS_ERR(planes)) {
 		dev_err(dev->dev, "failed to create planes\n");
-		return PTR_ERR(planes);
+		ret = PTR_ERR(planes);
+		goto err_destroy_outputs;
 	}
 
 	dc->planes = planes;
@@ -464,7 +462,7 @@ static int atmel_hlcdc_dc_modeset_init(struct drm_device *dev)
 	ret = atmel_hlcdc_crtc_create(dev);
 	if (ret) {
 		dev_err(dev->dev, "failed to create crtc\n");
-		return ret;
+		goto err_destroy_outputs;
 	}
 
 	dev->mode_config.min_width = dc->desc->min_width;
@@ -474,6 +472,11 @@ static int atmel_hlcdc_dc_modeset_init(struct drm_device *dev)
 	dev->mode_config.funcs = &mode_config_funcs;
 
 	return 0;
+
+err_destroy_outputs:
+	atmel_hlcdc_destroy_outputs(dev);
+
+	return ret;
 }
 
 static int atmel_hlcdc_dc_load(struct drm_device *dev)
@@ -536,8 +539,6 @@ static int atmel_hlcdc_dc_load(struct drm_device *dev)
 		goto err_periph_clk_disable;
 	}
 
-	platform_set_drvdata(pdev, dev);
-
 	drm_kms_helper_poll_init(dev);
 
 	/* force connectors detection */
@@ -559,22 +560,27 @@ static void atmel_hlcdc_dc_unload(struct drm_device *dev)
 {
 	struct atmel_hlcdc_dc *dc = dev->dev_private;
 
+	if (!dc)
+		return;
+
 	if (dc->fbdev)
 		drm_fbdev_cma_fini(dc->fbdev);
 	flush_workqueue(dc->wq);
 	drm_kms_helper_poll_fini(dev);
-	drm_mode_config_cleanup(dev);
 	drm_vblank_cleanup(dev);
 
 	pm_runtime_get_sync(dev->dev);
 	drm_irq_uninstall(dev);
 	pm_runtime_put_sync(dev->dev);
 
+	atmel_hlcdc_destroy_outputs(dev);
 	dev->dev_private = NULL;
 
 	pm_runtime_disable(dev->dev);
 	clk_disable_unprepare(dc->hlcdc->periph_clk);
 	destroy_workqueue(dc->wq);
+
+	dev->dev_private = NULL;
 }
 
 static int atmel_hlcdc_dc_connector_plug_all(struct drm_device *dev)
@@ -709,22 +715,17 @@ static struct drm_driver atmel_hlcdc_dc_driver = {
 	.minor = 0,
 };
 
-static int atmel_hlcdc_dc_drm_probe(struct platform_device *pdev)
+static int atmel_hlcdc_init(struct drm_device *ddev)
 {
-	struct drm_device *ddev;
 	int ret;
 
-	ddev = drm_dev_alloc(&atmel_hlcdc_dc_driver, &pdev->dev);
-	if (!ddev)
-		return -ENOMEM;
-
-	ret = drm_dev_set_unique(ddev, dev_name(ddev->dev));
+	ret = atmel_hlcdc_create_outputs(ddev);
 	if (ret)
-		goto err_unref;
+		return ret;
 
 	ret = atmel_hlcdc_dc_load(ddev);
 	if (ret)
-		goto err_unref;
+		goto err_destroy_outputs;
 
 	ret = drm_dev_register(ddev, 0);
 	if (ret)
@@ -742,6 +743,90 @@ err_unregister:
 err_unload:
 	atmel_hlcdc_dc_unload(ddev);
 
+err_destroy_outputs:
+	atmel_hlcdc_destroy_outputs(ddev);
+
+	return ret;
+}
+
+static void atmel_hlcdc_cleanup(struct drm_device *ddev)
+{
+	atmel_hlcdc_dc_connector_unplug_all(ddev);
+	drm_dev_unregister(ddev);
+	atmel_hlcdc_dc_unload(ddev);
+	atmel_hlcdc_destroy_outputs(ddev);
+}
+
+static int atmel_hlcdc_output_bind(struct device *dev)
+{
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	int ret;
+
+	ret = component_bind_all(dev, ddev);
+	if (ret)
+		return ret;
+
+	ret = atmel_hlcdc_init(ddev);
+	if (ret) {
+		component_unbind_all(dev, ddev);
+		return ret;
+	}
+
+	return 0;
+}
+
+static void atmel_hlcdc_output_unbind(struct device *dev)
+{
+	struct drm_device *ddev = dev_get_drvdata(dev);
+
+	atmel_hlcdc_cleanup(ddev);
+	component_unbind_all(dev, ddev);
+}
+
+static const struct component_master_ops atmel_hlcdc_output_master_ops = {
+	.bind = atmel_hlcdc_output_bind,
+	.unbind = atmel_hlcdc_output_unbind,
+};
+
+static int atmel_hlcdc_dc_drm_probe(struct platform_device *pdev)
+{
+	struct component_match *match = NULL;
+	struct drm_device *ddev;
+	int ret;
+
+	if (!atmel_hlcdc_output_panels_ready(&pdev->dev))
+		return -EPROBE_DEFER;
+
+	ddev = drm_dev_alloc(&atmel_hlcdc_dc_driver, &pdev->dev);
+	if (!ddev)
+		return -ENOMEM;
+
+	ret = drm_dev_set_unique(ddev, dev_name(ddev->dev));
+	if (ret) {
+		drm_dev_unref(ddev);
+		return ret;
+	}
+
+	drm_mode_config_init(ddev);
+
+	platform_set_drvdata(pdev, ddev);
+
+	ret = atmel_hlcdc_find_output_components(&pdev->dev, &match);
+	if (ret)
+		goto err_unref;
+
+	if (!match)
+		ret = atmel_hlcdc_init(ddev);
+	else
+		ret = component_master_add_with_match(&pdev->dev,
+						&atmel_hlcdc_output_master_ops,
+						match);
+
+	if (ret)
+		goto err_unref;
+
+	return 0;
+
 err_unref:
 	drm_dev_unref(ddev);
 
@@ -752,13 +837,62 @@ static int atmel_hlcdc_dc_drm_remove(struct platform_device *pdev)
 {
 	struct drm_device *ddev = platform_get_drvdata(pdev);
 
-	atmel_hlcdc_dc_connector_unplug_all(ddev);
-	drm_dev_unregister(ddev);
-	atmel_hlcdc_dc_unload(ddev);
+	component_master_del(&pdev->dev, &atmel_hlcdc_output_master_ops);
+
+	if (ddev->dev_private)
+		atmel_hlcdc_cleanup(ddev);
+
+	drm_mode_config_cleanup(ddev);
 	drm_dev_unref(ddev);
 
 	return 0;
 }
+
+#ifdef CONFIG_PM
+static int atmel_hlcdc_dc_drm_suspend(struct device *dev)
+{
+	struct drm_device *drm_dev = dev_get_drvdata(dev);
+	struct drm_crtc *crtc;
+
+	if (pm_runtime_suspended(dev))
+		return 0;
+
+	drm_modeset_lock_all(drm_dev);
+	list_for_each_entry(crtc, &drm_dev->mode_config.crtc_list, head) {
+		struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
+		if (crtc->enabled) {
+			crtc_funcs->dpms(crtc, DRM_MODE_DPMS_OFF);
+			/* save enable state for resume */
+			crtc->enabled = true;
+		}
+	}
+	drm_modeset_unlock_all(drm_dev);
+	return 0;
+}
+
+static int atmel_hlcdc_dc_drm_resume(struct device *dev)
+{
+	struct drm_device *drm_dev = dev_get_drvdata(dev);
+	struct drm_crtc *crtc;
+
+	if (pm_runtime_suspended(dev))
+		return 0;
+
+	drm_modeset_lock_all(drm_dev);
+	list_for_each_entry(crtc, &drm_dev->mode_config.crtc_list, head) {
+		struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
+		if (crtc->enabled) {
+			crtc->enabled = false;
+			crtc_funcs->dpms(crtc, DRM_MODE_DPMS_ON);
+		}
+	}
+	drm_modeset_unlock_all(drm_dev);
+	return 0;
+}
+#endif
+
+static SIMPLE_DEV_PM_OPS(atmel_hlcdc_dc_drm_pm_ops,
+		atmel_hlcdc_dc_drm_suspend, atmel_hlcdc_dc_drm_resume);
 
 static const struct of_device_id atmel_hlcdc_dc_of_match[] = {
 	{ .compatible = "atmel,hlcdc-display-controller" },
@@ -770,6 +904,7 @@ static struct platform_driver atmel_hlcdc_dc_platform_driver = {
 	.remove	= atmel_hlcdc_dc_drm_remove,
 	.driver	= {
 		.name	= "atmel-hlcdc-display-controller",
+		.pm	= &atmel_hlcdc_dc_drm_pm_ops,
 		.of_match_table = atmel_hlcdc_dc_of_match,
 	},
 };
