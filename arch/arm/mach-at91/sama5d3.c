@@ -22,7 +22,7 @@
 #include "sam9_smc.h"
 
 /* --------------------------------------------------------------------
- *  AT91SAM9x5 processor initialization
+ *  SAMA5D3 processor initialization
  * -------------------------------------------------------------------- */
 
 static void __init sama5d3_map_io(void)
