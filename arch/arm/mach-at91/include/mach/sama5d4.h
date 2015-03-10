@@ -14,6 +14,11 @@
 #define SAMA5D4_H
 
 /*
+ * Peripheral identifiers/interrupts.
+ */
+#define SAMA5D4_ID_MPDDRC	16	/* MPDDR controller */
+
+/*
  * User Peripheral physical base addresses.
  */
 #define SAMA5D4_BASE_USART3	0xfc00c000 /* (USART3 non-secure) Base Address */
