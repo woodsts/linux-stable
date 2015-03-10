@@ -74,6 +74,8 @@ tmp2	.req	r5
 
 	.text
 
+	.arm
+
 /*
  * void at91_pm_suspend_in_sram(void __iomem *pmc, void __iomem *sdramc,
  *			void __iomem *ramc1, int memctrl)
