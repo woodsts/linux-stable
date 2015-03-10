@@ -46,6 +46,12 @@ static void __init sama5_dt_device_init(void)
 						ksz8081_phy_fixup);
 	}
 
+	if (of_machine_is_compatible("atmel,sama5d3xmb") &&
+	   IS_ENABLED(CONFIG_PHYLIB)) {
+		phy_register_fixup_for_uid(PHY_ID_KSZ8051, MICREL_PHY_ID_MASK,
+						ksz8081_phy_fixup);
+	}
+
 	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
 	sam5d3_pm_init();
 }
