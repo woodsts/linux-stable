@@ -12,7 +12,7 @@
 #include "sama5d3xdm_pda4.dtsi"
 
 / {
-	model = "Atmel SAMA5D34-EK";
+	model = "Atmel SAMA5D34-EK TM43xx";
 	compatible = "atmel,sama5d34ek", "pda,tm43xx", "atmel,sama5d3xmb", "atmel,sama5d3xcm", "atmel,sama5d3", "atmel,sama5";
 
 	ahb {
