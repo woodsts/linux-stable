@@ -17,6 +17,7 @@
  /* Map io */
 extern void __init at91_map_io(void);
 extern void __init at91_alt_map_io(void);
+extern void __init at91_sama5d2_map_io(void);
 
  /* Processors */
 extern void __init at91rm9200_set_type(int type);
