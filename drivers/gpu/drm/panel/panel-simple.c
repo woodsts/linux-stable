@@ -643,6 +643,29 @@ static const struct panel_desc lg_lp129qe = {
 	},
 };
 
+static const struct drm_display_mode qd43003c0_40_mode = {
+	.clock = 9000,
+	.hdisplay = 480,
+	.hsync_start = 480 + 43,
+	.hsync_end = 480 + 43 + 5,
+	.htotal = 480 + 43 + 5 + 8,
+	.vdisplay = 272,
+	.vsync_start = 272 + 12,
+	.vsync_end = 272 + 12 + 10,
+	.vtotal = 272 + 12 + 10 + 4,
+	.vrefresh = 60,
+};
+
+static const struct panel_desc qd43003c0_40 = {
+	.modes = &qd43003c0_40_mode,
+	.num_modes = 1,
+	.size = {
+		.width = 95,
+		.height = 53,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
+};
+
 static const struct drm_display_mode samsung_ltn101nt05_mode = {
 	.clock = 54030,
 	.hdisplay = 1024,
@@ -733,6 +756,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "lg,lp129qe",
 		.data = &lg_lp129qe,
+	}, {
+		.compatible = "qd,qd43003c0-40",
+		.data = &qd43003c0_40,
 	}, {
 		.compatible = "samsung,ltn101nt05",
 		.data = &samsung_ltn101nt05,
