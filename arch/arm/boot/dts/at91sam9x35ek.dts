@@ -8,6 +8,7 @@
  */
 /dts-v1/;
 #include "at91sam9x35.dtsi"
+#include "at91sam9x5dm.dtsi"
 #include "at91sam9x5ek.dtsi"
 
 / {
@@ -21,10 +22,30 @@
 				status = "okay";
 			};
 
+			hlcdc: hlcdc@f8038000 {
+				status = "okay";
+			};
+
 			spi0: spi@f0000000 {
 				/* mmc1 pins is conflicted with spi0 pins */
 				status = "disabled";
 			};
 		};
+	};
+
+	backlight: backlight {
+		status = "okay";
+	};
+
+	bl_reg: backlight_regulator {
+		status = "okay";
+	};
+
+	panel: panel {
+		status = "okay";
+	};
+
+	panel_reg: panel_regulator {
+		status = "okay";
 	};
 };
