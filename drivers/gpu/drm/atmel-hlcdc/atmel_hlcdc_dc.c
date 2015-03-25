@@ -74,7 +74,7 @@ static const struct atmel_hlcdc_layer_desc atmel_hlcdc_at91sam9x5_layers[] = {
 	{
 		.name = "overlay1",
 		.formats = &atmel_hlcdc_plane_rgb_formats,
-		.regs_offset = 0x140,
+		.regs_offset = 0x100,
 		.id = 1,
 		.type = ATMEL_HLCDC_OVERLAY_LAYER,
 		.nconfigs = 10,
@@ -92,7 +92,7 @@ static const struct atmel_hlcdc_layer_desc atmel_hlcdc_at91sam9x5_layers[] = {
 	{
 		.name = "high-end-overlay",
 		.formats = &atmel_hlcdc_plane_rgb_and_yuv_formats,
-		.regs_offset = 0x240,
+		.regs_offset = 0x280,
 		.id = 2,
 		.type = ATMEL_HLCDC_OVERLAY_LAYER,
 		.nconfigs = 17,
