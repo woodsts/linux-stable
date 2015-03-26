@@ -646,13 +646,13 @@ static const struct panel_desc lg_lp129qe = {
 static const struct drm_display_mode qd43003c0_40_mode = {
 	.clock = 9000,
 	.hdisplay = 480,
-	.hsync_start = 480 + 43,
-	.hsync_end = 480 + 43 + 5,
-	.htotal = 480 + 43 + 5 + 8,
+	.hsync_start = 480 + 8,
+	.hsync_end = 480 + 8 + 4,
+	.htotal = 480 + 8 + 4 + 39,
 	.vdisplay = 272,
-	.vsync_start = 272 + 12,
-	.vsync_end = 272 + 12 + 10,
-	.vtotal = 272 + 12 + 10 + 4,
+	.vsync_start = 272 + 4,
+	.vsync_end = 272 + 4 + 10,
+	.vtotal = 272 + 4 + 10 + 2,
 	.vrefresh = 60,
 };
 
