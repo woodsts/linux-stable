@@ -1,0 +1,58 @@
+/*
+ * Device Tree file for HDMI on sama5d3x mother board
+ *
+ *  Copyright (C) 2015 Atmel,
+ *                2015 Nicolas Ferre <nicolas.ferre@atmel.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
+
+/ {
+	ahb {
+		apb {
+			i2c1: i2c@f0018000 {
+				sil9022: hdmi-encoder@39 {
+					compatible = "sil,sil9022";
+					reg = <0x39>;
+					reset-gpio = <&pioC 31 GPIO_ACTIVE_LOW>;
+					interrupt-extended = <&pioC 29 IRQ_TYPE_LEVEL_LOW>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_sil9022_irq>;
+
+					port {
+						#address-cells = <1>;
+						#size-cells = <0>;
+
+						hdmi_input: endpoint@0 {
+							reg = <0>;
+							remote-endpoint = <&hlcdc_hdmi_output>;
+						};
+					};
+				};
+			};
+
+			hlcdc: hlcdc@f0030000 {
+				hlcdc-display-controller {
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_lcd_base &pinctrl_lcd_rgb888_alt>;
+
+					port@0 {
+						hlcdc_hdmi_output: endpoint@1 {
+							reg = <1>;
+							remote-endpoint = <&hdmi_input>;
+						};
+					};
+				};
+			};
+
+			pinctrl@fffff200 {
+				board {
+					pinctrl_sil9022_irq: sil9022_irq-0 {
+						atmel,pins =
+							<AT91_PIOC 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;
+					};
+				};
+			};
+		};
+	};
+};
