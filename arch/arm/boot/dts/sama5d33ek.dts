@@ -10,6 +10,7 @@
 #include "sama5d33.dtsi"
 #include "sama5d3xmb.dtsi"
 #include "sama5d3xmb_audio.dtsi"
+#include "sama5d3xmb_hdmi.dtsi"
 #include "sama5d3xmb_isi_sensors.dtsi"
 #include "sama5d3xdm.dtsi"
 
