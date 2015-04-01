@@ -40,7 +40,7 @@ int pinmux_check_ops(struct pinctrl_dev *pctldev)
 	if (!ops ||
 	    !ops->get_functions_count ||
 	    !ops->get_function_name ||
-	    !ops->get_function_groups ||
+	    (!ops->get_function_groups & !ops->mux_per_pin) ||
 	    !ops->set_mux) {
 		dev_err(pctldev->dev, "pinmux ops lacks necessary functions\n");
 		return -EINVAL;
@@ -338,36 +338,42 @@ int pinmux_map_to_setting(struct pinctrl_map const *map,
 	}
 	setting->data.mux.func = ret;
 
-	ret = pmxops->get_function_groups(pctldev, setting->data.mux.func,
-					  &groups, &num_groups);
-	if (ret < 0) {
-		dev_err(pctldev->dev, "can't query groups for function %s\n",
-			map->data.mux.function);
-		return ret;
-	}
-	if (!num_groups) {
-		dev_err(pctldev->dev,
-			"function %s can't be selected on any group\n",
-			map->data.mux.function);
-		return -EINVAL;
-	}
-	if (map->data.mux.group) {
-		bool found = false;
-		group = map->data.mux.group;
-		for (i = 0; i < num_groups; i++) {
-			if (!strcmp(group, groups[i])) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
+	if (!pmxops->mux_per_pin) {
+		ret = pmxops->get_function_groups(pctldev,
+						  setting->data.mux.func,
+						  &groups, &num_groups);
+		if (ret < 0) {
 			dev_err(pctldev->dev,
-				"invalid group \"%s\" for function \"%s\"\n",
-				group, map->data.mux.function);
+				"can't query groups for function %s\n",
+				map->data.mux.function);
+			return ret;
+		}
+		if (!num_groups) {
+			dev_err(pctldev->dev,
+				"function %s can't be selected on any group\n",
+				map->data.mux.function);
 			return -EINVAL;
 		}
+		if (map->data.mux.group) {
+			bool found = false;
+			group = map->data.mux.group;
+			for (i = 0; i < num_groups; i++) {
+				if (!strcmp(group, groups[i])) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				dev_err(pctldev->dev,
+					"invalid group \"%s\" for function \"%s\"\n",
+					group, map->data.mux.function);
+				return -EINVAL;
+			}
+		} else {
+			group = groups[0];
+		}
 	} else {
-		group = groups[0];
+		group = map->data.mux.group;
 	}
 
 	ret = pinctrl_get_group_selector(pctldev, group);
