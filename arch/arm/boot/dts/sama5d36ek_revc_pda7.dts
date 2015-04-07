@@ -10,7 +10,9 @@
 /dts-v1/;
 #include "sama5d36.dtsi"
 #include "sama5d3xmb.dtsi"
-#include "sama5d3xmb_revc_audio.dtsi"
+#include "sama5d3xmb_revc_audio.dtsi"		/* require i2c0 */
+#include "sama5d3xmb_revc_hdmi.dtsi"		/* require i2c0 */
+/* #include "sama5d3xmb_isi_sensors.dtsi"*/	/* Conflict with i2c0 & led d3 */
 #include "sama5d3xdm_pda7.dtsi"
 
 / {
@@ -46,6 +48,13 @@
 			macb1: ethernet@f802c000 {
 				status = "okay";
 			};
+		};
+	};
+
+	leds {
+		d3 {
+			label = "d3";
+			gpios = <&pioE 24 GPIO_ACTIVE_HIGH>;
 		};
 	};
 

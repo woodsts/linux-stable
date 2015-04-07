@@ -1,5 +1,5 @@
 /*
- * sama5d36ek_revc.dts - Device Tree file for SAMA5D36-EK with rev.C MB
+ * sama5d36ek_revc.dts - Device Tree file for SAMA5D36-EK up to rev.C MB
  *
  *  Copyright (C) 2013 Atmel,
  *                2013 Josh Wu <josh.wu@atmel.com>
@@ -9,12 +9,13 @@
 /dts-v1/;
 #include "sama5d36.dtsi"
 #include "sama5d3xmb.dtsi"
-#include "sama5d3xmb_hdmi.dtsi"
-#include "sama5d3xmb_revc_audio.dtsi"
+#include "sama5d3xmb_revc_audio.dtsi"		/* require i2c0 */
+#include "sama5d3xmb_revc_hdmi.dtsi"		/* require i2c0 */
+/* #include "sama5d3xmb_isi_sensors.dtsi"*/	/* Conflict with i2c0 & led d3 */
 #include "sama5d3xdm.dtsi"
 
 / {
-	model = "Atmel SAMA5D36-EK";
+	model = "Atmel SAMA5D36-EK - rev.C";
 	compatible = "atmel,sama5d36ek", "atmel,sama5d3xmb", "atmel,sama5d3xcm", "atmel,sama5d36", "atmel,sama5d3", "atmel,sama5";
 
 	ahb {
@@ -43,30 +44,17 @@
 				status = "okay";
 			};
 
-			hlcdc: hlcdc@f0030000 {
-				status = "okay";
-			};
-
 			macb1: ethernet@f802c000 {
 				status = "okay";
 			};
 		};
 	};
 
-	backlight: backlight {
-		status = "okay";
-	};
-
-	bl_reg: backlight_regulator {
-		status = "okay";
-	};
-
-	panel: panel {
-		status = "okay";
-	};
-
-	panel_reg: panel_regulator {
-		status = "okay";
+	leds {
+		d3 {
+			label = "d3";
+			gpios = <&pioE 24 GPIO_ACTIVE_HIGH>;
+		};
 	};
 
 	sound {

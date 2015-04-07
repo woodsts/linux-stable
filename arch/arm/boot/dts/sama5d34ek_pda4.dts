@@ -9,7 +9,9 @@
 /dts-v1/;
 #include "sama5d34.dtsi"
 #include "sama5d3xmb.dtsi"
+#include "sama5d3xmb_audio.dtsi"
 #include "sama5d3xmb_hdmi.dtsi"
+/* #include "sama5d3xmb_isi_sensors.dtsi" */	/* Conflict with i2c0 & led d3 */
 #include "sama5d3xdm_pda4.dtsi"
 
 / {
