@@ -833,7 +833,7 @@
 				dma-names = "tx";
 				clocks = <&sha_clk>;
 				clock-names = "sha_clk";
-				status = "disabled";
+				status = "okay";
 			};
 
 			aes@fc044000 {
@@ -847,7 +847,7 @@
 				dma-names = "tx", "rx";
 				clocks = <&aes_clk>;
 				clock-names = "aes_clk";
-				status = "disabled";
+				status = "okay";
 			};
 
 			tdes@fc04c000 {
@@ -861,7 +861,7 @@
 				dma-names = "tx", "rx";
 				clocks = <&tdes_clk>;
 				clock-names = "tdes_clk";
-				status = "disabled";
+				status = "okay";
 			};
 
 			i2c2: i2c@f8024000 {
