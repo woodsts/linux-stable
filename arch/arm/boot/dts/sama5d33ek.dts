@@ -35,27 +35,7 @@
 			macb0: ethernet@f0028000 {
 				status = "okay";
 			};
-
-			hlcdc: hlcdc@f0030000 {
-				status = "okay";
-			};
 		};
-	};
-
-	backlight: backlight {
-		status = "okay";
-	};
-
-	bl_reg: backlight_regulator {
-		status = "okay";
-	};
-
-	panel: panel {
-		status = "okay";
-	};
-
-	panel_reg: panel_regulator {
-		status = "okay";
 	};
 
 	sound {
