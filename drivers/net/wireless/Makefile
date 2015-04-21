@@ -15,6 +15,7 @@ obj-$(CONFIG_PCI_ATMEL)         += atmel_pci.o
 obj-$(CONFIG_PCMCIA_ATMEL)      += atmel_cs.o
 
 obj-$(CONFIG_AT76C50X_USB)      += at76c50x-usb.o
+obj-$(CONFIG_ATMEL_SMARTCONNECT) += atmel/
 
 obj-$(CONFIG_PRISM54)		+= prism54/
 
