@@ -267,7 +267,7 @@ void drm_kms_helper_hotplug_event(struct drm_device *dev)
 }
 EXPORT_SYMBOL(drm_kms_helper_hotplug_event);
 
-#define DRM_OUTPUT_POLL_PERIOD (10*HZ)
+#define DRM_OUTPUT_POLL_PERIOD (4*HZ)
 static void output_poll_execute(struct work_struct *work)
 {
 	struct delayed_work *delayed_work = to_delayed_work(work);
@@ -291,14 +291,14 @@ static void output_poll_execute(struct work_struct *work)
 		if (!connector->polled || connector->polled == DRM_CONNECTOR_POLL_HPD)
 			continue;
 
-		repoll = true;
-
 		old_status = connector->status;
 		/* if we are connected and don't want to poll for disconnect
 		   skip it */
 		if (old_status == connector_status_connected &&
 		    !(connector->polled & DRM_CONNECTOR_POLL_DISCONNECT))
 			continue;
+
+		repoll = true;
 
 		connector->status = connector->funcs->detect(connector, false);
 		if (old_status != connector->status) {
