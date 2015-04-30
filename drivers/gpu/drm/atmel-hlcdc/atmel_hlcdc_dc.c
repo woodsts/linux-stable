@@ -770,6 +770,8 @@ static int atmel_hlcdc_output_bind(struct device *dev)
 	if (ret) {
 		component_unbind_all(dev, ddev);
 		return ret;
+	} else {
+		dev_info(ddev->dev, "DRM device successfully registered");
 	}
 
 	return 0;
@@ -815,12 +817,16 @@ static int atmel_hlcdc_dc_drm_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_unref;
 
-	if (!match)
+	if (!match) {
 		ret = atmel_hlcdc_init(ddev);
-	else
+		if (!ret)
+			dev_info(ddev->dev,
+				 "DRM device successfully registered");
+	} else {
 		ret = component_master_add_with_match(&pdev->dev,
 						&atmel_hlcdc_output_master_ops,
 						match);
+	}
 
 	if (ret)
 		goto err_unref;
