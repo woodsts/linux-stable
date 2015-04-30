@@ -347,12 +347,12 @@ static const struct of_device_id atmel_hlcdc_of_match[] = {
 int atmel_hlcdc_dc_mode_valid(struct atmel_hlcdc_dc *dc,
 			      struct drm_display_mode *mode)
 {
-	int vfront_porch = mode->vsync_start - mode->vdisplay;
-	int vback_porch = mode->vtotal - mode->vsync_end;
-	int vsync_len = mode->vsync_end - mode->vsync_start;
-	int hfront_porch = mode->hsync_start - mode->hdisplay;
-	int hback_porch = mode->htotal - mode->hsync_end;
-	int hsync_len = mode->hsync_end - mode->hsync_start;
+	int vfront_porch = mode->crtc_vsync_start - mode->crtc_vdisplay;
+	int vback_porch = mode->crtc_vtotal - mode->crtc_vsync_end;
+	int vsync_len = mode->crtc_vsync_end - mode->crtc_vsync_start;
+	int hfront_porch = mode->crtc_hsync_start - mode->crtc_hdisplay;
+	int hback_porch = mode->crtc_htotal - mode->crtc_hsync_end;
+	int hsync_len = mode->crtc_hsync_end - mode->crtc_hsync_start;
 
 	if (hsync_len > 0x40 || hsync_len < 1)
 		return MODE_HSYNC;
@@ -362,12 +362,12 @@ int atmel_hlcdc_dc_mode_valid(struct atmel_hlcdc_dc *dc,
 
 	if (hfront_porch > 0x200 || hfront_porch < 1 ||
 	    hback_porch > 0x200 || hback_porch < 1 ||
-	    mode->hdisplay < 1)
+	    mode->crtc_hdisplay < 1)
 		return MODE_H_ILLEGAL;
 
 	if (vfront_porch > 0x40 || vfront_porch < 1 ||
 	    vback_porch > 0x40 || vback_porch < 0 ||
-	    mode->vdisplay < 1)
+	    mode->crtc_vdisplay < 1)
 		return MODE_V_ILLEGAL;
 
 	return MODE_OK;
@@ -770,6 +770,8 @@ static int atmel_hlcdc_output_bind(struct device *dev)
 	if (ret) {
 		component_unbind_all(dev, ddev);
 		return ret;
+	} else {
+		dev_info(ddev->dev, "DRM device successfully registered");
 	}
 
 	return 0;
@@ -815,12 +817,16 @@ static int atmel_hlcdc_dc_drm_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_unref;
 
-	if (!match)
+	if (!match) {
 		ret = atmel_hlcdc_init(ddev);
-	else
+		if (!ret)
+			dev_info(ddev->dev,
+				 "DRM device successfully registered");
+	} else {
 		ret = component_master_add_with_match(&pdev->dev,
 						&atmel_hlcdc_output_master_ops,
 						match);
+	}
 
 	if (ret)
 		goto err_unref;
