@@ -237,41 +237,41 @@ static bool atmel_hlcdc_crtc_mode_fixup(struct drm_crtc *crtc,
 {
 	int timing;
 
-	timing = adj->vsync_start - adj->vdisplay;
+	timing = adj->crtc_vsync_start - adj->crtc_vdisplay;
 	if (timing > 0x40)
-		adj->vsync_start = adj->vdisplay + 0x40;
+		adj->crtc_vsync_start = adj->crtc_vdisplay + 0x40;
 	else if (timing < 1)
-		adj->vsync_start = adj->vdisplay + 1;
+		adj->crtc_vsync_start = adj->crtc_vdisplay + 1;
 
-	timing = adj->vsync_end - adj->vsync_start;
+	timing = adj->crtc_vsync_end - adj->crtc_vsync_start;
 	if (timing > 0x40)
-		adj->vsync_end = adj->vsync_start + 0x40;
+		adj->crtc_vsync_end = adj->crtc_vsync_start + 0x40;
 	else if (timing < 1)
-		adj->vsync_end = adj->vsync_start + 1;
+		adj->crtc_vsync_end = adj->crtc_vsync_start + 1;
 
-	timing = adj->vtotal - adj->vsync_end;
-	if (timing > 0x40)
-		adj->vtotal = adj->vsync_end + 0x40;
+	timing = adj->crtc_vtotal - adj->crtc_vsync_end;
+	if (timing > 0x3f)
+		adj->crtc_vtotal = adj->crtc_vsync_end + 0x3f;
 	else if (timing < 0)
-		adj->vtotal = adj->vsync_end;
+		adj->crtc_vtotal = adj->crtc_vsync_end;
 
-	timing = adj->hsync_start - adj->hdisplay;
+	timing = adj->crtc_hsync_start - adj->crtc_hdisplay;
 	if (timing > 0x200)
-		adj->hsync_start = adj->hdisplay + 0x200;
+		adj->crtc_hsync_start = adj->crtc_hdisplay + 0x200;
 	else if (timing < 1)
-		adj->hsync_start = adj->hdisplay + 1;
+		adj->crtc_hsync_start = adj->crtc_hdisplay + 1;
 
-	timing = adj->hsync_end - adj->hsync_start;
+	timing = adj->crtc_hsync_end - adj->crtc_hsync_start;
 	if (timing > 0x40)
-		adj->hsync_end = adj->hsync_start + 0x40;
+		adj->crtc_hsync_end = adj->crtc_hsync_start + 0x40;
 	else if (timing < 1)
-		adj->hsync_end = adj->hsync_start + 1;
+		adj->crtc_hsync_end = adj->crtc_hsync_start + 1;
 
-	timing = adj->htotal - adj->hsync_end;
+	timing = adj->crtc_htotal - adj->crtc_hsync_end;
 	if (timing > 0x200)
-		adj->htotal = adj->hsync_end + 0x200;
-	else
-		adj->htotal = adj->hsync_end + 1;
+		adj->crtc_htotal = adj->crtc_hsync_end + 0x200;
+	else if (timing < 1)
+		adj->crtc_htotal = adj->crtc_hsync_end + 1;
 
 	return true;
 }
