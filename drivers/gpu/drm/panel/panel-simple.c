@@ -104,6 +104,10 @@ static int panel_simple_get_fixed_modes(struct panel_simple *panel)
 			continue;
 		}
 
+		mode->type |= DRM_MODE_TYPE_DRIVER;
+		if (panel->desc->num_modes == 1)
+			mode->type |= DRM_MODE_TYPE_PREFERRED;
+
 		drm_mode_set_name(mode);
 
 		drm_mode_probed_add(connector, mode);
