@@ -45,6 +45,8 @@ struct pinctrl_pin_desc {
 #define PINCTRL_PIN(a, b) { .number = a, .name = b }
 #define PINCTRL_PIN_ANON(a) { .number = a }
 
+#define PINCTRL_PIN_MASK	0xffff
+
 /**
  * struct pinctrl_gpio_range - each pin controller can provide subranges of
  * the GPIO number space to be handled by the controller
@@ -112,6 +114,9 @@ struct pinctrl_ops {
  *	this pin controller
  * @npins: number of descriptors in the array, usually just ARRAY_SIZE()
  *	of the pins field above
+ * @complex_pin_desc: some pin controllers need more information than the pin
+ *	name. In this case, pins property uses u32 instead of string. In this
+ *	value there is the pin number plus optional parameters.
  * @pctlops: pin control operation vtable, to support global concepts like
  *	grouping of pins, this is optional.
  * @pmxops: pinmux operations vtable, if you support pinmuxing in your driver
@@ -129,6 +134,7 @@ struct pinctrl_desc {
 	const char *name;
 	struct pinctrl_pin_desc const *pins;
 	unsigned int npins;
+	bool complex_pin_desc;
 	const struct pinctrl_ops *pctlops;
 	const struct pinmux_ops *pmxops;
 	const struct pinconf_ops *confops;

@@ -278,17 +278,25 @@ int pinconf_generic_dt_subnode_to_map(struct pinctrl_dev *pctldev,
 		unsigned *reserved_maps, unsigned *num_maps,
 		enum pinctrl_map_type type)
 {
-	int ret;
+	int ret, i = 0;
 	const char *function;
 	struct device *dev = pctldev->dev;
 	unsigned long *configs = NULL;
 	unsigned num_configs = 0;
-	unsigned reserve, strings_count;
+	unsigned reserve, items_count, pin_id;
 	struct property *prop;
 	const char *group;
 	const char *subnode_target_type = "pins";
+	const char **items_name = NULL;
+	struct pinctrl_desc *pctldesc = pctldev->desc;
+	const __be32 *cur;
+	u32 val;
+	bool pins_prop = true;
 
-	ret = of_property_count_strings(np, "pins");
+	if (pctldesc->complex_pin_desc)
+		ret = of_property_count_u32_elems(np, "pins");
+	else
+		ret = of_property_count_strings(np, "pins");
 	if (ret < 0) {
 		ret = of_property_count_strings(np, "groups");
 		if (ret < 0)
@@ -297,11 +305,12 @@ int pinconf_generic_dt_subnode_to_map(struct pinctrl_dev *pctldev,
 		if (type == PIN_MAP_TYPE_INVALID)
 			type = PIN_MAP_TYPE_CONFIGS_GROUP;
 		subnode_target_type = "groups";
+		pins_prop = false;
 	} else {
 		if (type == PIN_MAP_TYPE_INVALID)
 			type = PIN_MAP_TYPE_CONFIGS_PIN;
 	}
-	strings_count = ret;
+	items_count = ret;
 
 	ret = of_property_read_string(np, "function", &function);
 	if (ret < 0) {
@@ -326,17 +335,31 @@ int pinconf_generic_dt_subnode_to_map(struct pinctrl_dev *pctldev,
 	if (num_configs)
 		reserve++;
 
-	reserve *= strings_count;
+	reserve *= items_count;
 
 	ret = pinctrl_utils_reserve_map(pctldev, map, reserved_maps,
 			num_maps, reserve);
 	if (ret < 0)
 		goto exit;
 
-	of_property_for_each_string(np, subnode_target_type, prop, group) {
+	items_name = kmalloc_array(items_count, sizeof(char *), GFP_KERNEL);
+	if (!items_name)
+		goto exit;
+	if (pctldesc->complex_pin_desc && pins_prop) {
+		of_property_for_each_u32(np, subnode_target_type, prop, cur, val) {
+			pin_id = val & PINCTRL_PIN_MASK;
+			items_name[i++] = pctldesc->pins[pin_id].name;
+		}
+	} else {
+		of_property_for_each_string(np, subnode_target_type, prop, group) {
+			items_name[i++] = group;
+		}
+	}
+
+	for (i = 0; i < items_count; i++) {
 		if (function) {
 			ret = pinctrl_utils_add_map_mux(pctldev, map,
-					reserved_maps, num_maps, group,
+					reserved_maps, num_maps, items_name[i],
 					function);
 			if (ret < 0)
 				goto exit;
@@ -344,8 +367,8 @@ int pinconf_generic_dt_subnode_to_map(struct pinctrl_dev *pctldev,
 
 		if (num_configs) {
 			ret = pinctrl_utils_add_map_configs(pctldev, map,
-					reserved_maps, num_maps, group, configs,
-					num_configs, type);
+					reserved_maps, num_maps, items_name[i],
+					configs, num_configs, type);
 			if (ret < 0)
 				goto exit;
 		}
@@ -353,6 +376,7 @@ int pinconf_generic_dt_subnode_to_map(struct pinctrl_dev *pctldev,
 	ret = 0;
 
 exit:
+	kfree(items_name);
 	kfree(configs);
 	return ret;
 }
