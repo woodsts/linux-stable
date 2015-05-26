@@ -20,6 +20,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 #include <linux/slab.h>
 
 #include <media/atmel-isi.h>
@@ -386,10 +387,13 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 	struct atmel_isi *isi = ici->priv;
 	int ret;
 
+	pm_runtime_get_sync(ici->v4l2_dev.dev);
+
 	/* Reset ISI */
 	ret = atmel_isi_wait_status(isi, WAIT_ISI_RESET);
 	if (ret < 0) {
 		dev_err(icd->parent, "Reset ISI timed out\n");
+		pm_runtime_put(ici->v4l2_dev.dev);
 		return ret;
 	}
 	/* Disable all interrupts */
@@ -443,6 +447,8 @@ static void stop_streaming(struct vb2_queue *vq)
 	ret = atmel_isi_wait_status(isi, WAIT_ISI_DISABLE);
 	if (ret < 0)
 		dev_err(icd->parent, "Disable ISI timed out\n");
+
+	pm_runtime_put(ici->v4l2_dev.dev);
 }
 
 static struct vb2_ops isi_video_qops = {
@@ -508,7 +514,13 @@ static int isi_camera_set_fmt(struct soc_camera_device *icd,
 	if (mf.code != xlate->code)
 		return -EINVAL;
 
+	/* Enable PM and peripheral clock before operate isi registers */
+	pm_runtime_get_sync(ici->v4l2_dev.dev);
+
 	ret = configure_geometry(isi, pix->width, pix->height, xlate->code);
+
+	pm_runtime_put(ici->v4l2_dev.dev);
+
 	if (ret < 0)
 		return ret;
 
@@ -721,14 +733,9 @@ static int isi_camera_clock_start(struct soc_camera_host *ici)
 	struct atmel_isi *isi = ici->priv;
 	int ret;
 
-	ret = clk_prepare_enable(isi->pclk);
-	if (ret)
-		return ret;
-
 	if (!IS_ERR(isi->mck)) {
 		ret = clk_prepare_enable(isi->mck);
 		if (ret) {
-			clk_disable_unprepare(isi->pclk);
 			return ret;
 		}
 	}
@@ -743,7 +750,6 @@ static void isi_camera_clock_stop(struct soc_camera_host *ici)
 
 	if (!IS_ERR(isi->mck))
 		clk_disable_unprepare(isi->mck);
-	clk_disable_unprepare(isi->pclk);
 }
 
 static unsigned int isi_camera_poll(struct file *file, poll_table *pt)
@@ -839,8 +845,13 @@ static int isi_camera_set_bus_param(struct soc_camera_device *icd)
 
 	cfg1 |= ISI_CFG1_THMASK_BEATS_16;
 
+	/* Enable PM and peripheral clock before operate isi registers */
+	pm_runtime_get_sync(ici->v4l2_dev.dev);
+
 	isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
 	isi_writel(isi, ISI_CFG1, cfg1);
+
+	pm_runtime_put(ici->v4l2_dev.dev);
 
 	return 0;
 }
@@ -873,6 +884,7 @@ static int atmel_isi_remove(struct platform_device *pdev)
 			sizeof(struct fbd) * MAX_BUFFER_NUM,
 			isi->p_fb_descriptors,
 			isi->fb_descriptors_phys);
+	pm_runtime_disable(&pdev->dev);
 
 	return 0;
 }
@@ -1011,8 +1023,6 @@ static int atmel_isi_probe(struct platform_device *pdev)
 	if (isi->pdata.data_width_flags & ISI_DATAWIDTH_10)
 		isi->width_flags |= 1 << 9;
 
-	isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
-
 	irq = platform_get_irq(pdev, 0);
 	if (IS_ERR_VALUE(irq)) {
 		ret = irq;
@@ -1033,6 +1043,9 @@ static int atmel_isi_probe(struct platform_device *pdev)
 	soc_host->v4l2_dev.dev	= &pdev->dev;
 	soc_host->nr		= pdev->id;
 
+	pm_suspend_ignore_children(&pdev->dev, true);
+	pm_runtime_enable(&pdev->dev);
+
 	if (isi->pdata.asd_sizes) {
 		soc_host->asd = isi->pdata.asd;
 		soc_host->asd_sizes = isi->pdata.asd_sizes;
@@ -1046,6 +1059,7 @@ static int atmel_isi_probe(struct platform_device *pdev)
 	return 0;
 
 err_register_soc_camera_host:
+	pm_runtime_disable(&pdev->dev);
 err_req_irq:
 err_ioremap:
 	vb2_dma_contig_cleanup_ctx(isi->alloc_ctx);
@@ -1057,6 +1071,30 @@ err_alloc_ctx:
 
 	return ret;
 }
+
+static int atmel_isi_runtime_suspend(struct device *dev)
+{
+	struct soc_camera_host *soc_host = to_soc_camera_host(dev);
+	struct atmel_isi *isi = container_of(soc_host,
+					struct atmel_isi, soc_host);
+
+	clk_disable_unprepare(isi->pclk);
+
+	return 0;
+}
+static int atmel_isi_runtime_resume(struct device *dev)
+{
+	struct soc_camera_host *soc_host = to_soc_camera_host(dev);
+	struct atmel_isi *isi = container_of(soc_host,
+					struct atmel_isi, soc_host);
+
+	return clk_prepare_enable(isi->pclk);
+}
+
+static const struct dev_pm_ops atmel_isi_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(atmel_isi_runtime_suspend,
+				atmel_isi_runtime_resume, NULL)
+};
 
 static const struct of_device_id atmel_isi_of_match[] = {
 	{ .compatible = "atmel,at91sam9g45-isi" },
@@ -1070,6 +1108,7 @@ static struct platform_driver atmel_isi_driver = {
 		.name = "atmel_isi",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(atmel_isi_of_match),
+		.pm	= &atmel_isi_dev_pm_ops,
 	},
 };
 
