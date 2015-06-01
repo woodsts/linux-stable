@@ -1678,7 +1678,8 @@ static void atmel_get_ip_name(struct uart_port *port)
 	atmel_port->is_usart = false;
 
 	switch (name) {
-	case 0x55534152:
+	case 0x55534152: /* USART */
+	case 0x55415254: /* new UART with "timeout" feature: considered as usart */
 		dev_dbg(port->dev, "This is usart\n");
 		atmel_port->is_usart = true;
 		break;
