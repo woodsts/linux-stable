@@ -56,6 +56,8 @@
 
 	aliases {
 		serial0 = &uart1;
+		tcb0 = &tcb0;
+		tcb1 = &tcb1;
 	};
 
 	cpus {
@@ -560,6 +562,14 @@
 				reg = <0xf800c000 0x100>;
 				interrupts = <35 IRQ_TYPE_LEVEL_HIGH 0>;
 				clocks = <&tcb0_clk>;
+				clock-names = "t0_clk";
+			};
+
+			tcb1: timer@f8010000 {
+				compatible = "atmel,at91sam9x5-tcb";
+				reg = <0xf8010000 0x100>;
+				interrupts = <36 IRQ_TYPE_LEVEL_HIGH 0>;
+				clocks = <&tcb1_clk>;
 				clock-names = "t0_clk";
 			};
 
