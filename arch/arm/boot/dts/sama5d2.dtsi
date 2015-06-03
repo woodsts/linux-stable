@@ -314,11 +314,13 @@
 					macb0_clk: macb0_clk {
 						#clock-cells = <0>;
 						reg = <5>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					tdes_clk: tdes_clk {
 						#clock-cells = <0>;
 						reg = <11>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					matrix1_clk: matrix1_clk {
@@ -334,6 +336,7 @@
 					pioA_clk: pioA_clk {
 						#clock-cells = <0>;
 						reg = <18>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					uart0_clk: uart0_clk {
@@ -351,81 +354,97 @@
 					uart2_clk: uart2_clk {
 						#clock-cells = <0>;
 						reg = <26>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					uart3_clk: uart3_clk {
 						#clock-cells = <0>;
 						reg = <27>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					uart4_clk: uart4_clk {
 						#clock-cells = <0>;
 						reg = <28>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					twi0_clk: twi0_clk {
 						reg = <29>;
 						#clock-cells = <0>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					twi1_clk: twi1_clk {
 						#clock-cells = <0>;
 						reg = <30>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					spi0_clk: spi0_clk {
 						#clock-cells = <0>;
 						reg = <33>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					spi1_clk: spi1_clk {
 						#clock-cells = <0>;
 						reg = <34>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					tcb0_clk: tcb0_clk {
 						#clock-cells = <0>;
 						reg = <35>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					tcb1_clk: tcb1_clk {
 						#clock-cells = <0>;
 						reg = <36>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					pwm_clk: pwm_clk {
 						#clock-cells = <0>;
 						reg = <38>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					adc_clk: adc_clk {
 						#clock-cells = <0>;
 						reg = <40>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					uhphs_clk: uhphs_clk {
 						#clock-cells = <0>;
 						reg = <41>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					udphs_clk: udphs_clk {
 						#clock-cells = <0>;
 						reg = <42>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					ssc0_clk: ssc0_clk {
 						#clock-cells = <0>;
 						reg = <43>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					ssc1_clk: ssc1_clk {
 						#clock-cells = <0>;
 						reg = <44>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 
 					trng_clk: trng_clk {
 						#clock-cells = <0>;
 						reg = <47>;
+						atmel,clk-output-range = <0 83000000>;
 					};
 				};
 
