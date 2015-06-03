@@ -90,11 +90,22 @@
 				status = "okay";
 			};
 
+			uart3: serial@fc008000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_uart3_default>;
+				status = "okay";
+			};
+
 			pinctrl@fc038000 {
 				group_defs {
 					uart1_0 {
 						pins = <PIN_PD2__URXD1>,
 						       <PIN_PD3__UTXD1>;
+					};
+
+					uart3_0 {
+						pins = <PIN_PB11__URXD3>,
+						       <PIN_PB12__UTXD3>;
 					};
 				};
 
@@ -102,6 +113,13 @@
 					mux {
 						function = "A";
 						groups = "uart1_0";
+					};
+				};
+
+				pinctrl_uart3_default: uart3_default {
+					mux {
+						function = "C";
+						groups = "uart3_0";
 					};
 				};
 			};
