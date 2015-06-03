@@ -541,7 +541,7 @@
 			};
 
 			macb0: ethernet@f8008000 {
-				compatible = "cdns,pc302-gem", "cdns,gem";
+				compatible = "atmel,sama5d2-gem";
 				reg = <0xf8008000 0x1000>;
 				interrupts = <5  IRQ_TYPE_LEVEL_HIGH 3		/* Queue 0 */
 					      66 IRQ_TYPE_LEVEL_HIGH 3          /* Queue 1 */

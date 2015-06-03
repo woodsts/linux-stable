@@ -78,6 +78,11 @@
 
 	ahb {
 		apb {
+			macb0: ethernet@f8008000 {
+				phy-mode = "rmii";
+				status = "okay";
+			};
+
 			uart1: serial@f8020000 {
 				status = "okay";
 			};
