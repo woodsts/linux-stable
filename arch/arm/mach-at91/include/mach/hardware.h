@@ -131,8 +131,13 @@
  * called as part of the generic suspend/resume path.
  */
 #ifndef __ASSEMBLY__
+#if defined(CONFIG_PINCTRL_AT91)
 extern void at91_pinctrl_gpio_suspend(void);
 extern void at91_pinctrl_gpio_resume(void);
+#else
+static void __maybe_unused at91_pinctrl_gpio_suspend(void) {}
+static void __maybe_unused at91_pinctrl_gpio_resume(void) {}
+#endif
 #endif
 
 #endif
