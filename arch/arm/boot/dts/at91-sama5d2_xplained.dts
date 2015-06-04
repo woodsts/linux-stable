@@ -44,6 +44,7 @@
  */
 /dts-v1/;
 #include "sama5d2.dtsi"
+#include "sama5d2-pinfunc.h"
 
 / {
 	model = "Atmel SAMA5D2 Xplained";
@@ -84,7 +85,25 @@
 			};
 
 			uart1: serial@f8020000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_uart1_default>;
 				status = "okay";
+			};
+
+			pinctrl@fc038000 {
+				group_defs {
+					uart1_0 {
+						pins = <PIN_PD2__URXD1>,
+						       <PIN_PD3__UTXD1>;
+					};
+				};
+
+				pinctrl_uart1_default: uart1_default {
+					mux {
+						function = "A";
+						groups = "uart1_0";
+					};
+				};
 			};
 		};
 	};
