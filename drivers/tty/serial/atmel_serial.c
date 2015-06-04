@@ -1674,20 +1674,20 @@ static void atmel_get_ip_name(struct uart_port *port)
 	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
 	int name = UART_GET_IP_NAME(port);
 	u32 version;
-	int usart, uart;
-	/* usart and uart ascii */
-	usart = 0x55534152;
-	uart = 0x44424755;
 
 	atmel_port->is_usart = false;
 
-	if (name == usart) {
+	switch (name) {
+	case 0x55534152: /* USART */
+	case 0x55415254: /* new UART with "timeout" feature: considered as usart */
 		dev_dbg(port->dev, "This is usart\n");
 		atmel_port->is_usart = true;
-	} else if (name == uart) {
+		break;
+	case 0x44424755:
 		dev_dbg(port->dev, "This is uart\n");
 		atmel_port->is_usart = false;
-	} else {
+		break;
+	default:
 		/* fallback for older SoCs: use version field */
 		version = UART_GET_IP_VERSION(port);
 		switch (version) {
@@ -1704,6 +1704,7 @@ static void atmel_get_ip_name(struct uart_port *port)
 		default:
 			dev_err(port->dev, "Not supported ip name nor version, set to uart\n");
 		}
+		break;
 	}
 }
 
