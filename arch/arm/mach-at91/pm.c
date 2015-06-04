@@ -369,6 +369,15 @@ void __init at91sam9x5_pm_init(void)
 	return at91_pm_init();
 }
 
+void __init sam5d2_pm_init(void)
+{
+	/*at91_dt_ramc();*/
+	at91_pm_data.uhp_udp_mask = AT91SAM926x_PMC_UHP | AT91SAM926x_PMC_UDP;
+	at91_pm_data.memctrl = AT91_MEMCTRL_DDRSDR;
+	/*at91_pm_data.ddrc_pid = SAMA5D4_ID_MPDDRC;*/
+	return at91_pm_init();
+}
+
 void __init sam5d3_pm_init(void)
 {
 	at91_dt_ramc();
