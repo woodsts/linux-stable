@@ -1,0 +1,229 @@
+/*
+ * sama5d2.dtsi - Device Tree Include file for SAMA5D2 family SoC
+ *
+ *  Copyright (C) 2015 Atmel,
+ *                2015 Ludovic Desroches <ludovic.desroches@atmel.com>
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "skeleton.dtsi"
+#include <dt-bindings/dma/at91.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/clock/at91.h>
+
+/ {
+	model = "Atmel SAMA5D2 family SoC";
+	compatible = "atmel,sama5d2";
+	interrupt-parent = <&aic>;
+
+	aliases {
+		serial0 = &uart1;
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a5";
+			reg = <0>;
+			next-level-cache = <&L2>;
+		};
+	};
+
+	memory {
+		reg = <0x20000000 0x20000000>;
+	};
+
+	clocks {
+		slow_xtal: slow_xtal {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <0>;
+		};
+
+		main_xtal: main_xtal {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <0>;
+		};
+
+		adc_op_clk: adc_op_clk{
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <1000000>;
+		};
+	};
+
+	ns_sram: sram@00200000 {
+		compatible = "mmio-sram";
+		reg = <0x00200000 0x20000>;
+	};
+
+	ahb {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		L2: cache-controller@00a00000 {
+			compatible = "arm,pl310-cache";
+			reg = <0x00a00000 0x1000>;
+			interrupts = <63 IRQ_TYPE_LEVEL_HIGH 4>;
+			cache-unified;
+			cache-level = <2>;
+		};
+
+		apb {
+			compatible = "simple-bus";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			sdio1: sdio-host@a0000000 {
+				compatible = "atmel,sama5d2-sdhci";
+				reg = <0xa0000000 0x100>;
+				interrupts = <31 IRQ_TYPE_LEVEL_HIGH 0>;
+				clocks = <&mck>;
+				bus-width = <8>;
+			};
+
+			ramc0: ramc@f000c000 {
+				compatible = "atmel,sama5d3-ddramc";
+				reg = <0xf000c000 0x200>;
+				clocks = <&ddrck>, <&mpddr_clk>;
+				clock-names = "ddrck", "mpddr";
+			};
+
+			dma0: dma-controller@f0010000 {
+				compatible = "atmel,sama5d4-dma";
+				reg = <0xf0010000 0x1000>;
+				interrupts = <6 IRQ_TYPE_LEVEL_HIGH 0>;
+				#dma-cells = <1>;
+				clocks = <&dma0_clk>;
+				clock-names = "dma_clk";
+			};
+
+			sha@f0028000 {
+				compatible = "atmel,at91sam9g46-sha";
+				reg = <0xf0028000 0x100>;
+				interrupts = <12 IRQ_TYPE_LEVEL_HIGH 0>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(31)>;
+				dma-names = "tx";
+				clocks = <&sha_clk>;
+				clock-names = "sha_clk";
+				status = "disabled";
+			};
+
+			aes@f002c000 {
+				compatible = "atmel,at91sam9g46-aes";
+				reg = <0xf002c000 0x100>;
+				interrupts = <9 IRQ_TYPE_LEVEL_HIGH 0>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(27)>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
+					AT91_XDMAC_DT_PERID(28)>;
+				dma-names = "tx", "rx";
+				clocks = <&aes_clk>;
+				clock-names = "aes_clk";
+				status = "disabled";
+			};
+
+			macb0: ethernet@f8008000 {
+				compatible = "cdns,pc302-gem", "cdns,gem";
+				reg = <0xf8008000 0x1000>;
+				interrupts = <5  IRQ_TYPE_LEVEL_HIGH 3		/* Queue 0 */
+					      66 IRQ_TYPE_LEVEL_HIGH 3          /* Queue 1 */
+					      67 IRQ_TYPE_LEVEL_HIGH 3>;        /* Queue 2 */
+				pinctrl-names = "default";
+				/*pinctrl-0 = <&pinctrl_macb0_rmii>;*/
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&macb0_clk>, <&macb0_clk>;
+				clock-names = "hclk", "pclk";
+				status = "disabled";
+			};
+
+			tcb0: timer@f800c000 {
+				compatible = "atmel,at91sam9x5-tcb";
+				reg = <0xf800c000 0x100>;
+				interrupts = <35 IRQ_TYPE_LEVEL_HIGH 0>;
+				clocks = <&tcb0_clk>;
+				clock-names = "t0_clk";
+			};
+
+			uart0: serial@f801c000 {
+				compatible = "atmel,at91sam9260-usart";
+				reg = <0xf801c000 0x100>;
+				interrupts = <24 IRQ_TYPE_LEVEL_HIGH 7>;
+				pinctrl-names = "default";
+				/*pinctrl-0 = <&pinctrl_uart0>;*/
+				clocks = <&uart0_clk>;
+				clock-names = "usart";
+				status = "disabled";
+			};
+
+			uart1: serial@f8020000 {
+				compatible = "atmel,at91sam9260-usart";
+				reg = <0xf8020000 0x100>;
+				interrupts = <25 IRQ_TYPE_LEVEL_HIGH 7>;
+				pinctrl-names = "default";
+				/*pinctrl-0 = <&pinctrl_uart1>;*/
+				clocks = <&uart1_clk>;
+				clock-names = "usart";
+				status = "disabled";
+			};
+
+			aic: interrupt-controller@fc020000 {
+				#interrupt-cells = <3>;
+				compatible = "atmel,sama5d4-aic";
+				interrupt-controller;
+				reg = <0xfc020000 0x200>;
+				atmel,external-irqs = <49>;
+			};
+		};
+	};
+};
