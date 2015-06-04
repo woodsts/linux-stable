@@ -566,6 +566,13 @@
 				status = "disabled";
 			};
 
+			pit: timer@f8048030 {
+				compatible = "atmel,at91sam9260-pit";
+				reg = <0xf8048030 0x10>;
+				interrupts = <3 IRQ_TYPE_LEVEL_HIGH 5>;
+				clocks = <&h32ck>;
+			};
+
 			sckc@f8048050 {
 				compatible = "atmel,at91sam9x5-sckc";
 				reg = <0xf8048050 0x4>;
