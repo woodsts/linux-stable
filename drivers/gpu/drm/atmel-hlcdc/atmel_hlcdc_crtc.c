@@ -405,6 +405,27 @@ static const struct drm_crtc_funcs atmel_hlcdc_crtc_funcs = {
 	.destroy = atmel_hlcdc_crtc_destroy,
 };
 
+void atmel_hlcdc_crtc_suspend(struct drm_crtc *c)
+{
+	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
+
+	if (crtc->dpms == DRM_MODE_DPMS_ON) {
+		atmel_hlcdc_crtc_dpms(c, DRM_MODE_DPMS_OFF);
+		/* save enable state for resume */
+		crtc->dpms = DRM_MODE_DPMS_ON;
+	}
+}
+
+void atmel_hlcdc_crtc_resume(struct drm_crtc *c)
+{
+	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
+
+	if (crtc->dpms == DRM_MODE_DPMS_ON) {
+		crtc->dpms = DRM_MODE_DPMS_OFF;
+		atmel_hlcdc_crtc_dpms(c, DRM_MODE_DPMS_ON);
+	}
+}
+
 int atmel_hlcdc_crtc_create(struct drm_device *dev)
 {
 	struct atmel_hlcdc_dc *dc = dev->dev_private;

@@ -517,8 +517,6 @@ static int atmel_hlcdc_dc_load(struct drm_device *dev)
 
 	pm_runtime_enable(dev->dev);
 
-	pm_runtime_put_sync(dev->dev);
-
 	ret = atmel_hlcdc_dc_modeset_init(dev);
 	if (ret < 0) {
 		dev_err(dev->dev, "failed to initialize mode setting\n");
@@ -864,14 +862,8 @@ static int atmel_hlcdc_dc_drm_suspend(struct device *dev)
 		return 0;
 
 	drm_modeset_lock_all(drm_dev);
-	list_for_each_entry(crtc, &drm_dev->mode_config.crtc_list, head) {
-		struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
-		if (crtc->enabled) {
-			crtc_funcs->dpms(crtc, DRM_MODE_DPMS_OFF);
-			/* save enable state for resume */
-			crtc->enabled = true;
-		}
-	}
+	list_for_each_entry(crtc, &drm_dev->mode_config.crtc_list, head)
+		atmel_hlcdc_crtc_suspend(crtc);
 	drm_modeset_unlock_all(drm_dev);
 	return 0;
 }
@@ -885,13 +877,8 @@ static int atmel_hlcdc_dc_drm_resume(struct device *dev)
 		return 0;
 
 	drm_modeset_lock_all(drm_dev);
-	list_for_each_entry(crtc, &drm_dev->mode_config.crtc_list, head) {
-		struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
-		if (crtc->enabled) {
-			crtc->enabled = false;
-			crtc_funcs->dpms(crtc, DRM_MODE_DPMS_ON);
-		}
-	}
+	list_for_each_entry(crtc, &drm_dev->mode_config.crtc_list, head)
+		atmel_hlcdc_crtc_resume(crtc);
 	drm_modeset_unlock_all(drm_dev);
 	return 0;
 }

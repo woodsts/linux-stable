@@ -292,11 +292,14 @@ static void macb_handle_link_change(struct net_device *dev)
 
 	spin_unlock_irqrestore(&bp->lock, flags);
 
-	if (!IS_ERR(bp->tx_clk))
-		macb_set_tx_clk(bp->tx_clk, phydev->speed, dev);
-
 	if (status_change) {
 		if (phydev->link) {
+			/* Update the TX clock rate if and only if the link is
+			 * up and there has been a link change.
+			 */
+			if (!IS_ERR(bp->tx_clk))
+				macb_set_tx_clk(bp->tx_clk, phydev->speed, dev);
+
 			netif_carrier_on(dev);
 			netdev_info(dev, "link up (%d/%s)\n",
 				    phydev->speed,
@@ -705,6 +708,9 @@ static void gem_rx_refill(struct macb *bp)
 
 			/* properly align Ethernet header */
 			skb_reserve(skb, NET_IP_ALIGN);
+		} else {
+			bp->rx_ring[entry].addr &= ~MACB_BIT(RX_USED);
+			bp->rx_ring[entry].ctrl = 0;
 		}
 	}
 
@@ -976,7 +982,7 @@ static irqreturn_t macb_interrupt(int irq, void *dev_id)
 	struct macb_queue *queue = dev_id;
 	struct macb *bp = queue->bp;
 	struct net_device *dev = bp->dev;
-	u32 status;
+	u32 status, ctrl;
 
 	status = queue_readl(queue, ISR);
 
@@ -1031,6 +1037,21 @@ static irqreturn_t macb_interrupt(int irq, void *dev_id)
 		 * Link change detection isn't possible with RMII, so we'll
 		 * add that if/when we get our hands on a full-blown MII PHY.
 		 */
+
+		/* There is a hardware issue under heavy load where DMA can
+		 * stop, this causes endless "used buffer descriptor read"
+		 * interrupts but it can be cleared by re-enabling RX. See
+		 * the at91 manual, section 41.3.1 or the Zynq manual
+		 * section 16.7.4 for details.
+		 */
+		if (status & MACB_BIT(RXUBR)) {
+			ctrl = macb_readl(bp, NCR);
+			macb_writel(bp, NCR, ctrl & ~MACB_BIT(RE));
+			macb_writel(bp, NCR, ctrl | MACB_BIT(RE));
+
+			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+				macb_writel(bp, ISR, MACB_BIT(RXUBR));
+		}
 
 		if (status & MACB_BIT(ISR_ROVR)) {
 			/* We missed at least one packet */
@@ -1471,9 +1492,9 @@ static void macb_init_rings(struct macb *bp)
 	for (i = 0; i < TX_RING_SIZE; i++) {
 		bp->queues[0].tx_ring[i].addr = 0;
 		bp->queues[0].tx_ring[i].ctrl = MACB_BIT(TX_USED);
-		bp->queues[0].tx_head = 0;
-		bp->queues[0].tx_tail = 0;
 	}
+	bp->queues[0].tx_head = 0;
+	bp->queues[0].tx_tail = 0;
 	bp->queues[0].tx_ring[TX_RING_SIZE - 1].ctrl |= MACB_BIT(TX_WRAP);
 
 	bp->rx_tail = 0;
@@ -1893,12 +1914,12 @@ struct net_device_stats *macb_get_stats(struct net_device *dev)
 			    hwstat->rx_oversize_pkts +
 			    hwstat->rx_jabbers +
 			    hwstat->rx_undersize_pkts +
-			    hwstat->sqe_test_errors +
 			    hwstat->rx_length_mismatch);
 	nstat->tx_errors = (hwstat->tx_late_cols +
 			    hwstat->tx_excessive_cols +
 			    hwstat->tx_underruns +
-			    hwstat->tx_carrier_errors);
+			    hwstat->tx_carrier_errors +
+			    hwstat->sqe_test_errors);
 	nstat->collisions = (hwstat->tx_single_cols +
 			     hwstat->tx_multiple_cols +
 			     hwstat->tx_excessive_cols);
@@ -1975,8 +1996,8 @@ static void macb_get_regs(struct net_device *dev, struct ethtool_regs *regs,
 	regs_buff[10] = macb_tx_dma(&bp->queues[0], tail);
 	regs_buff[11] = macb_tx_dma(&bp->queues[0], head);
 
+	regs_buff[12] = macb_or_gem_readl(bp, USRIO);
 	if (macb_is_gem(bp)) {
-		regs_buff[12] = gem_readl(bp, USRIO);
 		regs_buff[13] = gem_readl(bp, DMACFG);
 	}
 }
