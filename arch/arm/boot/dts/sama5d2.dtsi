@@ -116,6 +116,22 @@
 			cache-level = <2>;
 		};
 
+		sdmmc0: sdio-host@a0000000 {
+			compatible = "atmel,sama5d2-sdhci";
+			reg = <0xa0000000 0x100>;
+			interrupts = <31 IRQ_TYPE_LEVEL_HIGH 0>;
+			clocks = <&sdmmc0_clk>;
+			status = "disabled";
+		};
+
+		sdmmc1: sdio-host@b0000000 {
+			compatible = "atmel,sama5d2-sdhci";
+			reg = <0xb0000000 0x100>;
+			interrupts = <32 IRQ_TYPE_LEVEL_HIGH 0>;
+			clocks = <&sdmmc1_clk>;
+			status = "disabled";
+		};
+
 		apb {
 			compatible = "simple-bus";
 			#address-cells = <1>;
@@ -492,12 +508,12 @@
 						reg = <15>;
 					};
 
-					mci0_clk: mci0_clk {
+					sdmmc0_clk: sdmmc0_clk {
 						#clock-cells = <0>;
 						reg = <31>;
 					};
 
-					mci1_clk: mci1_clk {
+					sdmmc1_clk: sdmmc1_clk {
 						#clock-cells = <0>;
 						reg = <32>;
 					};
@@ -549,8 +565,6 @@
 				interrupts = <5  IRQ_TYPE_LEVEL_HIGH 3		/* Queue 0 */
 					      66 IRQ_TYPE_LEVEL_HIGH 3          /* Queue 1 */
 					      67 IRQ_TYPE_LEVEL_HIGH 3>;        /* Queue 2 */
-				pinctrl-names = "default";
-				/*pinctrl-0 = <&pinctrl_macb0_rmii>;*/
 				#address-cells = <1>;
 				#size-cells = <0>;
 				clocks = <&macb0_clk>, <&macb0_clk>;
@@ -578,8 +592,6 @@
 				compatible = "atmel,at91sam9260-usart";
 				reg = <0xf801c000 0x100>;
 				interrupts = <24 IRQ_TYPE_LEVEL_HIGH 7>;
-				pinctrl-names = "default";
-				/*pinctrl-0 = <&pinctrl_uart0>;*/
 				clocks = <&uart0_clk>;
 				clock-names = "usart";
 				status = "disabled";
@@ -589,9 +601,16 @@
 				compatible = "atmel,at91sam9260-usart";
 				reg = <0xf8020000 0x100>;
 				interrupts = <25 IRQ_TYPE_LEVEL_HIGH 7>;
-				pinctrl-names = "default";
-				/*pinctrl-0 = <&pinctrl_uart1>;*/
 				clocks = <&uart1_clk>;
+				clock-names = "usart";
+				status = "disabled";
+			};
+
+			uart2: serial@f8024000 {
+				compatible = "atmel,at91sam9260-usart";
+				reg = <0xf8024000 0x100>;
+				interrupts = <26 IRQ_TYPE_LEVEL_HIGH 7>;
+				clocks = <&uart2_clk>;
 				clock-names = "usart";
 				status = "disabled";
 			};
@@ -638,6 +657,14 @@
 				status = "disabled";
 			};
 
+			uart4: serial@fc00c000 {
+				compatible = "atmel,at91sam9260-usart";
+				reg = <0xfc00c000 0x100>;
+				interrupts = <28 IRQ_TYPE_LEVEL_HIGH 7>;
+				clocks = <&uart4_clk>;
+				clock-names = "usart";
+				status = "disabled";
+			};
 
 			aic: interrupt-controller@fc020000 {
 				#interrupt-cells = <3>;
