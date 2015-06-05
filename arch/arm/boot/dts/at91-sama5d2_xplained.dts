@@ -78,6 +78,13 @@
 	};
 
 	ahb {
+		sdmmc1: sdio-host@b0000000 {
+			bus-width = <4>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_sdmmc1_default>;
+			status = "okay";
+		};
+
 		apb {
 			uart1: serial@f8020000 {
 				pinctrl-names = "default";
@@ -93,6 +100,16 @@
 
 			pinctrl@fc038000 {
 				group_defs {
+					sdmmc1_0 {
+						pins = <PIN_PA22__SDMMC1_CK>,
+						       <PIN_PA28__SDMMC1_CMD>,
+						       <PIN_PA18__SDMMC1_DAT0>,
+						       <PIN_PA19__SDMMC1_DAT1>,
+						       <PIN_PA20__SDMMC1_DAT2>,
+						       <PIN_PA21__SDMMC1_DAT3>,
+						       <PIN_PA30__SDMMC1_CD>;
+					};
+
 					uart1_0 {
 						pins = <PIN_PD2__URXD1>,
 						       <PIN_PD3__UTXD1>;
@@ -101,6 +118,13 @@
 					uart3_0 {
 						pins = <PIN_PB11__URXD3>,
 						       <PIN_PB12__UTXD3>;
+					};
+				};
+
+				pinctrl_sdmmc1_default: sdmmc1_default {
+					mux {
+						function = "E";
+						groups = "sdmmc1_0";
 					};
 				};
 
