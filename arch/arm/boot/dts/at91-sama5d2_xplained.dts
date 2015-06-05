@@ -78,6 +78,16 @@
 	};
 
 	ahb {
+		usb1: ohci@00400000 {
+			num-ports = <3>;
+			/* TODO: add atmel,vbus-gpio property */
+			status = "okay";
+		};
+
+		usb2: ehci@00500000 {
+			status = "okay";
+		};
+
 		sdmmc1: sdio-host@b0000000 {
 			bus-width = <4>;
 			pinctrl-names = "default";
