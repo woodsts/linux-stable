@@ -126,6 +126,21 @@
 						function = "E";
 						groups = "sdmmc1_0";
 					};
+
+					conf-cmd_data {
+						pins = <PIN_PA28__SDMMC1_CMD>,
+						       <PIN_PA18__SDMMC1_DAT0>,
+						       <PIN_PA19__SDMMC1_DAT1>,
+						       <PIN_PA20__SDMMC1_DAT2>,
+						       <PIN_PA21__SDMMC1_DAT3>;
+						bias-pull-up;
+					};
+
+					conf-ck_cd {
+						pins = <PIN_PA22__SDMMC1_CK>,
+						       <PIN_PA30__SDMMC1_CD>;
+						bias-disable;
+					};
 				};
 
 				pinctrl_uart1_default: uart1_default {
