@@ -81,6 +81,8 @@
 		usb1: ohci@00400000 {
 			num-ports = <3>;
 			/* TODO: add atmel,vbus-gpio property */
+			/*pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usb_default>;*/
 			status = "okay";
 		};
 
