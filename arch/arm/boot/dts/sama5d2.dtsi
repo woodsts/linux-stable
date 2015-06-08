@@ -108,6 +108,136 @@
 		#size-cells = <1>;
 		ranges;
 
+		usb0: gadget@00300000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "atmel,sama5d3-udc";
+			reg = <0x00300000 0x100000
+			       0xfc02c000 0x400>;
+			interrupts = <42 IRQ_TYPE_LEVEL_HIGH 2>;
+			clocks = <&udphs_clk>, <&utmi>;
+			clock-names = "pclk", "hclk";
+			status = "disabled";
+
+			ep0 {
+				reg = <0>;
+				atmel,fifo-size = <64>;
+				atmel,nb-banks = <1>;
+			};
+
+			ep1 {
+				reg = <1>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <3>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep2 {
+				reg = <2>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <3>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep3 {
+				reg = <3>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep4 {
+				reg = <4>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep5 {
+				reg = <5>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep6 {
+				reg = <6>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep7 {
+				reg = <7>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep8 {
+				reg = <8>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+
+			ep9 {
+				reg = <9>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+
+			ep10 {
+				reg = <10>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+
+			ep11 {
+				reg = <11>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+
+			ep12 {
+				reg = <12>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+
+			ep13 {
+				reg = <13>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+
+			ep14 {
+				reg = <14>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+
+			ep15 {
+				reg = <15>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-isoc;
+			};
+		};
+
 		usb1: ohci@00400000 {
 			compatible = "atmel,at91rm9200-ohci", "usb-ohci";
 			reg = <0x00400000 0x100000>;
