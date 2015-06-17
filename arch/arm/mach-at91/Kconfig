@@ -87,6 +87,7 @@ config SOC_SAMA5D2
 	select HAVE_AT91_UTMI
 	select HAVE_AT91_USB_CLK
 	select HAVE_AT91_H32MX
+	select HAVE_AT91_GENERATED
 	select PINCTRL_AT91PIO4
 	help
 	  Select this if ou are using one of Atmel's SAMA5D2 family SoC.
