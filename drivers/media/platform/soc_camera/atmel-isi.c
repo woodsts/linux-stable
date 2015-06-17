@@ -36,6 +36,10 @@
 #define MIN_FRAME_RATE			15
 #define FRAME_INTERVAL_MILLI_SEC	(1000 / MIN_FRAME_RATE)
 
+/* Debug helper functions */
+#define pixfmtstr(x) (x) & 0xff, ((x) >> 8) & 0xff, ((x) >> 16) & 0xff, \
+	((x) >> 24) & 0xff
+
 /* Frame buffer descriptor */
 struct fbd {
 	/* Physical address of the frame buffer */
@@ -163,6 +167,27 @@ static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
 	isi_writel(isi, ISI_CFG2, cfg2);
 
 	return 0;
+}
+
+static bool is_supported(struct soc_camera_device *icd,
+		const struct soc_mbus_pixelfmt *host_fmt)
+{
+	bool ret = true;
+
+	switch (host_fmt->fourcc) {
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_VYUY:
+	case V4L2_PIX_FMT_GREY:
+		break;
+	default:
+		dev_err(icd->parent, "not support output memory v4l2 format: %c%c%c%c\n",
+					pixfmtstr(host_fmt->fourcc));
+		ret = false;
+	}
+
+	return ret;
 }
 
 static irqreturn_t atmel_isi_handle_streaming(struct atmel_isi *isi)
@@ -514,6 +539,10 @@ static int isi_camera_set_fmt(struct soc_camera_device *icd,
 			 pix->pixelformat);
 		return -EINVAL;
 	}
+
+	/* check with atmel-isi support this host format */
+	if (!is_supported(icd, xlate->host_fmt))
+		return -EINVAL;
 
 	dev_dbg(icd->parent, "Plan to set format %dx%d\n",
 			pix->width, pix->height);
