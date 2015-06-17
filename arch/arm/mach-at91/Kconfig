@@ -28,6 +28,9 @@ config HAVE_AT91_SMD
 config HAVE_AT91_H32MX
 	bool
 
+config HAVE_AT91_GENERATED
+	bool
+
 config SOC_AT91SAM9
 	bool
 	select ATMEL_AIC_IRQ
