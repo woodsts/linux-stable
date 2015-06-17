@@ -676,6 +676,32 @@
 						reg = <46>;
 					};
 				};
+
+				gck {
+					compatible = "atmel,sama5d2-clk-generated";
+					#address-cells = <1>;
+					#size-cells = <0>;
+					interrupt-parent = <&pmc>;
+					clocks = <&clk32k>, <&main>, <&plladiv>, <&utmi>, <&mck>;
+
+					tcb0_gclk: tcb0_gclk {
+						#clock-cells = <0>;
+						reg = <35>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					tcb1_gclk: tcb1_gclk {
+						#clock-cells = <0>;
+						reg = <36>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					pwm_gclk: pwm_gclk {
+						#clock-cells = <0>;
+						reg = <38>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+				};
 			};
 
 			sha@f0028000 {
