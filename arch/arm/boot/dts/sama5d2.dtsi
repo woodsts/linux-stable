@@ -287,7 +287,7 @@
 			ranges;
 
 			hlcdc: hlcdc@f0000000 {
-				compatible = "atmel,sama5d4-hlcdc";
+				compatible = "atmel,sama5d2-hlcdc";
 				reg = <0xf0000000 0x2000>;
 				interrupts = <45 IRQ_TYPE_LEVEL_HIGH 0>;
 				clocks = <&lcdc_clk>, <&lcdck>, <&clk32k>;
