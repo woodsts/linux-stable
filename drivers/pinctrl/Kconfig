@@ -67,6 +67,16 @@ config PINCTRL_AT91
 	help
 	  Say Y here to enable the at91 pinctrl driver
 
+config PINCTRL_AT91PIO4
+	bool "AT91 PIO4 pinctrl driver"
+	depends on OF
+	depends on ARCH_AT91
+	select PINMUX
+	select PINCONF
+	select GENERIC_PINCONF
+	help
+	  Say Y here to enable the at91-pio4 pinctrl driver
+
 config PINCTRL_BAYTRAIL
 	bool "Intel Baytrail GPIO pin control"
 	depends on GPIOLIB && ACPI && X86

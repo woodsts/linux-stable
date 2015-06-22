@@ -2,7 +2,9 @@ Device-Tree bindings for Atmel's HLCDC (High LCD Controller) MFD driver
 
 Required properties:
  - compatible: value should be one of the following:
+   "atmel,sama5d2-hlcdc"
    "atmel,sama5d3-hlcdc"
+   "atmel,sama5d4-hlcdc"
    "atmel,at91sam9n12-hlcdc"
    "atmel,at91sam9x5-hlcdc"
  - reg: base address and size of the HLCDC device registers.

@@ -376,7 +376,6 @@ config ARCH_AT91
 	select IRQ_DOMAIN
 	select NEED_MACH_IO_H if PCCARD
 	select PINCTRL
-	select PINCTRL_AT91
 	select USE_OF
 	help
 	  This enables support for systems based on Atmel

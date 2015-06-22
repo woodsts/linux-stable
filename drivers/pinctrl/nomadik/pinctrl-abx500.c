@@ -915,7 +915,7 @@ static int abx500_dt_subnode_to_map(struct pinctrl_dev *pctldev,
 		}
 	}
 
-	ret = pinconf_generic_parse_dt_config(np, &configs, &nconfigs);
+	ret = pinconf_generic_parse_dt_config(np, pctldev, &configs, &nconfigs);
 	if (nconfigs)
 		has_config = 1;
 	np_config = of_parse_phandle(np, "ste,config", 0);

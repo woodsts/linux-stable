@@ -23,6 +23,8 @@ struct pinctrl_dev;
 /**
  * struct pinmux_ops - pinmux operations, to be implemented by pin controller
  * drivers that support pinmuxing
+ * @mux_per_pin: in case of per pin muxing, it removes the need to declare
+ *	with which groups a function can be used.
  * @request: called by the core to see if a certain pin can be made
  *	available for muxing. This is called by the core to acquire the pins
  *	before selecting any actual mux setting across a function. The driver
@@ -58,6 +60,7 @@ struct pinctrl_dev;
  *	to the GPIO controllers that need pin muxing.
  */
 struct pinmux_ops {
+	bool mux_per_pin;
 	int (*request) (struct pinctrl_dev *pctldev, unsigned offset);
 	int (*free) (struct pinctrl_dev *pctldev, unsigned offset);
 	int (*get_functions_count) (struct pinctrl_dev *pctldev);

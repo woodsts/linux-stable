@@ -38,6 +38,26 @@ static int ksz8081_phy_fixup(struct phy_device *phy)
 	return 0;
 }
 
+static void __init sama5d2_dt_device_init(void)
+{
+	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
+	sam5d2_pm_init();
+}
+
+static const char *sama5_alt2_dt_board_compat[] __initconst = {
+	"atmel,sama5d2",
+	NULL
+};
+
+DT_MACHINE_START(sama5_sama5d2_dt, "Atmel SAMA5")
+	/* Maintainer: Atmel */
+	.map_io		= at91_sama5d2_map_io,
+	.init_early	= at91_dt_initialize,
+	.init_machine	= sama5d2_dt_device_init,
+	.dt_compat	= sama5_alt2_dt_board_compat,
+	.l2c_aux_mask	= ~0UL,
+MACHINE_END
+
 static void __init sama5_dt_device_init(void)
 {
 	if (of_machine_is_compatible("atmel,sama5d4ek") &&

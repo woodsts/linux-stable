@@ -17,6 +17,7 @@
  /* Map io */
 extern void __init at91_map_io(void);
 extern void __init at91_alt_map_io(void);
+extern void __init at91_sama5d2_map_io(void);
 
  /* Processors */
 extern void __init at91rm9200_set_type(int type);
@@ -42,15 +43,17 @@ extern void __init at91rm9200_pm_init(void);
 extern void __init at91sam9260_pm_init(void);
 extern void __init at91sam9g45_pm_init(void);
 extern void __init at91sam9x5_pm_init(void);
+extern void __init sam5d2_pm_init(void);
 extern void __init sam5d3_pm_init(void);
 extern void __init sam5d4_pm_init(void);
 #else
-void __init at91rm9200_pm_init(void) { }
-void __init at91sam9260_pm_init(void) { }
-void __init at91sam9g45_pm_init(void) { }
-void __init at91sam9x5_pm_init(void) { }
-void __init sam5d3_pm_init(void) {}
-void __init sam5d4_pm_init(void) {}
+static void __maybe_unused __init at91rm9200_pm_init(void) { }
+static void __maybe_unused __init at91sam9260_pm_init(void) { }
+static void __maybe_unused __init at91sam9g45_pm_init(void) { }
+static void __maybe_unused __init at91sam9x5_pm_init(void) { }
+static void __maybe_unused __init sam5d2_pm_init(void) {}
+static void __maybe_unused __init sam5d3_pm_init(void) {}
+static void __maybe_unused __init sam5d4_pm_init(void) {}
 #endif
 
 #endif /* _AT91_GENERIC_H */

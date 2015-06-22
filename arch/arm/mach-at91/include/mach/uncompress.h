@@ -108,6 +108,11 @@ static const u32 uarts_sama5d4[] = {
 	0,
 };
 
+static const u32 uarts_sama5d2[] = {
+	AT91_BASE_DBGU3,
+	0,
+};
+
 static inline const u32* decomp_soc_detect(void __iomem *dbgu_base)
 {
 	u32 cidr, socid;
@@ -172,8 +177,8 @@ static inline void arch_decomp_setup(void)
 	if (!usarts)
 		usarts = decomp_soc_detect((void __iomem *)AT91_BASE_DBGU2);
 	if (!usarts) {
-		at91_uart = NULL;
-		return;
+		/* it must be sama5d2 */
+		usarts = uarts_sama5d2;
 	}
 
 	do {

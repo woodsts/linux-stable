@@ -364,7 +364,7 @@ ENTRY(at91_ddr_clock)
 	cmp	r1, #0
 	beq	ddr_sys_clk
 
-	and	r1, r1, #AT91_PMC_PCR_PID
+	and	r1, r1, #AT91_PMC_PCR_PID_MASK
 	orr	r1, r1, #AT91_PMC_PCR_CMD
 
 	tst	r0, #DDR_CLOCK_ENABLE
