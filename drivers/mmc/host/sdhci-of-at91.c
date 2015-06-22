@@ -90,9 +90,7 @@ static int sdhci_at91_probe(struct platform_device *pdev)
 	clk_prepare_enable(priv->hclock);
 	clk_prepare_enable(priv->gck);
 
-	ret = mmc_of_parse(host->mmc);
-	if (ret)
-		goto err_sdhci_add;
+	sdhci_get_of_property(pdev);
 
 	ret = sdhci_add_host(host);
 	if (ret)
