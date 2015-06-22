@@ -9,7 +9,9 @@
 #include "sdhci-pltfm.h"
 
 struct sdhci_at91_priv {
-	struct clk *clk;
+	struct clk *hclock;
+	struct clk *gck;
+	struct clk *mainck;
 };
 
 static const struct sdhci_ops sdhci_at91_sama5d2_ops = {
@@ -48,7 +50,34 @@ static int sdhci_at91_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	priv->clk = devm_clk_get(&pdev->dev, NULL);
+	priv->mainck = devm_clk_get(&pdev->dev, "baseclk");
+	if (IS_ERR(priv->mainck)) {
+		dev_err(&pdev->dev, "failed to get baseclk\n");
+		//return PTR_ERR(priv->mainck);
+	}
+
+	priv->hclock = devm_clk_get(&pdev->dev, "hclock");
+	if (IS_ERR(priv->hclock)) {
+		dev_err(&pdev->dev, "failed to get hclock\n");
+		//return PTR_ERR(priv->hclock);
+	}
+
+	priv->gck = devm_clk_get(&pdev->dev, "multclk");
+	if (IS_ERR(priv->gck)) {
+		dev_err(&pdev->dev, "failed to get multclk\n");
+		//return PTR_ERR(priv->gck);
+	}
+
+	/*
+	 * Set gck rate according to values set in the capabilities register
+	 * then check if the rate set is the one requested. If not, because
+	 * of round down/up, fix the capabilities.
+	 */
+	ret = clk_set_rate(priv->gck, 12000000 * 33);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "failed to set gck");
+		return -EINVAL;
+	}
 
 	host = sdhci_pltfm_init(pdev, soc_data, 0);
 	if (IS_ERR(host))
@@ -57,8 +86,9 @@ static int sdhci_at91_probe(struct platform_device *pdev)
 	pltfm_host = sdhci_priv(host);
 	pltfm_host->priv = priv;
 
-	if (!IS_ERR(priv->clk))
-		clk_prepare_enable(priv->clk);
+	clk_prepare_enable(priv->mainck);
+	clk_prepare_enable(priv->hclock);
+	clk_prepare_enable(priv->gck);
 
 	ret = mmc_of_parse(host->mmc);
 	if (ret)
@@ -71,8 +101,9 @@ static int sdhci_at91_probe(struct platform_device *pdev)
 	return 0;
 
 err_sdhci_add:
-	if (!IS_ERR(priv->clk))
-		clk_disable_unprepare(priv->clk);
+	clk_disable_unprepare(priv->gck);
+	clk_disable_unprepare(priv->hclock);
+	clk_disable_unprepare(priv->mainck);
 	sdhci_pltfm_free(pdev);
 	return ret;
 }
@@ -85,8 +116,9 @@ static int sdhci_at91_remove(struct platform_device *pdev)
 
 	sdhci_pltfm_unregister(pdev);
 
-	if (!IS_ERR(priv->clk))
-		clk_disable_unprepare(priv->clk);
+	clk_disable_unprepare(priv->gck);
+	clk_disable_unprepare(priv->hclock);
+	clk_disable_unprepare(priv->mainck);
 
 	return 0;
 }
