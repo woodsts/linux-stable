@@ -268,7 +268,8 @@
 			compatible = "atmel,sama5d2-sdhci";
 			reg = <0xa0000000 0x100>;
 			interrupts = <31 IRQ_TYPE_LEVEL_HIGH 0>;
-			clocks = <&sdmmc0_clk>;
+			clocks = <&sdmmc0_hclk>, <&sdmmc0_gclk>, <&main>;
+			clock-names = "hclock", "multclk", "baseclk";
 			status = "disabled";
 		};
 
@@ -276,7 +277,8 @@
 			compatible = "atmel,sama5d2-sdhci";
 			reg = <0xb0000000 0x100>;
 			interrupts = <32 IRQ_TYPE_LEVEL_HIGH 0>;
-			clocks = <&sdmmc1_clk>;
+			clocks = <&sdmmc1_hclk>, <&sdmmc1_gclk>, <&main>;
+			clock-names = "hclock", "multclk", "baseclk";
 			status = "disabled";
 		};
 
@@ -310,14 +312,6 @@
 					compatible = "atmel,hlcdc-pwm";
 					#pwm-cells = <3>;
 				};
-			};
-
-			sdio1: sdio-host@a0000000 {
-				compatible = "atmel,sama5d2-sdhci";
-				reg = <0xa0000000 0x100>;
-				interrupts = <31 IRQ_TYPE_LEVEL_HIGH 0>;
-				clocks = <&mck>;
-				bus-width = <8>;
 			};
 
 			ramc0: ramc@f000c000 {
@@ -682,12 +676,12 @@
 						reg = <15>;
 					};
 
-					sdmmc0_clk: sdmmc0_clk {
+					sdmmc0_hclk: sdmmc0_hclk {
 						#clock-cells = <0>;
 						reg = <31>;
 					};
 
-					sdmmc1_clk: sdmmc1_clk {
+					sdmmc1_hclk: sdmmc1_hclk {
 						#clock-cells = <0>;
 						reg = <32>;
 					};
@@ -709,6 +703,18 @@
 					#size-cells = <0>;
 					interrupt-parent = <&pmc>;
 					clocks = <&clk32k>, <&main>, <&plladiv>, <&utmi>, <&mck>;
+
+					sdmmc0_gclk: sdmmc0_gclk {
+						#clock-cells = <0>;
+						reg = <31>;
+						atmel,clk-output-range = <0 396000000>;
+					};
+
+					sdmmc1_gclk: sdmmc1_gclk {
+						#clock-cells = <0>;
+						reg = <32>;
+						atmel,clk-output-range = <0 396000000>;
+					};
 
 					tcb0_gclk: tcb0_gclk {
 						#clock-cells = <0>;
