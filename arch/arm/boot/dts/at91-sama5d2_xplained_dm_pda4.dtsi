@@ -46,8 +46,12 @@
 / {
 	ahb {
 		apb {
-			/*
-			i2c1: i2c@f8014000 {
+			i2c1: i2c@fc028000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c1_default>;
+				status = "okay";
+
+/*
 				qt1070: keyboard@1b {
 					compatible = "qt1070";
 					reg = <0x1b>;
@@ -66,8 +70,8 @@
 					pinctrl-names = "default";
 					pinctrl-0 = <&pinctrl_mxt_ts>;
 				};
+*/
 			};
-			*/
 
 			hlcdc: hlcdc@f0000000 {
 				status = "okay";
@@ -122,6 +126,11 @@
 						       <PIN_PC25__LCDDAT21>,
 						       <PIN_PC26__LCDDAT22>,
 						       <PIN_PC27__LCDDAT23>;
+					};
+
+					i2c1_0 {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
 					};
 				};
 
@@ -178,6 +187,18 @@
 						       <PIN_PC25__LCDDAT21>,
 						       <PIN_PC26__LCDDAT22>,
 						       <PIN_PC27__LCDDAT23>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_i2c1_default: i2c1_default {
+					mux {
+						function = "A";
+						groups = "i2c1_0";
+					};
+
+					conf {
+						group = "i2c1_0";
 						bias-disable;
 					};
 				};
