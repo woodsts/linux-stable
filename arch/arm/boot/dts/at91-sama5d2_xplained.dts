@@ -79,17 +79,20 @@
 
 	ahb {
 		usb0: gadget@00300000 {
-			/* TODO: add atmel,vbus-gpio property */
-			/*pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_usba_vbus>;*/
+			atmel,vbus-gpio = <&pioA 31 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usba_vbus>;
 			status = "okay";
 		};
 
 		usb1: ohci@00400000 {
 			num-ports = <3>;
-			/* TODO: add atmel,vbus-gpio property */
-			/*pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_usb_default>;*/
+			atmel,vbus-gpio = <0 /* &pioA 41 GPIO_ACTIVE_HIGH */
+					   &pioA 42 GPIO_ACTIVE_HIGH
+					   0
+					  >;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usb_default>;
 			status = "okay";
 		};
 
@@ -165,6 +168,16 @@
 					uart3_0 {
 						pins = <PIN_PB11__URXD3>,
 						       <PIN_PB12__UTXD3>;
+					};
+
+					usb_0 {
+						pins = /*<PIN_PB9>,*/
+						       <PIN_PB10>;
+					};
+
+					usba_0 {
+						pins = <PIN_PA31>,
+						       <PIN_PB9>;
 					};
 				};
 
@@ -250,6 +263,37 @@
 
 					conf {
 						group = "uart3_0";
+						bias-disable;
+					};
+				};
+
+				pinctrl_usb_default: usb_default {
+					mux {
+						function = "GPIO";
+						groups = "usb_0";
+					};
+
+					conf {
+						pins = /*<PIN_PB9>,*/
+						       <PIN_PB10>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_usba_vbus: usba_vbus {
+					mux {
+						function = "GPIO";
+						groups = "usba_0";
+					};
+
+					conf-vbus_input {
+						pins = <PIN_PB9>;
+						bias-disable;
+						output-low;
+					};
+
+					conf-vbus_irq {
+						pins = <PIN_PA31>;
 						bias-disable;
 					};
 				};
