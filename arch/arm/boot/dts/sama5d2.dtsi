@@ -526,6 +526,36 @@
 						atmel,clk-output-range = <0 83000000>;
 					};
 
+					flx0_clk: flx0_clk {
+						#clock-cells = <0>;
+						reg = <19>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx1_clk: flx1_clk {
+						#clock-cells = <0>;
+						reg = <20>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx2_clk: flx2_clk {
+						#clock-cells = <0>;
+						reg = <21>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx3_clk: flx3_clk {
+						#clock-cells = <0>;
+						reg = <22>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx4_clk: flx4_clk {
+						#clock-cells = <0>;
+						reg = <23>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
 					uart0_clk: uart0_clk {
 						#clock-cells = <0>;
 						reg = <24>;
@@ -838,6 +868,26 @@
 				status = "disabled";
 			};
 
+			flx0: flexcom@f8034000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xf8034000 0x200>;
+				clocks = <&flx0_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xf8034000 0x800>;
+				status = "disabled";
+			};
+
+			flx1: flexcom@f8038000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xf8038000 0x200>;
+				clocks = <&flx1_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xf8038000 0x800>;
+				status = "disabled";
+			};
+
 			pit: timer@f8048030 {
 				compatible = "atmel,at91sam9260-pit";
 				reg = <0xf8048030 0x10>;
@@ -886,6 +936,36 @@
 				interrupts = <28 IRQ_TYPE_LEVEL_HIGH 7>;
 				clocks = <&uart4_clk>;
 				clock-names = "usart";
+				status = "disabled";
+			};
+
+			flx2: flexcom@fc010000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xfc010000 0x200>;
+				clocks = <&flx2_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xfc010000 0x800>;
+				status = "disabled";
+			};
+
+			flx3: flexcom@fc014000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xfc014000 0x200>;
+				clocks = <&flx3_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xfc014000 0x800>;
+				status = "disabled";
+			};
+
+			flx4: flexcom@fc018000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xfc018000 0x200>;
+				clocks = <&flx4_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xfc018000 0x800>;
 				status = "disabled";
 			};
 
