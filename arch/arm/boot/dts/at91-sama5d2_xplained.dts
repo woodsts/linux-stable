@@ -116,6 +116,19 @@
 		};
 
 		apb {
+			spi0: spi@f8000000 {
+				dmas = <0>, <0>;	/* Do not use DMA */
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_spi0_default>;
+				status = "okay";
+
+				m25p80@0 {
+					compatible = "atmel,at25df321a";
+					reg = <0>;
+					spi-max-frequency = <50000000>;
+				};
+			};
+
 			uart1: serial@f8020000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart1_default>;
@@ -158,6 +171,13 @@
 						       <PIN_PA20__SDMMC1_DAT2>,
 						       <PIN_PA21__SDMMC1_DAT3>,
 						       <PIN_PA30__SDMMC1_CD>;
+					};
+
+					spi0_0 {
+						pins = <PIN_PA14__SPI0_SPCK>,
+						       <PIN_PA15__SPI0_MOSI>,
+						       <PIN_PA16__SPI0_MISO>,
+						       <PIN_PA17__SPI0_NPCS0>;
 					};
 
 					uart1_0 {
@@ -239,6 +259,21 @@
 					conf-ck_cd {
 						pins = <PIN_PA22__SDMMC1_CK>,
 						       <PIN_PA30__SDMMC1_CD>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_spi0_default: spi0_default {
+					mux {
+						function = "A";
+						groups = "spi0_0";
+					};
+
+					conf {
+						pins = <PIN_PA14__SPI0_SPCK>,
+						       <PIN_PA15__SPI0_MOSI>,
+						       <PIN_PA16__SPI0_MISO>,
+						       <PIN_PA17__SPI0_NPCS0>;
 						bias-disable;
 					};
 				};
