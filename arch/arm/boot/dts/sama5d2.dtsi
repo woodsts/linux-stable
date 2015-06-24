@@ -795,6 +795,25 @@
 				status = "disabled";
 			};
 
+			spi0: spi@f8000000 {
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xf8000000 0x100>;
+				interrupts = <33 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(6))>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(7))>;
+				dma-names = "tx", "rx";
+				clocks = <&spi0_clk>;
+				clock-names = "spi_clk";
+				atmel,fifo-size = <16>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				status = "disabled";
+			};
+
 			macb0: ethernet@f8008000 {
 				compatible = "cdns,pc302-gem", "cdns,gem";
 				reg = <0xf8008000 0x1000>;
@@ -919,6 +938,25 @@
 					#clock-cells = <0>;
 					clocks = <&slow_rc_osc &slow_osc>;
 				};
+			};
+
+			spi1: spi@fc000000 {
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xfc000000 0x100>;
+				interrupts = <34 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(8))>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(9))>;
+				dma-names = "tx", "rx";
+				clocks = <&spi1_clk>;
+				clock-names = "spi_clk";
+				atmel,fifo-size = <16>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				status = "disabled";
 			};
 
 			uart3: serial@fc008000 {
