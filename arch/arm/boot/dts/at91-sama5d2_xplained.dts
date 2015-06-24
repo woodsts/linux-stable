@@ -141,8 +141,26 @@
 				status = "okay";
 			};
 
+			i2c1: i2c@fc028000 {
+				dmas = <0>, <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c1_default>;
+				status = "okay";
+
+				at24@54 {
+					compatible = "atmel,24c02";
+					reg = <0x54>;
+					pagesize = <16>;
+				};
+			};
+
 			pinctrl@fc038000 {
 				group_defs {
+					i2c1_0 {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
+					};
+
 					key_gpio {
 						pins = <PIN_PB6>;
 					};
@@ -198,6 +216,19 @@
 					usba_0 {
 						pins = <PIN_PA31>,
 						       <PIN_PB9>;
+					};
+				};
+
+				pinctrl_i2c1_default: i2c1_default {
+					mux {
+						function = "A";
+						groups = "i2c1_0";
+					};
+
+					conf {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
+						bias-disable;
 					};
 				};
 
