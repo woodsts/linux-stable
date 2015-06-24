@@ -102,28 +102,51 @@ static u32 isi_readl(struct atmel_isi *isi, u32 reg)
 	return readl(isi->regs + reg);
 }
 
-static int configure_geometry(struct atmel_isi *isi, u32 width,
-			u32 height, u32 code)
+static u32 setup_cfg2_yuv_swap(struct atmel_isi *isi,
+	const struct soc_camera_format_xlate *xlate)
+{
+	/* By default, no swap for the codec path of Atmel ISI. So codec
+	 * ouput is same as sensor's output.
+	 * For instance, if sensor's output is YUYV, then codec outputs YUYV.
+	 * And if sensor's ouput is UYVY, then codec outputs UYVY.
+	 */
+	u32 cfg2_yuv_swap = ISI_CFG2_YCC_SWAP_DEFAULT;
+
+	if (xlate->host_fmt->fourcc == V4L2_PIX_FMT_YUYV) {
+		/* all convert to YUYV */
+		switch (xlate->code) {
+		case MEDIA_BUS_FMT_VYUY8_2X8:
+			cfg2_yuv_swap = ISI_CFG2_YCC_SWAP_MODE_3;
+			break;
+		case MEDIA_BUS_FMT_UYVY8_2X8:
+			cfg2_yuv_swap = ISI_CFG2_YCC_SWAP_MODE_2;
+			break;
+		case MEDIA_BUS_FMT_YVYU8_2X8:
+			cfg2_yuv_swap = ISI_CFG2_YCC_SWAP_MODE_1;
+			break;
+		}
+	}
+
+	return cfg2_yuv_swap;
+}
+
+static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
+		const struct soc_camera_format_xlate *xlate)
 {
 	u32 cfg2;
 
 	/* According to sensor's output format to set cfg2 */
-	switch (code) {
-	/* YUV, including grey */
+	switch (xlate->code) {
+	/* Grey */
 	case MEDIA_BUS_FMT_Y8_1X8:
 		cfg2 = ISI_CFG2_GRAYSCALE;
 		break;
+	/* YUV */
 	case MEDIA_BUS_FMT_VYUY8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_MODE_3;
-		break;
 	case MEDIA_BUS_FMT_UYVY8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_MODE_2;
-		break;
 	case MEDIA_BUS_FMT_YVYU8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_MODE_1;
-		break;
 	case MEDIA_BUS_FMT_YUYV8_2X8:
-		cfg2 = ISI_CFG2_YCC_SWAP_DEFAULT;
+		cfg2 = setup_cfg2_yuv_swap(isi, xlate);
 		break;
 	/* RGB, TODO */
 	default:
@@ -391,7 +414,7 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 	isi_writel(isi, ISI_INTDIS, (u32)~0UL);
 
 	ret = configure_geometry(isi, icd->user_width, icd->user_height,
-				icd->current_fmt->code);
+				icd->current_fmt);
 	if (ret < 0)
 		return ret;
 
