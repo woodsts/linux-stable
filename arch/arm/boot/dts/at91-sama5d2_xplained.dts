@@ -186,9 +186,8 @@
 						groups = "sdmmc0_0";
 					};
 
-					conf-cmd_data {
-						pins = <PIN_PA1__SDMMC0_CMD>,
-						       <PIN_PA2__SDMMC0_DAT0>,
+					conf-data {
+						pins = <PIN_PA2__SDMMC0_DAT0>,
 						       <PIN_PA3__SDMMC0_DAT1>,
 						       <PIN_PA4__SDMMC0_DAT2>,
 						       <PIN_PA5__SDMMC0_DAT3>,
@@ -199,8 +198,9 @@
 						bias-pull-up;
 					};
 
-					conf-ck_cd_rstn_vddsel {
-						pins = <PIN_PA0__SDMMC0_CK>,
+					conf-cmd_ck_cd_rstn_vddsel {
+						pins = <PIN_PA1__SDMMC0_CMD>,
+						       <PIN_PA0__SDMMC0_CK>,
 						       <PIN_PA10__SDMMC0_RSTN>,
 						       <PIN_PA11__SDMMC0_VDDSEL>;
 						       /*<PIN_PA13__SDMMC0_CD>;*/
