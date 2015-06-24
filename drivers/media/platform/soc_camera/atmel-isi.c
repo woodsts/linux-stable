@@ -168,7 +168,7 @@ static u32 setup_cfg2_yuv_swap(struct atmel_isi *isi,
 static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
 		const struct soc_camera_format_xlate *xlate)
 {
-	u32 cfg2;
+	u32 cfg2, psize;
 
 	/* According to sensor's output format to set cfg2 */
 	switch (xlate->code) {
@@ -196,6 +196,14 @@ static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
 	cfg2 |= ((height - 1) << ISI_CFG2_IM_VSIZE_OFFSET)
 			& ISI_CFG2_IM_VSIZE_MASK;
 	isi_writel(isi, ISI_CFG2, cfg2);
+
+	/* No down sampling, preview size equal to sensor output size */
+	psize = ((width - 1) << ISI_PSIZE_PREV_HSIZE_OFFSET) &
+		ISI_PSIZE_PREV_HSIZE_MASK;
+	psize |= ((height -1) << ISI_PSIZE_PREV_VSIZE_OFFSET) &
+		ISI_PSIZE_PREV_VSIZE_MASK;
+	isi_writel(isi, ISI_PSIZE, psize);
+	isi_writel(isi, ISI_PDECF, ISI_PDECF_NO_SAMPLING);
 
 	return 0;
 }
