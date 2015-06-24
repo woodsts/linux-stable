@@ -129,6 +129,13 @@
 				};
 			};
 
+			macb0: ethernet@f8008000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_macb0_rmii>;
+				phy-mode = "rmii";
+				status = "okay";
+			};
+
 			uart1: serial@f8020000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart1_default>;
@@ -163,6 +170,19 @@
 
 					key_gpio {
 						pins = <PIN_PB6>;
+					};
+
+					macb0_0 {
+						pins = <PIN_PB14__GTXCK>,
+						       <PIN_PB15__GTXEN>,
+						       <PIN_PB16__GRXDV>,
+						       <PIN_PB17__GRXER>,
+						       <PIN_PB18__GRX0>,
+						       <PIN_PB19__GRX1>,
+						       <PIN_PB20__GTX0>,
+						       <PIN_PB21__GTX1>,
+						       <PIN_PB22__GMDC>,
+						       <PIN_PB23__GMDIO>;
 					};
 
 					sdmmc0_0 {
@@ -241,6 +261,27 @@
 					conf {
 						pins = <PIN_PB6>;
 						bias-pull-up;
+					};
+				};
+
+				pinctrl_macb0_rmii: macb0_rmii {
+					mux {
+						function = "F";
+						groups = "macb0_0";
+					};
+
+					conf {
+						pins = <PIN_PB14__GTXCK>,
+						       <PIN_PB15__GTXEN>,
+						       <PIN_PB16__GRXDV>,
+						       <PIN_PB17__GRXER>,
+						       <PIN_PB18__GRX0>,
+						       <PIN_PB19__GRX1>,
+						       <PIN_PB20__GTX0>,
+						       <PIN_PB21__GTX1>,
+						       <PIN_PB22__GMDC>,
+						       <PIN_PB23__GMDIO>;
+						bias-disable;
 					};
 				};
 
