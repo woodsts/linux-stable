@@ -205,7 +205,11 @@ static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
 	case MEDIA_BUS_FMT_YUYV8_2X8:
 		cfg2 = setup_cfg2_yuv_swap(isi, xlate);
 		break;
-	/* RGB, TODO */
+	/* RGB */
+	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+		cfg2 = ISI_CFG2_COL_SPACE_RGB | ISI_CFG2_RGB_MODE_565 |
+			ISI_CFG2_RGB_CFG_DEFAULT;
+		break;
 	default:
 		return -EINVAL;
 	}
