@@ -115,6 +115,8 @@ struct atmel_isi {
 	struct				list_head dma_desc_head;
 	struct isi_dma_desc		dma_desc[MAX_BUFFER_NUM];
 	bool				enable_preview_path;
+	u32				sensor_orig_width;
+	u32				sensor_orig_height;
 
 	struct completion		complete;
 	/* ISI peripherial clock */
@@ -187,6 +189,8 @@ static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
 		const struct soc_camera_format_xlate *xlate)
 {
 	u32 cfg2, psize;
+	u32 factor = min(isi->sensor_orig_width * 16 / width,
+			isi->sensor_orig_height * 16 / height);
 
 	/* According to sensor's output format to set cfg2 */
 	switch (xlate->code) {
@@ -208,20 +212,19 @@ static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
 
 	isi_writel(isi, ISI_CTRL, ISI_CTRL_DIS);
 	/* Set width */
-	cfg2 |= ((width - 1) << ISI_CFG2_IM_HSIZE_OFFSET) &
+	cfg2 |= ((isi->sensor_orig_width - 1) << ISI_CFG2_IM_HSIZE_OFFSET) &
 			ISI_CFG2_IM_HSIZE_MASK;
 	/* Set height */
-	cfg2 |= ((height - 1) << ISI_CFG2_IM_VSIZE_OFFSET)
+	cfg2 |= ((isi->sensor_orig_height - 1) << ISI_CFG2_IM_VSIZE_OFFSET)
 			& ISI_CFG2_IM_VSIZE_MASK;
 	isi_writel(isi, ISI_CFG2, cfg2);
 
-	/* No down sampling, preview size equal to sensor output size */
 	psize = ((width - 1) << ISI_PSIZE_PREV_HSIZE_OFFSET) &
 		ISI_PSIZE_PREV_HSIZE_MASK;
 	psize |= ((height -1) << ISI_PSIZE_PREV_VSIZE_OFFSET) &
 		ISI_PSIZE_PREV_VSIZE_MASK;
 	isi_writel(isi, ISI_PSIZE, psize);
-	isi_writel(isi, ISI_PDECF, ISI_PDECF_NO_SAMPLING);
+	isi_writel(isi, ISI_PDECF, factor & ISI_PDECF_DEC_FACTOR_MASK);
 
 	return 0;
 }
@@ -620,6 +623,8 @@ static int isi_camera_set_fmt(struct soc_camera_device *icd,
 			      struct v4l2_format *f)
 {
 	struct v4l2_subdev *sd = soc_camera_to_subdev(icd);
+	struct soc_camera_host *ici = to_soc_camera_host(icd->parent);
+	struct atmel_isi *isi = ici->priv;
 	const struct soc_camera_format_xlate *xlate;
 	struct v4l2_pix_format *pix = &f->fmt.pix;
 	struct v4l2_mbus_framefmt mf;
@@ -652,8 +657,16 @@ static int isi_camera_set_fmt(struct soc_camera_device *icd,
 	if (mf.code != xlate->code)
 		return -EINVAL;
 
-	pix->width		= mf.width;
-	pix->height		= mf.height;
+	/* record original sensor size for preview path to do down sampling */
+	isi->sensor_orig_width = mf.width;
+	isi->sensor_orig_height = mf.height;
+
+	if (!is_output_rgb(xlate->host_fmt) ||
+			(pix->width > mf.width || pix->height > mf.height)) {
+		pix->width	= mf.width;
+		pix->height	= mf.height;
+	}
+
 	pix->field		= mf.field;
 	pix->colorspace		= mf.colorspace;
 	icd->current_fmt	= xlate;
@@ -701,8 +714,17 @@ static int isi_camera_try_fmt(struct soc_camera_device *icd,
 	if (ret < 0)
 		return ret;
 
-	pix->width	= mf.width;
-	pix->height	= mf.height;
+	/*
+	 * In following cases, we use sensor output size:
+	 *   1. Not in preview path
+	 *   2. In preview path, pix->width/height > sensor's width/height
+	 * otherwise, we can keep pix-width/height for down sampling.
+	 */
+	if (!is_output_rgb(xlate->host_fmt) ||
+			(pix->width > mf.width || pix->height > mf.height)) {
+		pix->width	= mf.width;
+		pix->height	= mf.height;
+	}
 
 	/* for preview path, the max height & width is VGA. */
 	if (is_output_rgb(xlate->host_fmt)) {
