@@ -31,6 +31,7 @@ struct at91_pio4_gpio_desc {
 };
 
 struct at91_gpio_soc_config {
+	const char *pinctrl_dev_name;
 	unsigned int ngroups;
 };
 
@@ -159,8 +160,8 @@ static int at91_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
 
 static struct gpio_chip pio4_gpio_chip = {
 	.label			= "at91-gpio",
-	//.request		= at91_gpio_request,
-	//.free			= at91_gpio_free,
+	.request		= at91_gpio_request,
+	.free			= at91_gpio_free,
 	.direction_input	= at91_gpio_direction_input,
 	.get			= at91_gpio_get,
 	.direction_output	= at91_gpio_direction_output,
@@ -194,6 +195,7 @@ static void at91_gpio_irq_handler(unsigned int irq, struct irq_desc *desc)
 }
 
 static struct at91_gpio_soc_config at91_gpio_sama5d2_config = {
+	.pinctrl_dev_name = "ahb:apb:pinctrl@fc038000",
 	.ngroups = 4,
 };
 
@@ -308,34 +310,56 @@ static int at91_gpio_probe(struct platform_device *pdev)
 	ret = clk_prepare_enable(clk);
 	if (ret) {
 		dev_err(dev, "failed to prepare and enable clock\n");
-		irq_domain_remove(irq_domain);
-		return ret;
+		goto irq_domain_remove;
 	}
 
 	ret = gpiochip_add(&pio4_gpio_chip);
 	if (ret) {
 		dev_err(dev, "failed to add gpiochip\n");
-		irq_domain_remove(irq_domain);
-		clk_disable_unprepare(clk);
-		return ret;
+		goto clk_disable_unprepare;
 	}
 
-	dev_info(dev, "at91 pio4 gpio driver: %u groups, %d pins\n",
+	ret = gpiochip_add_pin_range(&pio4_gpio_chip, config->pinctrl_dev_name,
+				     0, 0, pio4_gpio_chip.ngpio);
+	if (ret) {
+		dev_err(dev, "failed to add gpio pin range\n");
+		goto gpiochip_remove;
+	}
+
+	dev_info(dev, "%u groups, %d pins\n",
 		 config->ngroups, pio4_gpio_chip.ngpio);
+	return 0;
+
+gpiochip_remove:
+	gpiochip_remove(&pio4_gpio_chip);
+clk_disable_unprepare:
+	clk_disable_unprepare(clk);
+irq_domain_remove:
+	irq_domain_remove(irq_domain);
+	return ret;
+}
+
+static int at91_gpio_remove(struct platform_device *pdev)
+{
+	gpiochip_remove_pin_ranges(&pio4_gpio_chip);
+	gpiochip_remove(&pio4_gpio_chip);
+	clk_disable_unprepare(clk);
+	irq_domain_remove(irq_domain);
+
 	return 0;
 }
 
 static struct platform_driver at91_gpio_driver = {
 	.driver	= {
-		.name		= "at91-gpio",
+		.name		= "at91-gpio-pio4",
 		.owner		= THIS_MODULE,
 		.of_match_table	= at91_gpio_of_match,
 	},
 	.probe	= at91_gpio_probe,
+	.remove = at91_gpio_remove,
 };
+module_platform_driver(at91_gpio_driver);
 
-static int __init at91_gpio_init(void)
-{
-	return platform_driver_register(&at91_gpio_driver);
-}
-postcore_initcall(at91_gpio_init);
+MODULE_AUTHOR(Ludovic Desroches <ludovic.desroches@atmel.com>);
+MODULE_DESCRIPTION("Atmel PIO4 GPIO driver");
+MODULE_LICENSE("GPL v2");
