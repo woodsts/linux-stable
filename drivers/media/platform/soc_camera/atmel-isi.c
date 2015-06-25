@@ -32,6 +32,8 @@
 #define MAX_BUFFER_NUM			32
 #define MAX_SUPPORT_WIDTH		2048
 #define MAX_SUPPORT_HEIGHT		2048
+#define MAX_PREVIEW_SUPPORT_WIDTH	640
+#define MAX_PREVIEW_SUPPORT_HEIGHT	480
 #define VID_LIMIT_BYTES			(16 * 1024 * 1024)
 #define MIN_FRAME_RATE			15
 #define FRAME_INTERVAL_MILLI_SEC	(1000 / MIN_FRAME_RATE)
@@ -701,6 +703,13 @@ static int isi_camera_try_fmt(struct soc_camera_device *icd,
 
 	pix->width	= mf.width;
 	pix->height	= mf.height;
+
+	/* for preview path, the max height & width is VGA. */
+	if (is_output_rgb(xlate->host_fmt)) {
+		pix->width = min((u32)MAX_PREVIEW_SUPPORT_WIDTH, pix->width);
+		pix->height = min((u32)MAX_PREVIEW_SUPPORT_HEIGHT, pix->height);
+	}
+
 	pix->colorspace	= mf.colorspace;
 
 	switch (mf.field) {
