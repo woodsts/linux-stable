@@ -177,6 +177,30 @@ static int __soc_camera_power_off(struct soc_camera_device *icd)
 	return 0;
 }
 
+static int soc_camera_clock_start(struct soc_camera_host *ici)
+{
+	int ret;
+
+	if (!ici->ops->clock_start)
+		return 0;
+
+	mutex_lock(&ici->clk_lock);
+	ret = ici->ops->clock_start(ici);
+	mutex_unlock(&ici->clk_lock);
+
+	return ret;
+}
+
+static void soc_camera_clock_stop(struct soc_camera_host *ici)
+{
+	if (!ici->ops->clock_stop)
+		return;
+
+	mutex_lock(&ici->clk_lock);
+	ici->ops->clock_stop(ici);
+	mutex_unlock(&ici->clk_lock);
+}
+
 const struct soc_camera_format_xlate *soc_camera_xlate_by_fourcc(
 	struct soc_camera_device *icd, unsigned int fourcc)
 {
@@ -584,9 +608,7 @@ static int soc_camera_add_device(struct soc_camera_device *icd)
 		return -EBUSY;
 
 	if (!icd->clk) {
-		mutex_lock(&ici->clk_lock);
-		ret = ici->ops->clock_start(ici);
-		mutex_unlock(&ici->clk_lock);
+		ret = soc_camera_clock_start(ici);
 		if (ret < 0)
 			return ret;
 	}
@@ -602,11 +624,8 @@ static int soc_camera_add_device(struct soc_camera_device *icd)
 	return 0;
 
 eadd:
-	if (!icd->clk) {
-		mutex_lock(&ici->clk_lock);
-		ici->ops->clock_stop(ici);
-		mutex_unlock(&ici->clk_lock);
-	}
+	if (!icd->clk)
+		soc_camera_clock_stop(ici);
 	return ret;
 }
 
@@ -619,11 +638,8 @@ static void soc_camera_remove_device(struct soc_camera_device *icd)
 
 	if (ici->ops->remove)
 		ici->ops->remove(icd);
-	if (!icd->clk) {
-		mutex_lock(&ici->clk_lock);
-		ici->ops->clock_stop(ici);
-		mutex_unlock(&ici->clk_lock);
-	}
+	if (!icd->clk)
+		soc_camera_clock_stop(ici);
 	ici->icd = NULL;
 }
 
@@ -1196,7 +1212,6 @@ static int soc_camera_clk_enable(struct v4l2_clk *clk)
 {
 	struct soc_camera_device *icd = clk->priv;
 	struct soc_camera_host *ici;
-	int ret;
 
 	if (!icd || !icd->parent)
 		return -ENODEV;
@@ -1210,10 +1225,7 @@ static int soc_camera_clk_enable(struct v4l2_clk *clk)
 	 * If a different client is currently being probed, the host will tell
 	 * you to go
 	 */
-	mutex_lock(&ici->clk_lock);
-	ret = ici->ops->clock_start(ici);
-	mutex_unlock(&ici->clk_lock);
-	return ret;
+	return soc_camera_clock_start(ici);
 }
 
 static void soc_camera_clk_disable(struct v4l2_clk *clk)
@@ -1226,9 +1238,7 @@ static void soc_camera_clk_disable(struct v4l2_clk *clk)
 
 	ici = to_soc_camera_host(icd->parent);
 
-	mutex_lock(&ici->clk_lock);
-	ici->ops->clock_stop(ici);
-	mutex_unlock(&ici->clk_lock);
+	soc_camera_clock_stop(ici);
 
 	module_put(ici->ops->owner);
 }
@@ -1382,7 +1392,7 @@ static int soc_camera_i2c_init(struct soc_camera_device *icd,
 	snprintf(clk_name, sizeof(clk_name), "%d-%04x",
 		 shd->i2c_adapter_id, shd->board_info->addr);
 
-	icd->clk = v4l2_clk_register(&soc_camera_clk_ops, clk_name, "mclk", icd);
+	icd->clk = v4l2_clk_register(&soc_camera_clk_ops, clk_name, icd);
 	if (IS_ERR(icd->clk)) {
 		ret = PTR_ERR(icd->clk);
 		goto eclkreg;
@@ -1563,7 +1573,7 @@ static int scan_async_group(struct soc_camera_host *ici,
 	snprintf(clk_name, sizeof(clk_name), "%d-%04x",
 		 sasd->asd.match.i2c.adapter_id, sasd->asd.match.i2c.address);
 
-	icd->clk = v4l2_clk_register(&soc_camera_clk_ops, clk_name, "mclk", icd);
+	icd->clk = v4l2_clk_register(&soc_camera_clk_ops, clk_name, icd);
 	if (IS_ERR(icd->clk)) {
 		ret = PTR_ERR(icd->clk);
 		goto eclkreg;
@@ -1668,7 +1678,7 @@ static int soc_of_bind(struct soc_camera_host *ici,
 		snprintf(clk_name, sizeof(clk_name), "of-%s",
 			 of_node_full_name(remote));
 
-	icd->clk = v4l2_clk_register(&soc_camera_clk_ops, clk_name, "mclk", icd);
+	icd->clk = v4l2_clk_register(&soc_camera_clk_ops, clk_name, icd);
 	if (IS_ERR(icd->clk)) {
 		ret = PTR_ERR(icd->clk);
 		goto eclkreg;
@@ -1677,13 +1687,15 @@ static int soc_of_bind(struct soc_camera_host *ici,
 	ret = v4l2_async_notifier_register(&ici->v4l2_dev, &sasc->notifier);
 	if (!ret)
 		return 0;
+
+	v4l2_clk_unregister(icd->clk);
 eclkreg:
 	icd->clk = NULL;
 	platform_device_del(sasc->pdev);
 eaddpdev:
 	platform_device_put(sasc->pdev);
 eallocpdev:
-	devm_kfree(ici->v4l2_dev.dev, sasc);
+	devm_kfree(ici->v4l2_dev.dev, info);
 	dev_err(ici->v4l2_dev.dev, "group probe failed: %d\n", ret);
 
 	return ret;
@@ -1761,9 +1773,7 @@ static int soc_camera_probe(struct soc_camera_host *ici,
 		ret = -EINVAL;
 		goto eadd;
 	} else {
-		mutex_lock(&ici->clk_lock);
-		ret = ici->ops->clock_start(ici);
-		mutex_unlock(&ici->clk_lock);
+		ret = soc_camera_clock_start(ici);
 		if (ret < 0)
 			goto eadd;
 
@@ -1803,9 +1813,7 @@ efinish:
 		module_put(control->driver->owner);
 enodrv:
 eadddev:
-		mutex_lock(&ici->clk_lock);
-		ici->ops->clock_stop(ici);
-		mutex_unlock(&ici->clk_lock);
+		soc_camera_clock_stop(ici);
 	}
 eadd:
 	video_device_release(icd->vdev);
@@ -1933,8 +1941,6 @@ int soc_camera_host_register(struct soc_camera_host *ici)
 	    ((!ici->ops->init_videobuf ||
 	      !ici->ops->reqbufs) &&
 	     !ici->ops->init_videobuf2) ||
-	    !ici->ops->clock_start ||
-	    !ici->ops->clock_stop ||
 	    !ici->ops->poll ||
 	    !ici->v4l2_dev.dev)
 		return -EINVAL;
