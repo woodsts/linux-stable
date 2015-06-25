@@ -279,4 +279,20 @@
 			linux,code = <0x104>;
 		};
 	};
+
+	leds {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		green {
+			label = "green";
+			gpios = <&pioA 37 GPIO_ACTIVE_LOW>;
+		};
+
+		blue {
+			label = "blue";
+			gpios = <&pioA 32 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+		};
+	};
 };
