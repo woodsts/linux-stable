@@ -125,6 +125,10 @@
 				status = "okay";
 			};
 
+			watchdog@f8048040 {
+				status = "okay";
+			};
+
 			uart3: serial@fc008000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart3_default>;
