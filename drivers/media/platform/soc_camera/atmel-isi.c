@@ -772,6 +772,26 @@ static const struct soc_mbus_pixelfmt isi_camera_formats[] = {
 	},
 };
 
+/* When sensor output RGB565, ISI can get following formats */
+static const struct soc_mbus_pixelfmt isi_camera_formats_rgb[] = {
+	{
+		.fourcc			= V4L2_PIX_FMT_UYVY,
+		.name			= "Packed YUV422 16 bit",
+		.bits_per_sample	= 8,
+		.packing		= SOC_MBUS_PACKING_2X8_PADHI,
+		.order			= SOC_MBUS_ORDER_LE,
+		.layout			= SOC_MBUS_LAYOUT_PACKED,
+	},
+	{
+		.fourcc			= V4L2_PIX_FMT_RGB565,
+		.name			= "RGB565",
+		.bits_per_sample	= 8,
+		.packing		= SOC_MBUS_PACKING_2X8_PADHI,
+		.order			= SOC_MBUS_ORDER_LE,
+		.layout			= SOC_MBUS_LAYOUT_PACKED,
+	},
+};
+
 /* This will be corrected as we get more formats */
 static bool isi_camera_packing_supported(const struct soc_mbus_pixelfmt *fmt)
 {
@@ -863,7 +883,20 @@ static int isi_camera_get_formats(struct soc_camera_device *icd,
 			if (xlate) {
 				xlate->host_fmt	= &isi_camera_formats[i];
 				xlate->code	= code;
-				dev_dbg(icd->parent, "Providing format %s (%s)\n",
+				dev_dbg(icd->parent, "Providing format %s (%s) when sensor output YUV\n",
+					xlate->host_fmt->name, mbus_fmt_string(xlate->code));
+				xlate++;
+			}
+		}
+		break;
+	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+		n = ARRAY_SIZE(isi_camera_formats_rgb);
+		formats += n;
+		for (i = 0; i < n; i++) {
+			if (xlate) {
+				xlate->host_fmt	= &isi_camera_formats_rgb[i];
+				xlate->code	= code;
+				dev_dbg(icd->parent, "Providing format %s (%s) when sensor output RGB565\n",
 					xlate->host_fmt->name, mbus_fmt_string(xlate->code));
 				xlate++;
 			}
