@@ -646,6 +646,11 @@ static const struct regval_list ov2643_yuv_vga[]= {
 	{0xFF, 0xFF},
 };
 
+static u32 ov2643_codes[] = {
+	MEDIA_BUS_FMT_UYVY8_2X8,
+	MEDIA_BUS_FMT_RGB565_2X8_LE,
+};
+
 static const struct ov2640_win_size ov2643_supported_win_sizes[] = {
 	OV2640_SIZE("VGA", VGA_WIDTH, VGA_HEIGHT, ov2643_yuv_vga),
 	OV2640_SIZE("SWVGA", XGA_WIDTH, SVGA_HEIGHT, ov2643_yuv_swvga),

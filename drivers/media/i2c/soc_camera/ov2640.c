@@ -1039,20 +1039,21 @@ static int ov2640_enum_fmt(struct v4l2_subdev *sd, unsigned int index,
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov2640_priv *priv = to_ov2640(client);
 
-	if (priv->model == MODEL_OV2643) {
-		/* OV2643 only support UYVY format */
-		if (index > 0)
-			return -EINVAL;
+	int support_fmt_num;
+	u32 *support_codes;
 
-		*code = MEDIA_BUS_FMT_UYVY8_2X8;
-		return 0;
+	if (priv->model == MODEL_OV2643) {
+		support_fmt_num = ARRAY_SIZE(ov2643_codes);
+		support_codes = ov2643_codes;
+	} else {
+		support_fmt_num = ARRAY_SIZE(ov2640_codes);
+		support_codes = ov2640_codes;
 	}
 
-	/* OV2640 */
-	if (index >= ARRAY_SIZE(ov2640_codes))
+	if (index >= support_fmt_num)
 		return -EINVAL;
 
-	*code = ov2640_codes[index];
+	*code = support_codes[index];
 	return 0;
 }
 
