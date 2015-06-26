@@ -821,6 +821,23 @@
 				status = "disabled";
 			};
 
+			i2c0: i2c@f8028000 {
+				compatible = "atmel,sama5d2-i2c";
+				reg = <0xf8028000 0x100>;
+				interrupts = <29 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
+					| AT91_XDMAC_DT_PERID(0))>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
+					| AT91_XDMAC_DT_PERID(1))>;
+				dma-names = "tx", "rx";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&twi0_clk>;
+				status = "disabled";
+			};
+
 			pit: timer@f8048030 {
 				compatible = "atmel,at91sam9260-pit";
 				reg = <0xf8048030 0x10>;
@@ -872,21 +889,12 @@
 				status = "disabled";
 			};
 
-			i2c0: i2c@f8028000 {
-				compatible = "atmel,sama5d2-i2c";
-				reg = <0xf8028000 0x100>;
-				interrupts = <29 IRQ_TYPE_LEVEL_HIGH 7>;
-				dmas = <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
-					| AT91_XDMAC_DT_PERID(0))>,
-				       <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
-					| AT91_XDMAC_DT_PERID(1))>;
-				dma-names = "tx", "rx";
-				#address-cells = <1>;
-				#size-cells = <0>;
-				clocks = <&twi0_clk>;
-				status = "disabled";
+			aic: interrupt-controller@fc020000 {
+				#interrupt-cells = <3>;
+				compatible = "atmel,sama5d4-aic";
+				interrupt-controller;
+				reg = <0xfc020000 0x200>;
+				atmel,external-irqs = <49>;
 			};
 
 			i2c1: i2c@fc028000 {
@@ -904,14 +912,6 @@
 				#size-cells = <0>;
 				clocks = <&twi1_clk>;
 				status = "disabled";
-			};
-
-			aic: interrupt-controller@fc020000 {
-				#interrupt-cells = <3>;
-				compatible = "atmel,sama5d4-aic";
-				interrupt-controller;
-				reg = <0xfc020000 0x200>;
-				atmel,external-irqs = <49>;
 			};
 
 			pio_reg: syscon@fc038000 {
