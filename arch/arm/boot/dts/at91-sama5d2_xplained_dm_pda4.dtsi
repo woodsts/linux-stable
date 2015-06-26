@@ -46,6 +46,27 @@
 / {
 	ahb {
 		apb {
+			hlcdc: hlcdc@f0000000 {
+				status = "okay";
+
+				hlcdc-display-controller {
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_lcd_base &pinctrl_lcd_rgb666>;
+
+					port@0 {
+						hlcdc_panel_output: endpoint@0 {
+							reg = <0>;
+							remote-endpoint = <&panel_input>;
+						};
+					};
+				};
+
+				hlcdc_pwm: hlcdc-pwm {
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_lcd_pwm>;
+				};
+			};
+
 			i2c1: i2c@fc028000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_i2c1_default>;
@@ -73,29 +94,13 @@
 */
 			};
 
-			hlcdc: hlcdc@f0000000 {
-				status = "okay";
-
-				hlcdc-display-controller {
-					pinctrl-names = "default";
-					pinctrl-0 = <&pinctrl_lcd_base &pinctrl_lcd_rgb666>;
-
-					port@0 {
-						hlcdc_panel_output: endpoint@0 {
-							reg = <0>;
-							remote-endpoint = <&panel_input>;
-						};
-					};
-				};
-
-				hlcdc_pwm: hlcdc-pwm {
-					pinctrl-names = "default";
-					pinctrl-0 = <&pinctrl_lcd_pwm>;
-				};
-			};
-
 			pinctrl@fc038000 {
 				group_defs {
+					i2c1_0 {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
+					};
+
 					lcd_base_0 {
 						pins = <PIN_PC30__LCDVSYNC>,	/* LCDVSYNC */
 						       <PIN_PC31__LCDHSYNC>,	/* LCDHSYNC */
@@ -127,10 +132,17 @@
 						       <PIN_PC26__LCDDAT22>,
 						       <PIN_PC27__LCDDAT23>;
 					};
+				};
 
-					i2c1_0 {
-						pins = <PIN_PD4__TWD1>,
-						       <PIN_PD5__TWCK1>;
+				pinctrl_i2c1_default: i2c1_default {
+					mux {
+						function = "A";
+						groups = "i2c1_0";
+					};
+
+					conf {
+						group = "i2c1_0";
+						bias-disable;
 					};
 				};
 
@@ -187,18 +199,6 @@
 						       <PIN_PC25__LCDDAT21>,
 						       <PIN_PC26__LCDDAT22>,
 						       <PIN_PC27__LCDDAT23>;
-						bias-disable;
-					};
-				};
-
-				pinctrl_i2c1_default: i2c1_default {
-					mux {
-						function = "A";
-						groups = "i2c1_0";
-					};
-
-					conf {
-						group = "i2c1_0";
 						bias-disable;
 					};
 				};
