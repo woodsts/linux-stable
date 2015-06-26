@@ -79,17 +79,20 @@
 
 	ahb {
 		usb0: gadget@00300000 {
-			/* TODO: add atmel,vbus-gpio property */
-			/*pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_usba_vbus>;*/
+			atmel,vbus-gpio = <&pioA 31 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usba_vbus>;
 			status = "okay";
 		};
 
 		usb1: ohci@00400000 {
 			num-ports = <3>;
-			/* TODO: add atmel,vbus-gpio property */
-			/*pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_usb_default>;*/
+			atmel,vbus-gpio = <0 /* &pioA 41 GPIO_ACTIVE_HIGH */
+					   &pioA 42 GPIO_ACTIVE_HIGH
+					   0
+					  >;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usb_default>;
 			status = "okay";
 		};
 
@@ -113,7 +116,22 @@
 		};
 
 		apb {
+			spi0: spi@f8000000 {
+				dmas = <0>, <0>;	/* Do not use DMA */
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_spi0_default>;
+				status = "okay";
+
+				m25p80@0 {
+					compatible = "atmel,at25df321a";
+					reg = <0>;
+					spi-max-frequency = <50000000>;
+				};
+			};
+
 			macb0: ethernet@f8008000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_macb0_rmii>;
 				phy-mode = "rmii";
 				status = "okay";
 			};
@@ -130,10 +148,41 @@
 				status = "okay";
 			};
 
+			i2c1: i2c@fc028000 {
+				dmas = <0>, <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c1_default>;
+				status = "okay";
+
+				at24@54 {
+					compatible = "atmel,24c02";
+					reg = <0x54>;
+					pagesize = <16>;
+				};
+			};
+
 			pinctrl@fc038000 {
 				group_defs {
+					i2c1_0 {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
+					};
+
 					key_gpio {
 						pins = <PIN_PB6>;
+					};
+
+					macb0_0 {
+						pins = <PIN_PB14__GTXCK>,
+						       <PIN_PB15__GTXEN>,
+						       <PIN_PB16__GRXDV>,
+						       <PIN_PB17__GRXER>,
+						       <PIN_PB18__GRX0>,
+						       <PIN_PB19__GRX1>,
+						       <PIN_PB20__GTX0>,
+						       <PIN_PB21__GTX1>,
+						       <PIN_PB22__GMDC>,
+						       <PIN_PB23__GMDIO>;
 					};
 
 					sdmmc0_0 {
@@ -162,6 +211,13 @@
 						       <PIN_PA30__SDMMC1_CD>;
 					};
 
+					spi0_0 {
+						pins = <PIN_PA14__SPI0_SPCK>,
+						       <PIN_PA15__SPI0_MOSI>,
+						       <PIN_PA16__SPI0_MISO>,
+						       <PIN_PA17__SPI0_NPCS0>;
+					};
+
 					uart1_0 {
 						pins = <PIN_PD2__URXD1>,
 						       <PIN_PD3__UTXD1>;
@@ -170,6 +226,16 @@
 					uart3_0 {
 						pins = <PIN_PB11__URXD3>,
 						       <PIN_PB12__UTXD3>;
+					};
+
+					usb_0 {
+						pins = /*<PIN_PB9>,*/
+						       <PIN_PB10>;
+					};
+
+					usba_0 {
+						pins = <PIN_PA31>,
+						       <PIN_PB9>;
 					};
 				};
 
@@ -185,15 +251,35 @@
 					};
 				};
 
+				pinctrl_macb0_rmii: macb0_rmii {
+					mux {
+						function = "F";
+						groups = "macb0_0";
+					};
+
+					conf {
+						pins = <PIN_PB14__GTXCK>,
+						       <PIN_PB15__GTXEN>,
+						       <PIN_PB16__GRXDV>,
+						       <PIN_PB17__GRXER>,
+						       <PIN_PB18__GRX0>,
+						       <PIN_PB19__GRX1>,
+						       <PIN_PB20__GTX0>,
+						       <PIN_PB21__GTX1>,
+						       <PIN_PB22__GMDC>,
+						       <PIN_PB23__GMDIO>;
+						bias-disable;
+					};
+				};
+
 				pinctrl_sdmmc0_default: sdmmc0_default {
 					mux {
 						function = "A";
 						groups = "sdmmc0_0";
 					};
 
-					conf-cmd_data {
-						pins = <PIN_PA1__SDMMC0_CMD>,
-						       <PIN_PA2__SDMMC0_DAT0>,
+					conf-data {
+						pins = <PIN_PA2__SDMMC0_DAT0>,
 						       <PIN_PA3__SDMMC0_DAT1>,
 						       <PIN_PA4__SDMMC0_DAT2>,
 						       <PIN_PA5__SDMMC0_DAT3>,
@@ -204,8 +290,9 @@
 						bias-pull-up;
 					};
 
-					conf-ck_cd_rstn_vddsel {
-						pins = <PIN_PA0__SDMMC0_CK>,
+					conf-cmd_ck_cd_rstn_vddsel {
+						pins = <PIN_PA1__SDMMC0_CMD>,
+						       <PIN_PA0__SDMMC0_CK>,
 						       <PIN_PA10__SDMMC0_RSTN>,
 						       <PIN_PA11__SDMMC0_VDDSEL>;
 						       /*<PIN_PA13__SDMMC0_CD>;*/
@@ -235,6 +322,21 @@
 					};
 				};
 
+				pinctrl_spi0_default: spi0_default {
+					mux {
+						function = "A";
+						groups = "spi0_0";
+					};
+
+					conf {
+						pins = <PIN_PA14__SPI0_SPCK>,
+						       <PIN_PA15__SPI0_MOSI>,
+						       <PIN_PA16__SPI0_MISO>,
+						       <PIN_PA17__SPI0_NPCS0>;
+						bias-disable;
+					};
+				};
+
 				pinctrl_uart1_default: uart1_default {
 					mux {
 						function = "A";
@@ -255,6 +357,50 @@
 
 					conf {
 						group = "uart3_0";
+						bias-disable;
+					};
+				};
+
+				pinctrl_usb_default: usb_default {
+					mux {
+						function = "GPIO";
+						groups = "usb_0";
+					};
+
+					conf {
+						pins = /*<PIN_PB9>,*/
+						       <PIN_PB10>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_usba_vbus: usba_vbus {
+					mux {
+						function = "GPIO";
+						groups = "usba_0";
+					};
+
+					conf-vbus_input {
+						pins = <PIN_PB9>;
+						bias-disable;
+						output-low;
+					};
+
+					conf-vbus_irq {
+						pins = <PIN_PA31>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_i2c1_default: i2c1_default {
+					mux {
+						function = "A";
+						groups = "i2c1_0";
+					};
+
+					conf {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
 						bias-disable;
 					};
 				};

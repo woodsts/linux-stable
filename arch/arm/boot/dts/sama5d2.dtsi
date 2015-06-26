@@ -526,6 +526,36 @@
 						atmel,clk-output-range = <0 83000000>;
 					};
 
+					flx0_clk: flx0_clk {
+						#clock-cells = <0>;
+						reg = <19>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx1_clk: flx1_clk {
+						#clock-cells = <0>;
+						reg = <20>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx2_clk: flx2_clk {
+						#clock-cells = <0>;
+						reg = <21>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx3_clk: flx3_clk {
+						#clock-cells = <0>;
+						reg = <22>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
+					flx4_clk: flx4_clk {
+						#clock-cells = <0>;
+						reg = <23>;
+						atmel,clk-output-range = <0 83000000>;
+					};
+
 					uart0_clk: uart0_clk {
 						#clock-cells = <0>;
 						reg = <24>;
@@ -741,8 +771,8 @@
 				reg = <0xf0028000 0x100>;
 				interrupts = <12 IRQ_TYPE_LEVEL_HIGH 0>;
 				dmas = <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
-					AT91_XDMAC_DT_PERID(31)>;
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(31))>;
 				dma-names = "tx";
 				clocks = <&sha_clk>;
 				clock-names = "sha_clk";
@@ -754,14 +784,33 @@
 				reg = <0xf002c000 0x100>;
 				interrupts = <9 IRQ_TYPE_LEVEL_HIGH 0>;
 				dmas = <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
-					AT91_XDMAC_DT_PERID(27)>,
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(27))>,
 				       <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1))
-					AT91_XDMAC_DT_PERID(28)>;
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(28))>;
 				dma-names = "tx", "rx";
 				clocks = <&aes_clk>;
 				clock-names = "aes_clk";
+				status = "disabled";
+			};
+
+			spi0: spi@f8000000 {
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xf8000000 0x100>;
+				interrupts = <33 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(6))>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(7))>;
+				dma-names = "tx", "rx";
+				clocks = <&spi0_clk>;
+				clock-names = "spi_clk";
+				atmel,fifo-size = <16>;
+				#address-cells = <1>;
+				#size-cells = <0>;
 				status = "disabled";
 			};
 
@@ -821,6 +870,43 @@
 				status = "disabled";
 			};
 
+			i2c0: i2c@f8028000 {
+				compatible = "atmel,sama5d2-i2c";
+				reg = <0xf8028000 0x100>;
+				interrupts = <29 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(0))>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(1))>;
+				dma-names = "tx", "rx";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&twi0_clk>;
+				status = "disabled";
+			};
+
+			flx0: flexcom@f8034000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xf8034000 0x200>;
+				clocks = <&flx0_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xf8034000 0x800>;
+				status = "disabled";
+			};
+
+			flx1: flexcom@f8038000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xf8038000 0x200>;
+				clocks = <&flx1_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xf8038000 0x800>;
+				status = "disabled";
+			};
+
 			pit: timer@f8048030 {
 				compatible = "atmel,at91sam9260-pit";
 				reg = <0xf8048030 0x10>;
@@ -854,6 +940,25 @@
 				};
 			};
 
+			spi1: spi@fc000000 {
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xfc000000 0x100>;
+				interrupts = <34 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(8))>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(9))>;
+				dma-names = "tx", "rx";
+				clocks = <&spi1_clk>;
+				clock-names = "spi_clk";
+				atmel,fifo-size = <16>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				status = "disabled";
+			};
+
 			uart3: serial@fc008000 {
 				compatible = "atmel,at91sam9260-usart";
 				reg = <0xfc008000 0x100>;
@@ -872,37 +977,33 @@
 				status = "disabled";
 			};
 
-			i2c0: i2c@f8028000 {
-				compatible = "atmel,sama5d2-i2c";
-				reg = <0xf8028000 0x100>;
-				interrupts = <29 IRQ_TYPE_LEVEL_HIGH 7>;
-				dmas = <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
-					| AT91_XDMAC_DT_PERID(0))>,
-				       <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
-					| AT91_XDMAC_DT_PERID(1))>;
-				dma-names = "tx", "rx";
+			flx2: flexcom@fc010000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xfc010000 0x200>;
+				clocks = <&flx2_clk>;
 				#address-cells = <1>;
-				#size-cells = <0>;
-				clocks = <&twi0_clk>;
+				#size-cells = <1>;
+				ranges = <0x0 0xfc010000 0x800>;
 				status = "disabled";
 			};
 
-			i2c1: i2c@fc028000 {
-				compatible = "atmel,sama5d2-i2c";
-				reg = <0xfc028000 0x100>;
-				interrupts = <30 IRQ_TYPE_LEVEL_HIGH 7>;
-				dmas = <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
-					| AT91_XDMAC_DT_PERID(2))>,
-				       <&dma0
-					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1)
-					| AT91_XDMAC_DT_PERID(3))>;
-				dma-names = "tx", "rx";
+			flx3: flexcom@fc014000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xfc014000 0x200>;
+				clocks = <&flx3_clk>;
 				#address-cells = <1>;
-				#size-cells = <0>;
-				clocks = <&twi1_clk>;
+				#size-cells = <1>;
+				ranges = <0x0 0xfc014000 0x800>;
+				status = "disabled";
+			};
+
+			flx4: flexcom@fc018000 {
+				compatible = "atmel,sama5d2-flexcom";
+				reg = <0xfc018000 0x200>;
+				clocks = <&flx4_clk>;
+				#address-cells = <1>;
+				#size-cells = <1>;
+				ranges = <0x0 0xfc018000 0x800>;
 				status = "disabled";
 			};
 
@@ -912,6 +1013,23 @@
 				interrupt-controller;
 				reg = <0xfc020000 0x200>;
 				atmel,external-irqs = <49>;
+			};
+
+			i2c1: i2c@fc028000 {
+				compatible = "atmel,sama5d2-i2c";
+				reg = <0xfc028000 0x100>;
+				interrupts = <30 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(2))>,
+				       <&dma0
+					(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+					 AT91_XDMAC_DT_PERID(3))>;
+				dma-names = "tx", "rx";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&twi1_clk>;
+				status = "disabled";
 			};
 
 			pio_reg: syscon@fc038000 {
