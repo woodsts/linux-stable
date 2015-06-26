@@ -142,6 +142,10 @@
 				status = "okay";
 			};
 
+			watchdog@f8048040 {
+				status = "okay";
+			};
+
 			uart3: serial@fc008000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart3_default>;
@@ -236,6 +240,19 @@
 					usba_0 {
 						pins = <PIN_PA31>,
 						       <PIN_PB9>;
+					};
+				};
+
+				pinctrl_i2c1_default: i2c1_default {
+					mux {
+						function = "A";
+						groups = "i2c1_0";
+					};
+
+					conf {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
+						bias-disable;
 					};
 				};
 
@@ -418,6 +435,22 @@
 			label = "PB_USER";
 			gpios = <&pioA 38 GPIO_ACTIVE_LOW>;
 			linux,code = <0x104>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		status = "okay";
+
+		green {
+			label = "green";
+			gpios = <&pioA 37 GPIO_ACTIVE_LOW>;
+		};
+
+		blue {
+			label = "blue";
+			gpios = <&pioA 32 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
 		};
 	};
 };
