@@ -1,8 +1,8 @@
 #define PID_OV2643	0x2643
 
-#define OV2643_FLIP_REG       0x12
-#define   OV2643_HFLIP_IMG       0x20 /* Horizontal mirror image ON/OFF */
-#define   OV2643_VFLIP_IMG       0x10 /* Vertical flip image ON/OFF */
+#define	OV2643_SYS_REG	0x12
+#define		OV2643_HFLIP_IMG	0x20 /* Horizontal mirror image ON/OFF */
+#define		OV2643_VFLIP_IMG	0x10 /* Vertical flip image ON/OFF */
 
 static u8 ov2643_flip_reg;
 

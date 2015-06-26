@@ -715,7 +715,7 @@ static int ov2640_s_ctrl(struct v4l2_ctrl *ctrl)
 			val = ctrl->val ? OV2643_VFLIP_IMG : 0x00;
 			ov2643_flip_reg = ctrl->val ? ov2643_flip_reg | OV2643_VFLIP_IMG :
 						      ov2643_flip_reg & ~OV2643_VFLIP_IMG;
-			return ov2640_mask_set(client, OV2643_FLIP_REG, OV2643_VFLIP_IMG, val);
+			return ov2640_mask_set(client, OV2643_SYS_REG, OV2643_VFLIP_IMG, val);
 		}
 	case V4L2_CID_HFLIP:
 		if (priv->model == MODEL_OV2640) {
@@ -725,7 +725,7 @@ static int ov2640_s_ctrl(struct v4l2_ctrl *ctrl)
 			val = ctrl->val ? OV2643_HFLIP_IMG : 0x00;
 			ov2643_flip_reg = ctrl->val ? ov2643_flip_reg | OV2643_HFLIP_IMG :
 						      ov2643_flip_reg & ~OV2643_HFLIP_IMG;
-			return ov2640_mask_set(client, OV2643_FLIP_REG, OV2643_HFLIP_IMG, val);
+			return ov2640_mask_set(client, OV2643_SYS_REG, OV2643_HFLIP_IMG, val);
 		}
 	}
 
@@ -921,11 +921,11 @@ static int ov2643_set_params(struct i2c_client *client, u32 *width, u32 *height,
 	ret = ov2640_write_array(client, priv->win->regs);
 
 	/* set flip control */
-	val = i2c_smbus_read_byte_data(client, OV2643_FLIP_REG);
+	val = i2c_smbus_read_byte_data(client, OV2643_SYS_REG);
 	val |= ov2643_flip_reg;
 
 	dev_err(&client->dev, "set flip reg: 0x%08x\n", val);
-	ret = i2c_smbus_write_byte_data(client,	OV2643_FLIP_REG, val);
+	ret = i2c_smbus_write_byte_data(client,	OV2643_SYS_REG, val);
 
 	priv->cfmt_code = code;
 	*width = priv->win->width;
