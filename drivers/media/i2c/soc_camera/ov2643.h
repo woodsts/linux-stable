@@ -14,6 +14,9 @@
 #define			OV2643_DVP2_FORMAT_RGB555	(0x0 << 2)
 #define			OV2643_DVP2_FORMAT_RGB565	(0x1 << 2)
 #define			OV2643_DVP2_FORMAT_GBR422	(0x2 << 2)
+#define		OV2643_DVP2_MASK_RAW_SEL	0x10 /* raw data selection, Bit[4] */
+#define			OV2643_DVP2_RAW_FROM_ISP	(0x0 << 4)
+#define			OV2643_DVP2_RAW_FROM_SENSOR	(0x1 << 4)
 /* Bit[6:5]: YUV422/GBR422 only impact YUV422 & raw RGB. no effect for RGB565/RGB555. */
 
 static u8 ov2643_flip_reg;
@@ -649,6 +652,7 @@ static const struct regval_list ov2643_yuv_vga[]= {
 static u32 ov2643_codes[] = {
 	MEDIA_BUS_FMT_UYVY8_2X8,
 	MEDIA_BUS_FMT_RGB565_2X8_LE,
+	MEDIA_BUS_FMT_SBGGR8_1X8,
 };
 
 static const struct ov2640_win_size ov2643_supported_win_sizes[] = {
