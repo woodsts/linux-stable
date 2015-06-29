@@ -21,7 +21,6 @@
 #include "pmc.h"
 
 #define PERIPHERAL_MAX		64
-
 #define PERIPHERAL_ID_MIN	2
 
 #define GENERATED_SOURCE_MAX	6
@@ -45,9 +44,6 @@ static int clk_generated_enable(struct clk_hw *hw)
 	struct at91_pmc *pmc = gck->pmc;
 	u32 tmp;
 
-	if (gck->id < PERIPHERAL_ID_MIN)
-		return 0;
-
 	pr_debug("GCLK: %s, gckdiv = %d, parent id = %d\n",
 		 __FUNCTION__, gck->gckdiv, gck->parent_id);
 
@@ -69,9 +65,6 @@ static void clk_generated_disable(struct clk_hw *hw)
 	struct at91_pmc *pmc = gck->pmc;
 	u32 tmp;
 
-	if (gck->id < PERIPHERAL_ID_MIN)
-		return;
-
 	pmc_lock(pmc);
 	pmc_write(pmc, AT91_PMC_PCR, (gck->id & AT91_PMC_PCR_PID_MASK));
 	tmp = pmc_read(pmc, AT91_PMC_PCR) & ~AT91_PMC_PCR_GCKEN;
@@ -84,9 +77,6 @@ static int clk_generated_is_enabled(struct clk_hw *hw)
 	struct clk_generated *gck = to_clk_generated(hw);
 	struct at91_pmc *pmc = gck->pmc;
 	int ret;
-
-	if (gck->id < PERIPHERAL_ID_MIN)
-		return 1;
 
 	pmc_lock(pmc);
 	pmc_write(pmc, AT91_PMC_PCR, (gck->id & AT91_PMC_PCR_PID_MASK));
@@ -102,9 +92,6 @@ clk_generated_recalc_rate(struct clk_hw *hw,
 {
 	struct clk_generated *gck = to_clk_generated(hw);
 
-	if (gck->id < PERIPHERAL_ID_MIN)
-		return parent_rate;
-
 	return DIV_ROUND_CLOSEST(parent_rate, gck->gckdiv + 1);
 }
 
@@ -116,7 +103,7 @@ static long clk_generated_determine_rate(struct clk_hw *hw,
 	struct clk_generated *gck = to_clk_generated(hw);
 	struct clk *parent = NULL;
 	long best_rate = -EINVAL;
-	unsigned long tmp_rate;
+	unsigned long tmp_rate, min_rate;
 	int best_diff = -1;
 	int tmp_diff;
 	int i;
@@ -130,9 +117,9 @@ static long clk_generated_determine_rate(struct clk_hw *hw,
 			continue;
 
 		parent_rate = __clk_get_rate(parent);
-		if (!parent_rate
-		    || DIV_ROUND_CLOSEST(parent_rate, GENERATED_MAX_DIV + 1)
-		       > gck->range.max)
+		min_rate = DIV_ROUND_CLOSEST(parent_rate, GENERATED_MAX_DIV + 1);
+		if (!parent_rate ||
+		    (gck->range.max && min_rate > gck->range.max))
 			continue;
 
 		for (div = 1; div < GENERATED_MAX_DIV + 2; div++) {
@@ -192,16 +179,7 @@ static int clk_generated_set_rate(struct clk_hw *hw,
 	if (!rate)
 		return -EINVAL;
 
-	if (gck->id < PERIPHERAL_ID_MIN || !gck->range.max) {
-		if (parent_rate == rate) {
-			gck->gckdiv = 0;
-			return 0;
-		} else {
-			return -EINVAL;
-		}
-	}
-
-	if (rate > gck->range.max)
+	if (gck->range.max && rate > gck->range.max)
 		return -EINVAL;
 
 	div = DIV_ROUND_CLOSEST(parent_rate, rate);
@@ -310,7 +288,7 @@ void __init of_sama5d2_clk_generated_setup(struct device_node *np,
 		if (of_property_read_u32(gcknp, "reg", &id))
 			continue;
 
-		if (id >= PERIPHERAL_MAX)
+		if (id < PERIPHERAL_ID_MIN || id >= PERIPHERAL_MAX)
 			continue;
 
 		if (of_property_read_string(np, "clock-output-names", &name))
