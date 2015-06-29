@@ -737,13 +737,11 @@
 					sdmmc0_gclk: sdmmc0_gclk {
 						#clock-cells = <0>;
 						reg = <31>;
-						atmel,clk-output-range = <0 396000000>;
 					};
 
 					sdmmc1_gclk: sdmmc1_gclk {
 						#clock-cells = <0>;
 						reg = <32>;
-						atmel,clk-output-range = <0 396000000>;
 					};
 
 					tcb0_gclk: tcb0_gclk {
