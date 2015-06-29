@@ -51,10 +51,18 @@ static char *mbus_fmt_string(u32 code)
 		return "MEDIA_BUS_FMT_Y10_1X10";
 	case MEDIA_BUS_FMT_Y12_1X12:
 		return "MEDIA_BUS_FMT_Y12_1X12";
-	case MEDIA_BUS_FMT_SGRBG12_1X12:
-		return "MEDIA_BUS_FMT_SGRBG12_1X12";
+	case MEDIA_BUS_FMT_SGRBG8_1X8:
+		return "MEDIA_BUS_FMT_SGRBG8_1X8";
 	case MEDIA_BUS_FMT_SGRBG10_1X10:
 		return "MEDIA_BUS_FMT_SGRBG10_1X10";
+	case MEDIA_BUS_FMT_SGRBG12_1X12:
+		return "MEDIA_BUS_FMT_SGRBG12_1X12";
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
+		return "MEDIA_BUS_FMT_SBGGR8_1X8";
+	case MEDIA_BUS_FMT_SBGGR10_1X10:
+		return "MEDIA_BUS_FMT_SBGGR10_1X10";
+	case MEDIA_BUS_FMT_SBGGR12_1X12:
+		return "MEDIA_BUS_FMT_SBGGR12_1X12";
 	case MEDIA_BUS_FMT_UYVY8_2X8:
 		return "MEDIA_BUS_FMT_UYVY8_2X8";
 	case MEDIA_BUS_FMT_VYUY8_2X8:
@@ -196,6 +204,15 @@ static int configure_geometry(struct atmel_isi *isi, u32 width, u32 height,
 	switch (xlate->code) {
 	/* Grey */
 	case MEDIA_BUS_FMT_Y8_1X8:
+	case MEDIA_BUS_FMT_Y10_1X10:
+	case MEDIA_BUS_FMT_Y12_1X12:
+	/* Bayer RGB */
+	case MEDIA_BUS_FMT_SGRBG8_1X8:
+	case MEDIA_BUS_FMT_SGRBG10_1X10:
+	case MEDIA_BUS_FMT_SGRBG12_1X12:
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
+	case MEDIA_BUS_FMT_SBGGR10_1X10:
+	case MEDIA_BUS_FMT_SBGGR12_1X12:
 		cfg2 = ISI_CFG2_GRAYSCALE;
 		break;
 	/* YUV */
@@ -246,6 +263,15 @@ static bool is_supported(struct soc_camera_device *icd,
 	case V4L2_PIX_FMT_VYUY:
 	/* GREY */
 	case V4L2_PIX_FMT_GREY:
+	case V4L2_PIX_FMT_Y10:
+	case V4L2_PIX_FMT_Y12:
+	/* Bayer RGB */
+	case V4L2_PIX_FMT_SGRBG8:
+	case V4L2_PIX_FMT_SGRBG10:
+	case V4L2_PIX_FMT_SGRBG12:
+	case V4L2_PIX_FMT_SBGGR8:
+	case V4L2_PIX_FMT_SBGGR10:
+	case V4L2_PIX_FMT_SBGGR12:
 	/* RGB */
 	case V4L2_PIX_FMT_RGB565:
 		break;
