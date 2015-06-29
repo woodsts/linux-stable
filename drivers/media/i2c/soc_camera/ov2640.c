@@ -912,7 +912,7 @@ static int ov2643_set_params(struct i2c_client *client, u32 *width, u32 *height,
 	/* select win */
 	priv->win = ov2643_select_win(width, height);
 
-	if (code != MEDIA_BUS_FMT_UYVY8_2X8) {
+	if (code != MEDIA_BUS_FMT_UYVY8_2X8 && code != MEDIA_BUS_FMT_RGB565_2X8_LE) {
 		dev_err(&client->dev, "Not supported format: %d\n", code);
 		return -1;
 	}
@@ -926,6 +926,15 @@ static int ov2643_set_params(struct i2c_client *client, u32 *width, u32 *height,
 
 	dev_err(&client->dev, "set flip reg: 0x%08x\n", val);
 	ret = i2c_smbus_write_byte_data(client,	OV2643_SYS_REG, val);
+
+	/* set RGB565 output */
+	if (code == MEDIA_BUS_FMT_RGB565_2X8_LE) {
+		ov2640_mask_set(client, OV2643_SYS_REG,
+				OV2643_SYS_MASK_FORMAT_SEL, OV2643_SYS_FORMAT_RGB);
+
+		ov2640_mask_set(client, OV2643_DVP2_REG,
+				OV2643_DVP2_MASK_RGB_SEL, OV2643_DVP2_FORMAT_RGB565);
+	}
 
 	priv->cfmt_code = code;
 	*width = priv->win->width;

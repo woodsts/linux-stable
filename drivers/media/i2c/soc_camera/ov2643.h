@@ -4,6 +4,18 @@
 #define		OV2643_HFLIP_IMG	0x20 /* Horizontal mirror image ON/OFF */
 #define		OV2643_VFLIP_IMG	0x10 /* Vertical flip image ON/OFF */
 
+#define		OV2643_SYS_MASK_FORMAT_SEL	0xc /* format_sel, Bit[3:2] */
+#define			OV2643_SYS_FORMAT_RAW		(0x0 << 2)
+#define			OV2643_SYS_FORMAT_RGB		(0x1 << 2)
+#define			OV2643_SYS_FORMAT_YUV		(0x2 << 2)
+
+#define	OV2643_DVP2_REG	0x0d
+#define		OV2643_DVP2_MASK_RGB_SEL	0xc /* rgb_sel, Bit[3:2] */
+#define			OV2643_DVP2_FORMAT_RGB555	(0x0 << 2)
+#define			OV2643_DVP2_FORMAT_RGB565	(0x1 << 2)
+#define			OV2643_DVP2_FORMAT_GBR422	(0x2 << 2)
+/* Bit[6:5]: YUV422/GBR422 only impact YUV422 & raw RGB. no effect for RGB565/RGB555. */
+
 static u8 ov2643_flip_reg;
 
 static const struct regval_list ov2643_yuv_uxga[]= {
