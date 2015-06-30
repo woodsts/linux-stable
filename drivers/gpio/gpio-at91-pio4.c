@@ -1,3 +1,11 @@
+/*
+ * AT91 PIO4 GPIO driver for the SAMA5D2 family
+ *
+ * Copyright (C) 2015 Atmel Corporation,
+ * 		      Ludovic Desroches <ludovic.desroches@atmel.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
 
 #include <linux/clk.h>
 #include <linux/gpio.h>
