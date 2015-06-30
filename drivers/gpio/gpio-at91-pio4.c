@@ -1,3 +1,11 @@
+/*
+ * AT91 PIO4 GPIO driver for the SAMA5D2 family
+ *
+ * Copyright (C) 2015 Atmel Corporation,
+ * 		      Ludovic Desroches <ludovic.desroches@atmel.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
 
 #include <linux/clk.h>
 #include <linux/gpio.h>
@@ -31,15 +39,17 @@ struct at91_pio4_gpio_desc {
 };
 
 struct at91_gpio_soc_config {
+	const char *pinctrl_dev_name;
 	unsigned int ngroups;
 };
 
 /* There is only one PIO controller per SoC */
-struct irq_domain		*at91_gpio_irq_domain;
-struct at91_pio4_gpio_desc	*gpio_descs;
-struct regmap			*regmap_base;
-struct clk			*clk;
-struct device			*dev;
+static struct irq_domain		*irq_domain;
+static struct at91_pio4_gpio_desc	*gpio_descs;
+static struct regmap			*regmap_base;
+static struct clk			*clk;
+static struct device			*dev;
+static unsigned int			*groups;
 
 static unsigned int at91_gpio_read(unsigned int group, unsigned int reg)
 {
@@ -153,13 +163,13 @@ static void at91_gpio_set(struct gpio_chip *chip, unsigned offset, int val)
 
 static int at91_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
 {
-	return irq_find_mapping(at91_gpio_irq_domain, offset);
+	return irq_find_mapping(irq_domain, offset);
 }
 
 static struct gpio_chip pio4_gpio_chip = {
 	.label			= "at91-gpio",
-	//.request		= at91_gpio_request,
-	//.free			= at91_gpio_free,
+	.request		= at91_gpio_request,
+	.free			= at91_gpio_free,
 	.direction_input	= at91_gpio_direction_input,
 	.get			= at91_gpio_get,
 	.direction_output	= at91_gpio_direction_output,
@@ -172,25 +182,28 @@ static void at91_gpio_irq_handler(unsigned int irq, struct irq_desc *desc)
 {
 	struct irq_chip *chip = irq_desc_get_chip(desc);
 	unsigned long isr;
+	unsigned int *group;
 	int n;
 
 	chained_irq_enter(chip, desc);
 
+	group = irq_get_handler_data(irq);
+
 	for (;;) {
-		isr = (unsigned long) at91_gpio_read(AT91_PIO4_GROUP(irq), AT91_PIO4_ISR);
-		isr &= (unsigned long) at91_gpio_read(AT91_PIO4_GROUP(irq), AT91_PIO4_IMR);
+		isr = (unsigned long) at91_gpio_read(*group, AT91_PIO4_ISR);
+		isr &= (unsigned long) at91_gpio_read(*group, AT91_PIO4_IMR);
 		if (!isr)
 			break;
 
-		for_each_set_bit(n, &isr, BITS_PER_LONG) {
-			generic_handle_irq(gpio_to_irq(irq));
-		}
+		for_each_set_bit(n, &isr, BITS_PER_LONG)
+			generic_handle_irq(gpio_to_irq(*group * AT91_PIO4_NPINS_PER_GROUP + n));
 	}
 
 	chained_irq_exit(chip, desc);
 }
 
 static struct at91_gpio_soc_config at91_gpio_sama5d2_config = {
+	.pinctrl_dev_name = "ahb:apb:pinctrl@fc038000",
 	.ngroups = 4,
 };
 
@@ -233,13 +246,10 @@ static int at91_gpio_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	at91_gpio_irq_domain = irq_domain_add_linear(pdev->dev.of_node,
-						     pio4_gpio_chip.ngpio,
-						     &irq_domain_simple_ops,
-						     NULL);
-	if (!at91_gpio_irq_domain) {
-		dev_err(dev, "can't add the irq domain\n");
-		return -ENODEV;
+	clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(clk)) {
+		dev_err(dev, "failed to get clock\n");
+		return PTR_ERR(clk);
 	}
 
 	gpio_descs = devm_kzalloc(&pdev->dev,
@@ -250,36 +260,10 @@ static int at91_gpio_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	/* There is one controller but each group has its own irq line. */
-	for (i = 0; i < config->ngroups; i++) {
-		res = platform_get_resource(pdev, IORESOURCE_IRQ, i);
-		if (!res) {
-			dev_err(dev, "missing irq resource for group %c\n",
-				'A' + i);
-			return -EINVAL;
-		}
-		irq_set_chained_handler(res->start, at91_gpio_irq_handler);
-		dev_dbg(dev, "group %i: irq %u\n", i, res->start);
-	}
-
-	for (i = 0; i < pio4_gpio_chip.ngpio; i++) {
-		int irq = irq_create_mapping(at91_gpio_irq_domain, i);
-		struct at91_pio4_gpio_desc *pio4_gpio_desc = &gpio_descs[i];
-
-		pio4_gpio_desc->group = AT91_PIO4_GROUP(i);
-		pio4_gpio_desc->line = AT91_PIO4_LINE(i);
-		irq_set_chip_and_handler(irq, &pio4_gpio_irq_chip,
-					 handle_simple_irq);
-		irq_set_chip_data(irq, pio4_gpio_desc);
-		dev_dbg(dev,
-			"at91_gpio_domain: hwirq: %d, linux irq: %d, group: %c, line: %u)\n",
-			i, irq, 'A' + pio4_gpio_desc->group, pio4_gpio_desc->line);
-	}
-
-	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(dev, "failed to get clock\n");
-		return PTR_ERR(clk);
+	groups = devm_kzalloc(&pdev->dev, config->ngroups, GFP_KERNEL);
+	if (!groups) {
+		dev_err(dev, "can't allocate groups\n");
+		return -ENOMEM;
 	}
 
 	names = devm_kzalloc(&pdev->dev, sizeof(char *) *  pio4_gpio_chip.ngpio,
@@ -293,31 +277,97 @@ static int at91_gpio_probe(struct platform_device *pdev)
 				     AT91_PIO4_GROUP(i), AT91_PIO4_LINE(i));
 	pio4_gpio_chip.names = (const char *const *)names;
 
-	/* clk enable prepare */
+	/* There is one controller but each group has its own irq line. */
+	for (i = 0; i < config->ngroups; i++) {
+		res = platform_get_resource(pdev, IORESOURCE_IRQ, i);
+		if (!res) {
+			dev_err(dev, "missing irq resource for group %c\n",
+				'A' + i);
+			return -EINVAL;
+		}
+		groups[i] = i;
+		irq_set_chained_handler(res->start, at91_gpio_irq_handler);
+		irq_set_handler_data(res->start, groups + i);
+		dev_dbg(dev, "group %i: irq %u\n", i, res->start);
+	}
+
+	irq_domain = irq_domain_add_linear(pdev->dev.of_node,
+					   pio4_gpio_chip.ngpio,
+					   &irq_domain_simple_ops,
+					   NULL);
+	if (!irq_domain) {
+		dev_err(dev, "can't add the irq domain\n");
+		return -ENODEV;
+	}
+	irq_domain->name = "at91-pio4";
+
+	for (i = 0; i < pio4_gpio_chip.ngpio; i++) {
+		int irq = irq_create_mapping(irq_domain, i);
+		struct at91_pio4_gpio_desc *pio4_gpio_desc = &gpio_descs[i];
+
+		pio4_gpio_desc->group = AT91_PIO4_GROUP(i);
+		pio4_gpio_desc->line = AT91_PIO4_LINE(i);
+		irq_set_chip_and_handler(irq, &pio4_gpio_irq_chip,
+					 handle_simple_irq);
+		irq_set_chip_data(irq, pio4_gpio_desc);
+		dev_dbg(dev,
+			"at91_gpio_domain: hwirq: %d, linux irq: %d, group: %c, line: %u)\n",
+			i, irq, 'A' + pio4_gpio_desc->group, pio4_gpio_desc->line);
+	}
+
 	ret = clk_prepare_enable(clk);
 	if (ret) {
 		dev_err(dev, "failed to prepare and enable clock\n");
-		return ret;
+		goto irq_domain_remove;
 	}
 
 	ret = gpiochip_add(&pio4_gpio_chip);
+	if (ret) {
+		dev_err(dev, "failed to add gpiochip\n");
+		goto clk_disable_unprepare;
+	}
 
-	dev_info(dev, "at91 pio4 gpio driver: %u groups, %d pins\n",
+	ret = gpiochip_add_pin_range(&pio4_gpio_chip, config->pinctrl_dev_name,
+				     0, 0, pio4_gpio_chip.ngpio);
+	if (ret) {
+		dev_err(dev, "failed to add gpio pin range\n");
+		goto gpiochip_remove;
+	}
+
+	dev_info(dev, "%u groups, %d pins\n",
 		 config->ngroups, pio4_gpio_chip.ngpio);
+	return 0;
+
+gpiochip_remove:
+	gpiochip_remove(&pio4_gpio_chip);
+clk_disable_unprepare:
+	clk_disable_unprepare(clk);
+irq_domain_remove:
+	irq_domain_remove(irq_domain);
+	return ret;
+}
+
+static int at91_gpio_remove(struct platform_device *pdev)
+{
+	gpiochip_remove_pin_ranges(&pio4_gpio_chip);
+	gpiochip_remove(&pio4_gpio_chip);
+	clk_disable_unprepare(clk);
+	irq_domain_remove(irq_domain);
+
 	return 0;
 }
 
 static struct platform_driver at91_gpio_driver = {
 	.driver	= {
-		.name		= "at91-gpio",
+		.name		= "at91-gpio-pio4",
 		.owner		= THIS_MODULE,
 		.of_match_table	= at91_gpio_of_match,
 	},
 	.probe	= at91_gpio_probe,
+	.remove = at91_gpio_remove,
 };
+module_platform_driver(at91_gpio_driver);
 
-static int __init at91_gpio_init(void)
-{
-	return platform_driver_register(&at91_gpio_driver);
-}
-postcore_initcall(at91_gpio_init);
+MODULE_AUTHOR(Ludovic Desroches <ludovic.desroches@atmel.com>);
+MODULE_DESCRIPTION("Atmel PIO4 GPIO driver");
+MODULE_LICENSE("GPL v2");
