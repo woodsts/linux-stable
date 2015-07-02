@@ -18,7 +18,13 @@
 
 #define AT91_PIO4_MSKR	0x00
 #define AT91_PIO4_CFGR	0x04
-#define		AT91_PIO4_CFGR_DIR_MASK	BIT(8)
+#define		AT91_PIO4_CFGR_DIR_MASK		BIT(8)
+#define		AT91_PIO4_CFGR_EVTSEL_MASK	(7 << 24)
+#define		AT91_PIO4_CFGR_EVTSEL_FALLING	(0 << 24)
+#define		AT91_PIO4_CFGR_EVTSEL_RISING	(1 << 24)
+#define		AT91_PIO4_CFGR_EVTSEL_BOTH	(2 << 24)
+#define		AT91_PIO4_CFGR_EVTSEL_LOW	(3 << 24)
+#define		AT91_PIO4_CFGR_EVTSEL_HIGH	(4 << 24)
 #define AT91_PIO4_PDSR	0x08
 #define AT91_PIO4_SODR	0x10
 #define AT91_PIO4_CODR	0x14
@@ -73,6 +79,40 @@ static void at91_gpio_irq_ack(struct irq_data *d)
 
 static int at91_gpio_irq_set_type(struct irq_data *d, unsigned type)
 {
+	struct at91_pio4_gpio_desc *gpio_desc = irq_data_get_irq_chip_data(d);
+	unsigned int reg;
+
+	reg = at91_gpio_read(gpio_desc->group, AT91_PIO4_CFGR);
+	reg &= (~AT91_PIO4_CFGR_EVTSEL_MASK);
+
+	switch (type) {
+	case IRQ_TYPE_EDGE_RISING:
+		__irq_set_handler_locked(d->irq, handle_edge_irq);
+		reg |= AT91_PIO4_CFGR_EVTSEL_RISING;
+		break;
+	case IRQ_TYPE_EDGE_FALLING:
+		__irq_set_handler_locked(d->irq, handle_edge_irq);
+		reg |= AT91_PIO4_CFGR_EVTSEL_FALLING;
+		break;
+	case IRQ_TYPE_EDGE_BOTH:
+		__irq_set_handler_locked(d->irq, handle_edge_irq);
+		reg |= AT91_PIO4_CFGR_EVTSEL_BOTH;
+		break;
+	case IRQ_TYPE_LEVEL_LOW:
+		__irq_set_handler_locked(d->irq, handle_level_irq);
+		reg |= AT91_PIO4_CFGR_EVTSEL_LOW;
+		break;
+	case IRQ_TYPE_LEVEL_HIGH:
+		__irq_set_handler_locked(d->irq, handle_level_irq);
+		reg |= AT91_PIO4_CFGR_EVTSEL_HIGH;
+		break;
+	case IRQ_TYPE_NONE:
+	default:
+		return -EINVAL;
+	}
+
+	at91_gpio_write(gpio_desc->group, AT91_PIO4_CFGR, reg);
+
 	return 0;
 }
 
