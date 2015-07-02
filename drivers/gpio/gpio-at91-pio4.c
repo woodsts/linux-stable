@@ -82,6 +82,7 @@ static int at91_gpio_irq_set_type(struct irq_data *d, unsigned type)
 	struct at91_pio4_gpio_desc *gpio_desc = irq_data_get_irq_chip_data(d);
 	unsigned int reg;
 
+	at91_gpio_write(gpio_desc->group, AT91_PIO4_MSKR, BIT(gpio_desc->line));
 	reg = at91_gpio_read(gpio_desc->group, AT91_PIO4_CFGR);
 	reg &= (~AT91_PIO4_CFGR_EVTSEL_MASK);
 
