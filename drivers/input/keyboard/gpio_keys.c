@@ -461,6 +461,7 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 		}
 
 		if (button->debounce_interval) {
+			printk("+++ gpio_set_debounce +++\n");
 			error = gpio_set_debounce(button->gpio,
 					button->debounce_interval * 1000);
 			/* use timer if gpiolib doesn't provide debounce */
