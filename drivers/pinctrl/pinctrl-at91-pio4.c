@@ -325,6 +325,22 @@ static int atmel_pio4_pin_config_set(struct pinctrl_dev *pctldev,
 			else
 				conf &= (~ATMEL_PIO4_SCHMITT_MASK);
 			break;
+		case PIN_CONFIG_INPUT_DEBOUNCE:
+			if (arg == 0) {
+				conf &= (~ATMEL_PIO4_IFEN_MASK);
+				conf &= (~ATMEL_PIO4_IFSCEN_MASK);
+			} else {
+				/*
+				 * We don't care about the debounce value for several reasons:
+				 * - can't have different debounce periods inside a same group,
+				 * - the register to configure this period is a secure register.
+				 * The debouncing filter can filter a pulse with a duration of less
+				 * than 1/2 slow clock period.
+				 */
+				conf |= ATMEL_PIO4_IFEN_MASK;
+				conf |= ATMEL_PIO4_IFSCEN_MASK;
+			}
+			break;
 		case PIN_CONFIG_OUTPUT:
 			conf |= ATMEL_PIO4_DIR_MASK;
 			bank = pin_id / pctrl->npins_per_bank;
@@ -348,6 +364,7 @@ static int atmel_pio4_pin_config_set(struct pinctrl_dev *pctldev,
 		}
 	}
 
+	dev_dbg(pctldev->dev, "%s: reg=0x%08x\n", __func__, conf);
 	atmel_pio4_pin_config_write(pctldev, pin_id, conf);
 
 	return 0;
