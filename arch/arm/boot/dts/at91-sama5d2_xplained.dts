@@ -234,6 +234,11 @@
 						pins = <PIN_PB6>;
 					};
 
+					led_gpio {
+						pins = <PIN_PB0>,
+						       <PIN_PB5>;
+					};
+
 					macb0_0 {
 						pins = <PIN_PB14__GTXCK>,
 						       <PIN_PB15__GTXEN>,
@@ -361,6 +366,19 @@
 
 					conf {
 						pins = <PIN_PB6>;
+						bias-pull-up;
+					};
+				};
+
+				pinctrl_led_gpio_default: led_gpio_default {
+					mux {
+						function = "GPIO";
+						groups = "led_gpio";
+					};
+
+					conf {
+						pins = <PIN_PB0>,
+						       <PIN_PB5>;
 						bias-pull-up;
 					};
 				};
@@ -524,6 +542,8 @@
 
 	leds {
 		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_led_gpio_default>;
 		status = "okay";
 
 		green {
