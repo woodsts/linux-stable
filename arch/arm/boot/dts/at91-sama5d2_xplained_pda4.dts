@@ -80,17 +80,20 @@
 
 	ahb {
 		usb0: gadget@00300000 {
-			/* TODO: add atmel,vbus-gpio property */
-			/*pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_usba_vbus>;*/
+			atmel,vbus-gpio = <&pioA 31 GPIO_ACTIVE_HIGH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usba_vbus>;
 			status = "okay";
 		};
 
 		usb1: ohci@00400000 {
 			num-ports = <3>;
-			/* TODO: add atmel,vbus-gpio property */
-			/*pinctrl-names = "default";
-			pinctrl-0 = <&pinctrl_usb_default>;*/
+			atmel,vbus-gpio = <0 /* &pioA 41 GPIO_ACTIVE_HIGH */
+					   &pioA 42 GPIO_ACTIVE_HIGH
+					   0
+					  >;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usb_default>;
 			status = "okay";
 		};
 
@@ -114,7 +117,21 @@
 		};
 
 		apb {
+			spi0: spi@f8000000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_spi0_default>;
+				status = "okay";
+
+				m25p80@0 {
+					compatible = "atmel,at25df321a";
+					reg = <0>;
+					spi-max-frequency = <50000000>;
+				};
+			};
+
 			macb0: ethernet@f8008000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_macb0_rmii>;
 				phy-mode = "rmii";
 				status = "okay";
 			};
@@ -123,6 +140,30 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart1_default>;
 				status = "okay";
+			};
+
+			i2c0: i2c@f8028000 {
+				dmas = <0>, <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c0_default>;
+				status = "okay";
+			};
+
+			flx0: flexcom@f8034000 {
+				atmel,flexcom-mode = "usart";
+				status = "okay";
+
+				uart5: serial@f8034200 {
+					compatible = "atmel,at91sam9260-usart";
+					reg = <0x200 0x200>;
+					interrupts = <19 IRQ_TYPE_LEVEL_HIGH 7>;
+					clocks = <&flx0_clk>;
+					clock-names = "usart";
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_flx0_default>;
+					atmel,fifo-size = <32>;
+					status = "okay";
+				};
 			};
 
 			watchdog@f8048040 {
@@ -135,10 +176,76 @@
 				status = "okay";
 			};
 
+			flx4: flexcom@fc018000 {
+				atmel,flexcom-mode = "i2c";
+				status = "okay";
+
+				i2c2: i2c@fc018600 {
+					compatible = "atmel,sama5d2-i2c";
+					reg = <0x600 0x200>;
+					interrupts = <23 IRQ_TYPE_LEVEL_HIGH 7>;
+					dmas = <0>, <0>;
+					dma-names = "tx", "rx";
+					#address-cells = <1>;
+					#size-cells = <0>;
+					clocks = <&flx4_clk>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_flx4_default>;
+					atmel,fifo-size = <16>;
+					status = "okay";
+				};
+			};
+
+			i2c1: i2c@fc028000 {
+				dmas = <0>, <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c1_default>;
+				status = "okay";
+
+				at24@54 {
+					compatible = "atmel,24c02";
+					reg = <0x54>;
+					pagesize = <16>;
+				};
+			};
+
 			pinctrl@fc038000 {
 				group_defs {
+					flx0_0 {
+						pins = <PIN_PB28__FLEXCOM0_IO0>,
+						       <PIN_PB29__FLEXCOM0_IO1>;
+					};
+
+					flx4_0 {
+						pins = <PIN_PD12__FLEXCOM4_IO0>,
+						       <PIN_PD13__FLEXCOM4_IO1>;
+					};
+
+					i2c0_0 {
+						pins = <PIN_PB31__TWD0>,
+						       <PIN_PC0__TWCK0>;
+					};
+
+					i2c1_0 {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
+					};
+
 					key_gpio {
 						pins = <PIN_PB6>;
+					};
+
+					macb0_0 {
+						pins = <PIN_PB14__GTXCK>,
+						       <PIN_PB15__GTXEN>,
+						       <PIN_PB16__GRXDV>,
+						       <PIN_PB17__GRXER>,
+						       <PIN_PB18__GRX0>,
+						       <PIN_PB19__GRX1>,
+						       <PIN_PB20__GTX0>,
+						       <PIN_PB21__GTX1>,
+						       <PIN_PB22__GMDC>,
+						       <PIN_PB23__GMDIO>;
 					};
 
 					sdmmc0_0 {
@@ -167,6 +274,13 @@
 						       <PIN_PA30__SDMMC1_CD>;
 					};
 
+					spi0_0 {
+						pins = <PIN_PA14__SPI0_SPCK>,
+						       <PIN_PA15__SPI0_MOSI>,
+						       <PIN_PA16__SPI0_MISO>,
+						       <PIN_PA17__SPI0_NPCS0>;
+					};
+
 					uart1_0 {
 						pins = <PIN_PD2__URXD1>,
 						       <PIN_PD3__UTXD1>;
@@ -175,6 +289,68 @@
 					uart3_0 {
 						pins = <PIN_PB11__URXD3>,
 						       <PIN_PB12__UTXD3>;
+					};
+
+					usb_0 {
+						pins = /*<PIN_PB9>,*/
+						       <PIN_PB10>;
+					};
+
+					usba_0 {
+						pins = <PIN_PA31>,
+						       <PIN_PB9>;
+					};
+				};
+
+				pinctrl_flx0_default: flx0_default {
+					mux {
+						function = "C";
+						groups = "flx0_0";
+					};
+
+					conf {
+						pin = <PIN_PB28__FLEXCOM0_IO0>,
+						      <PIN_PB29__FLEXCOM0_IO1>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_flx4_default: flx4_default {
+					mux {
+						function = "B";
+						groups = "flx4_0";
+					};
+
+					conf {
+						pins = <PIN_PD12__FLEXCOM4_IO0>,
+						       <PIN_PD13__FLEXCOM4_IO1>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_i2c0_default: i2c0_default {
+					mux {
+						function = "D";
+						groups = "i2c0_0";
+					};
+
+					conf {
+						pins = <PIN_PB31__TWD0>,
+						       <PIN_PC0__TWCK0>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_i2c1_default: i2c1_default {
+					mux {
+						function = "A";
+						groups = "i2c1_0";
+					};
+
+					conf {
+						pins = <PIN_PD4__TWD1>,
+						       <PIN_PD5__TWCK1>;
+						bias-disable;
 					};
 				};
 
@@ -187,6 +363,27 @@
 					conf {
 						pins = <PIN_PB6>;
 						bias-pull-up;
+					};
+				};
+
+				pinctrl_macb0_rmii: macb0_rmii {
+					mux {
+						function = "F";
+						groups = "macb0_0";
+					};
+
+					conf {
+						pins = <PIN_PB14__GTXCK>,
+						       <PIN_PB15__GTXEN>,
+						       <PIN_PB16__GRXDV>,
+						       <PIN_PB17__GRXER>,
+						       <PIN_PB18__GRX0>,
+						       <PIN_PB19__GRX1>,
+						       <PIN_PB20__GTX0>,
+						       <PIN_PB21__GTX1>,
+						       <PIN_PB22__GMDC>,
+						       <PIN_PB23__GMDIO>;
+						bias-disable;
 					};
 				};
 
@@ -240,6 +437,21 @@
 					};
 				};
 
+				pinctrl_spi0_default: spi0_default {
+					mux {
+						function = "A";
+						groups = "spi0_0";
+					};
+
+					conf {
+						pins = <PIN_PA14__SPI0_SPCK>,
+						       <PIN_PA15__SPI0_MOSI>,
+						       <PIN_PA16__SPI0_MISO>,
+						       <PIN_PA17__SPI0_NPCS0>;
+						bias-disable;
+					};
+				};
+
 				pinctrl_uart1_default: uart1_default {
 					mux {
 						function = "A";
@@ -260,6 +472,37 @@
 
 					conf {
 						group = "uart3_0";
+						bias-disable;
+					};
+				};
+
+				pinctrl_usb_default: usb_default {
+					mux {
+						function = "GPIO";
+						groups = "usb_0";
+					};
+
+					conf {
+						pins = /*<PIN_PB9>,*/
+						       <PIN_PB10>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_usba_vbus: usba_vbus {
+					mux {
+						function = "GPIO";
+						groups = "usba_0";
+					};
+
+					conf-vbus_input {
+						pins = <PIN_PB9>;
+						bias-disable;
+						output-low;
+					};
+
+					conf-vbus_irq {
+						pins = <PIN_PA31>;
 						bias-disable;
 					};
 				};
