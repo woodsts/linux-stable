@@ -1,5 +1,26 @@
 #define PID_OV2643	0x2643
 
+#define	OV2643_SYS_REG	0x12
+#define		OV2643_HFLIP_IMG	0x20 /* Horizontal mirror image ON/OFF */
+#define		OV2643_VFLIP_IMG	0x10 /* Vertical flip image ON/OFF */
+
+#define		OV2643_SYS_MASK_FORMAT_SEL	0xc /* format_sel, Bit[3:2] */
+#define			OV2643_SYS_FORMAT_RAW		(0x0 << 2)
+#define			OV2643_SYS_FORMAT_RGB		(0x1 << 2)
+#define			OV2643_SYS_FORMAT_YUV		(0x2 << 2)
+
+#define	OV2643_DVP2_REG	0x0d
+#define		OV2643_DVP2_MASK_RGB_SEL	0xc /* rgb_sel, Bit[3:2] */
+#define			OV2643_DVP2_FORMAT_RGB555	(0x0 << 2)
+#define			OV2643_DVP2_FORMAT_RGB565	(0x1 << 2)
+#define			OV2643_DVP2_FORMAT_GBR422	(0x2 << 2)
+#define		OV2643_DVP2_MASK_RAW_SEL	0x10 /* raw data selection, Bit[4] */
+#define			OV2643_DVP2_RAW_FROM_ISP	(0x0 << 4)
+#define			OV2643_DVP2_RAW_FROM_SENSOR	(0x1 << 4)
+/* Bit[6:5]: YUV422/GBR422 only impact YUV422 & raw RGB. no effect for RGB565/RGB555. */
+
+static u8 ov2643_flip_reg;
+
 static const struct regval_list ov2643_yuv_uxga[]= {
 	{0x12, 0x80},
 	{0xc3, 0x1f},
@@ -12,7 +33,7 @@ static const struct regval_list ov2643_yuv_uxga[]= {
 	{0x0f, 0x14},
 	{0x21, 0x25},
 	{0x23, 0x0c},
-	{0x12, 0x08},
+	{0x12, 0x08},	/* YUV output, Bit[3:2] = 1x, Bit[1:0] = 00, no subsample */
 	{0x39, 0x10},
 	{0xcd, 0x12},
 	{0x13, 0xff},
@@ -153,7 +174,7 @@ static const struct regval_list ov2643_yuv_uxga[]= {
 	{0x0f, 0x14},
 	{0x21, 0x25},
 	{0x23, 0x0c},
-	{0x12, 0x08},
+	{0x12, 0x08},	/* YUV output, Bit[3:2] = 1x, Bit[1:0] = 00, no subsample */
 	{0x39, 0x10},
 	{0xcd, 0x12},
 	{0x13, 0xff},
@@ -172,7 +193,7 @@ static const struct regval_list ov2643_yuv_uxga[]= {
 	{0x35, 0x10},
 	{0x36, 0x10},
 	{0x0c, 0x00},
-	{0x0d, 0x20},	/* YUV/RGB format */
+	{0x0d, 0x20},	/* Bit[6:5] = 01, UYVY/BGRG */
 	{0xd0, 0x93},
 	{0xdc, 0x2b},
 	{0xd9, 0x41},
@@ -297,7 +318,7 @@ static const struct regval_list ov2643_yuv_swvga[]= {
 	{0x0f, 0x14},
 	{0x21, 0x25},
 	{0x23, 0x0c},
-	{0x12, 0x08},
+	{0x12, 0x08},	/* YUV output, Bit[3:2] = 1x, Bit[1:0] = 00, no subsample */
 	{0x39, 0x10},
 	{0xcd, 0x12},
 	{0x13, 0xff},
@@ -316,7 +337,7 @@ static const struct regval_list ov2643_yuv_swvga[]= {
 	{0x35, 0x10},
 	{0x36, 0x10},
 	{0x0c, 0x00},
-	{0x0d, 0x20},	/* YUV/RGB format */
+	{0x0d, 0x20},	/* Bit[6:5] = 01, UYVY/BGRG */
 	{0xd0, 0x93},
 	{0xdc, 0x2b},
 	{0xd9, 0x41},
@@ -449,7 +470,7 @@ static const struct regval_list ov2643_yuv_swvga[]= {
 	{0x2a, 0xce},
 	{0x2b, 0x02},
 	{0x2c, 0x8a},
-	{0x12, 0x09},
+	{0x12, 0x09},	/* YUV output, Bit[3:2] = 1x, Bit[1:0] = 01, subsample */
 	{0x39, 0xd0},
 	{0xcd, 0x13},
 	{0xde, 0x7c},
@@ -472,7 +493,7 @@ static const struct regval_list ov2643_yuv_vga[]= {
 	{0x0f, 0x14},
 	{0x21, 0x25},
 	{0x23, 0x0c},
-	{0x12, 0x08},
+	{0x12, 0x08},	/* YUV output, Bit[3:2] = 1x, Bit[1:0] = 00, no subsample */
 	{0x39, 0x10},
 	{0xcd, 0x12},
 	{0x13, 0xff},
@@ -491,7 +512,7 @@ static const struct regval_list ov2643_yuv_vga[]= {
 	{0x35, 0x10},
 	{0x36, 0x10},
 	{0x0c, 0x00},
-	{0x0d, 0x20},	/* YUV/RGB format */
+	{0x0d, 0x20},	/* Bit[6:5] = 01, UYVY/BGRG */
 	{0xd0, 0x93},
 	{0xdc, 0x2b},
 	{0xd9, 0x41},
@@ -618,7 +639,7 @@ static const struct regval_list ov2643_yuv_vga[]= {
 	{0x2a, 0xce},
 	{0x2b, 0x02},
 	{0x2c, 0x8a},
-	{0x12, 0x09},
+	{0x12, 0x09},	/* YUV output, Bit[3:2] = 1x, Bit[1:0] = 01, subsample */
 	{0x39, 0xd0},
 	{0xcd, 0x13},
 	{0xde, 0x7c},
@@ -626,6 +647,12 @@ static const struct regval_list ov2643_yuv_vga[]= {
 	{0x13, 0xff},
 	{0x15, 0x42},
 	{0xFF, 0xFF},
+};
+
+static u32 ov2643_codes[] = {
+	MEDIA_BUS_FMT_UYVY8_2X8,
+	MEDIA_BUS_FMT_RGB565_2X8_LE,
+	MEDIA_BUS_FMT_SBGGR8_1X8,
 };
 
 static const struct ov2640_win_size ov2643_supported_win_sizes[] = {

@@ -697,6 +697,8 @@ static int ov2640_s_ctrl(struct v4l2_ctrl *ctrl)
 	struct v4l2_subdev *sd =
 		&container_of(ctrl->handler, struct ov2640_priv, hdl)->subdev;
 	struct i2c_client  *client = v4l2_get_subdevdata(sd);
+	struct ov2640_priv *priv = to_ov2640(client);
+
 	u8 val;
 	int ret;
 
@@ -706,11 +708,25 @@ static int ov2640_s_ctrl(struct v4l2_ctrl *ctrl)
 
 	switch (ctrl->id) {
 	case V4L2_CID_VFLIP:
-		val = ctrl->val ? REG04_VFLIP_IMG : 0x00;
-		return ov2640_mask_set(client, REG04, REG04_VFLIP_IMG, val);
+		if (priv->model == MODEL_OV2640) {
+			val = ctrl->val ? REG04_VFLIP_IMG : 0x00;
+			return ov2640_mask_set(client, REG04, REG04_VFLIP_IMG, val);
+		} else {
+			val = ctrl->val ? OV2643_VFLIP_IMG : 0x00;
+			ov2643_flip_reg = ctrl->val ? ov2643_flip_reg | OV2643_VFLIP_IMG :
+						      ov2643_flip_reg & ~OV2643_VFLIP_IMG;
+			return ov2640_mask_set(client, OV2643_SYS_REG, OV2643_VFLIP_IMG, val);
+		}
 	case V4L2_CID_HFLIP:
-		val = ctrl->val ? REG04_HFLIP_IMG : 0x00;
-		return ov2640_mask_set(client, REG04, REG04_HFLIP_IMG, val);
+		if (priv->model == MODEL_OV2640) {
+			val = ctrl->val ? REG04_HFLIP_IMG : 0x00;
+			return ov2640_mask_set(client, REG04, REG04_HFLIP_IMG, val);
+		} else {
+			val = ctrl->val ? OV2643_HFLIP_IMG : 0x00;
+			ov2643_flip_reg = ctrl->val ? ov2643_flip_reg | OV2643_HFLIP_IMG :
+						      ov2643_flip_reg & ~OV2643_HFLIP_IMG;
+			return ov2640_mask_set(client, OV2643_SYS_REG, OV2643_HFLIP_IMG, val);
+		}
 	}
 
 	return -EINVAL;
@@ -891,17 +907,42 @@ static int ov2643_set_params(struct i2c_client *client, u32 *width, u32 *height,
 {
 	struct ov2640_priv       *priv = to_ov2640(client);
 	int ret;
+	s32 val;
 
 	/* select win */
 	priv->win = ov2643_select_win(width, height);
 
-	if (code != MEDIA_BUS_FMT_UYVY8_2X8) {
+	if (code != MEDIA_BUS_FMT_UYVY8_2X8 && code != MEDIA_BUS_FMT_RGB565_2X8_LE &&
+			code != MEDIA_BUS_FMT_SBGGR8_1X8) {
 		dev_err(&client->dev, "Not supported format: %d\n", code);
 		return -1;
 	}
 
 	/* set size win */
 	ret = ov2640_write_array(client, priv->win->regs);
+
+	/* set flip control */
+	val = i2c_smbus_read_byte_data(client, OV2643_SYS_REG);
+	val |= ov2643_flip_reg;
+
+	dev_err(&client->dev, "set flip reg: 0x%08x\n", val);
+	ret = i2c_smbus_write_byte_data(client,	OV2643_SYS_REG, val);
+
+	/* set RGB565 output */
+	if (code == MEDIA_BUS_FMT_RGB565_2X8_LE) {
+		ov2640_mask_set(client, OV2643_SYS_REG,
+				OV2643_SYS_MASK_FORMAT_SEL, OV2643_SYS_FORMAT_RGB);
+
+		ov2640_mask_set(client, OV2643_DVP2_REG,
+				OV2643_DVP2_MASK_RGB_SEL, OV2643_DVP2_FORMAT_RGB565);
+	} else if (code == MEDIA_BUS_FMT_SBGGR8_1X8) {
+		/* set raw RGB BGGR output */
+		ov2640_mask_set(client, OV2643_SYS_REG,
+				OV2643_SYS_MASK_FORMAT_SEL, OV2643_SYS_FORMAT_RAW);
+
+		ov2640_mask_set(client, OV2643_DVP2_REG,
+				OV2643_DVP2_MASK_RAW_SEL, OV2643_DVP2_RAW_FROM_ISP);
+	}
 
 	priv->cfmt_code = code;
 	*width = priv->win->width;
@@ -929,6 +970,8 @@ static int ov2640_g_fmt(struct v4l2_subdev *sd,
 	switch (mf->code) {
 	case MEDIA_BUS_FMT_RGB565_2X8_BE:
 	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
+	case MEDIA_BUS_FMT_SBGGR10_1X10:
 		mf->colorspace = V4L2_COLORSPACE_SRGB;
 		break;
 	default:
@@ -952,6 +995,8 @@ static int ov2640_s_fmt(struct v4l2_subdev *sd,
 	switch (mf->code) {
 	case MEDIA_BUS_FMT_RGB565_2X8_BE:
 	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
+	case MEDIA_BUS_FMT_SBGGR10_1X10:
 		mf->colorspace = V4L2_COLORSPACE_SRGB;
 		break;
 	default:
@@ -988,6 +1033,8 @@ static int ov2640_try_fmt(struct v4l2_subdev *sd,
 	switch (mf->code) {
 	case MEDIA_BUS_FMT_RGB565_2X8_BE:
 	case MEDIA_BUS_FMT_RGB565_2X8_LE:
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
+	case MEDIA_BUS_FMT_SBGGR10_1X10:
 		mf->colorspace = V4L2_COLORSPACE_SRGB;
 		break;
 	default:
@@ -1006,20 +1053,21 @@ static int ov2640_enum_fmt(struct v4l2_subdev *sd, unsigned int index,
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct ov2640_priv *priv = to_ov2640(client);
 
-	if (priv->model == MODEL_OV2643) {
-		/* OV2643 only support UYVY format */
-		if (index > 0)
-			return -EINVAL;
+	int support_fmt_num;
+	u32 *support_codes;
 
-		*code = MEDIA_BUS_FMT_UYVY8_2X8;
-		return 0;
+	if (priv->model == MODEL_OV2643) {
+		support_fmt_num = ARRAY_SIZE(ov2643_codes);
+		support_codes = ov2643_codes;
+	} else {
+		support_fmt_num = ARRAY_SIZE(ov2640_codes);
+		support_codes = ov2640_codes;
 	}
 
-	/* OV2640 */
-	if (index >= ARRAY_SIZE(ov2640_codes))
+	if (index >= support_fmt_num)
 		return -EINVAL;
 
-	*code = ov2640_codes[index];
+	*code = support_codes[index];
 	return 0;
 }
 
