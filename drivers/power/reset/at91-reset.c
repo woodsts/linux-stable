@@ -119,6 +119,12 @@ static void at91sam9g45_restart(enum reboot_mode mode, const char *cmd)
 		: "r0");
 }
 
+static void sama5d3_restart(enum reboot_mode mode, const char *cmd)
+{
+	writel(AT91_RSTC_KEY | AT91_RSTC_PERRST | AT91_RSTC_PROCRST,
+				at91_rstc_base);
+}
+
 static void __init at91_reset_status(struct platform_device *pdev)
 {
 	u32 reg = readl(at91_rstc_base + AT91_RSTC_SR);
@@ -151,13 +157,13 @@ static void __init at91_reset_status(struct platform_device *pdev)
 static struct of_device_id at91_ramc_of_match[] = {
 	{ .compatible = "atmel,at91sam9260-sdramc", },
 	{ .compatible = "atmel,at91sam9g45-ddramc", },
-	{ .compatible = "atmel,sama5d3-ddramc", },
 	{ /* sentinel */ }
 };
 
 static struct of_device_id at91_reset_of_match[] = {
 	{ .compatible = "atmel,at91sam9260-rstc", .data = at91sam9260_restart },
 	{ .compatible = "atmel,at91sam9g45-rstc", .data = at91sam9g45_restart },
+	{ .compatible = "atmel,sama5d3-rstc", .data = sama5d3_restart },
 	{ /* sentinel */ }
 };
 
@@ -173,6 +179,13 @@ static int at91_reset_of_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
+	match = of_match_node(at91_reset_of_match, pdev->dev.of_node);
+	arm_pm_restart = match->data;
+
+	/* as sama5d3 don't need to shutdown the ddr controller, just return. */
+	if (match->data == sama5d3_restart)
+		return 0;
+
 	for_each_matching_node(np, at91_ramc_of_match) {
 		at91_ramc_base[idx] = of_iomap(np, 0);
 		if (!at91_ramc_base[idx]) {
@@ -181,9 +194,6 @@ static int at91_reset_of_probe(struct platform_device *pdev)
 		}
 		idx++;
 	}
-
-	match = of_match_node(at91_reset_of_match, pdev->dev.of_node);
-	arm_pm_restart = match->data;
 
 	return 0;
 }
