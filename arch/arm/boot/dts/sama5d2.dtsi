@@ -266,7 +266,7 @@
 
 		sdmmc0: sdio-host@a0000000 {
 			compatible = "atmel,sama5d2-sdhci";
-			reg = <0xa0000000 0x100>;
+			reg = <0xa0000000 0x300>;
 			interrupts = <31 IRQ_TYPE_LEVEL_HIGH 0>;
 			clocks = <&sdmmc0_hclk>, <&sdmmc0_gclk>, <&main>;
 			clock-names = "hclock", "multclk", "baseclk";
@@ -275,7 +275,7 @@
 
 		sdmmc1: sdio-host@b0000000 {
 			compatible = "atmel,sama5d2-sdhci";
-			reg = <0xb0000000 0x100>;
+			reg = <0xb0000000 0x300>;
 			interrupts = <32 IRQ_TYPE_LEVEL_HIGH 0>;
 			clocks = <&sdmmc1_hclk>, <&sdmmc1_gclk>, <&main>;
 			clock-names = "hclock", "multclk", "baseclk";

@@ -72,12 +72,11 @@
 				pinctrl-0 = <&pinctrl_i2c1_default>;
 				status = "okay";
 
-/*
 				qt1070: keyboard@1b {
 					compatible = "qt1070";
 					reg = <0x1b>;
-					interrupt-parent = <&pioE>;
-					interrupts = <10 0x0>;
+					interrupt-parent = <&pioA>;
+					interrupts = <40 0x0>;
 					pinctrl-names = "default";
 					pinctrl-0 = <&pinctrl_qt1070_irq>;
 					wakeup-source;
@@ -86,12 +85,11 @@
 				atmel_mxt_ts@4a {
 					compatible = "atmel,atmel_mxt_ts";
 					reg = <0x4a>;
-					interrupt-parent = <&pioE>;
-					interrupts = <9 0x0>;
+					interrupt-parent = <&pioA>;
+					interrupts = <39 0x0>;
 					pinctrl-names = "default";
-					pinctrl-0 = <&pinctrl_mxt_ts>;
+					pinctrl-0 = <&pinctrl_mxt_irq>;
 				};
-*/
 			};
 
 			pinctrl@fc038000 {
@@ -131,6 +129,14 @@
 						       <PIN_PC25__LCDDAT21>,
 						       <PIN_PC26__LCDDAT22>,
 						       <PIN_PC27__LCDDAT23>;
+					};
+
+					mxt_irq {
+						pins = <PIN_PB7>;
+					};
+
+					qt1070_irq {
+						pins = <PIN_PB8>;
 					};
 				};
 
@@ -200,6 +206,32 @@
 						       <PIN_PC26__LCDDAT22>,
 						       <PIN_PC27__LCDDAT23>;
 						bias-disable;
+					};
+				};
+
+				pinctrl_mxt_irq: pinctrl_mxt_irq {
+					mux {
+						function = "GPIO";
+						groups = "mxt_irq";
+					};
+
+					conf {
+						pins = <PIN_PB7>;
+						bias-pull-up;
+						input-debounce = <1>;
+					};
+				};
+
+				pinctrl_qt1070_irq: pinctrl_qt1070_irq {
+					mux {
+						function = "GPIO";
+						groups = "qt1070_irq";
+					};
+
+					conf {
+						pins = <PIN_PB8>;
+						bias-pull-up;
+						input-debounce = <1>;
 					};
 				};
 			};
