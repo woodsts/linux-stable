@@ -136,3 +136,55 @@ Example:
 		compatible = "atmel,at91sam9260-shdwc";
 		reg = <0xfffffd10 0x10>;
 	};
+
+SHDWC Shutdown Controller (Alternative)
+
+1) shdwc node
+
+required properties:
+- compatible: should be "atmel,sama5d2-shdwc".
+- reg: should contain registers location and length
+- #address-cells: should be one. The cell is the wake-up input index.
+- #size-cells: should be zero.
+
+optional properties:
+
+- atmel,wakeup-debouncer: minimum wake-up inputs debouncer period in
+  micro-seconds. It's usually a board-related property.
+- atmel,wakeup-rtc-timer: boolean to enable Real-Time Clock wake-up.
+
+The node contains child nodes for each wake-up input that the platform uses.
+
+2) input nodes
+
+Wake-up input nodes are usually described in the "board" part of the Device
+Tree. Note also that input 0 is linked to the wake-up pin and is frequently
+used.
+
+Required properties:
+- reg: should contain the wake-up input index [0 - 15].
+
+Optional properties:
+- atmel,wakeup-type: string, operation mode of the input described by the child
+  node. Supported values are: "high" or "low".
+
+Example:
+
+On the SoC side:
+	shdwc@f8048010 {
+		compatible = "atmel,sama5d2-shdwc";
+		reg = <0xf8048010 0x10>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		atmel,wakeup-rtc-timer;
+	};
+
+On the board side:
+	shdwc@f8048010 {
+		atmel,shdwc-debouncer = <976>;
+
+		input@0 {
+			reg = <0>;
+			atmel,wakeup-type = "low";
+		};
+	};
