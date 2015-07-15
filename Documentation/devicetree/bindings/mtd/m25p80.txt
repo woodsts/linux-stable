@@ -16,6 +16,11 @@ Optional properties:
                    all chips and support for it can not be detected at runtime.
                    Refer to your chips' datasheet to check if this is supported
                    by your chip.
+- m25p,num-dummy-cycles : Set the number of dummy cycles for Fast Read commands.
+                          Depending on the manufacturer additional dedicated
+                          commands are sent to the flash memory so the
+                          controller and the memory can agree on the number of
+                          dummy cycles to use.
 
 Example:
 
@@ -26,4 +31,5 @@ Example:
 		reg = <0>;
 		spi-max-frequency = <40000000>;
 		m25p,fast-read;
+		m25p,num-dummy-cycles = <8>;
 	};
