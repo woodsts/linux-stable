@@ -946,6 +946,50 @@ static int set_quad_mode(struct spi_nor *nor, u32 jedec_id)
 	}
 }
 
+static int spansion_set_latency_code(struct spi_nor *nor)
+{
+	struct device_node *np = nor->dev->of_node;
+	u8 cr, mask = GENMASK(7, 6);
+	u32 lc;
+	int ret;
+
+	if (!np || of_property_read_u32(np, "spansion,latency-code", &lc))
+		return 0;
+
+	if (lc & ~(mask >> 6)) {
+		dev_err(nor->dev, "invalid latency code: %u\n", lc);
+		return -EINVAL;
+	}
+
+	ret = read_cr(nor);
+	if (ret < 0) {
+		dev_err(nor->dev,
+			"error while reading configuration register\n");
+		return ret;
+	}
+
+	write_enable(nor);
+
+	cr = ret;
+	cr &= ~mask;
+	cr |= (lc << 6);
+	ret = write_sr_cr(nor, cr << 8);
+	if (ret < 0) {
+		dev_err(nor->dev,
+			"error while updating configuration register\n");
+		return -EINVAL;
+	}
+
+	/* read back and check it */
+	ret = read_cr(nor);
+	if (!(ret >= 0 && (ret & mask) == (lc << 6))) {
+		dev_err(nor->dev, "Spansion latency code not set\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int micron_set_dummy_cycles(struct spi_nor *nor)
 {
 	int ret;
@@ -1002,6 +1046,8 @@ static int spi_nor_read_dummy_cycles(struct spi_nor *nor,
 		 * backward compatibility.
 		 */
 		switch (JEDEC_MFR(info->jedec_id)) {
+		case CFI_MFR_AMD:
+			return spansion_set_latency_code(nor);
 		case CFI_MFR_ST:
 			return micron_set_dummy_cycles(nor);
 		default:
