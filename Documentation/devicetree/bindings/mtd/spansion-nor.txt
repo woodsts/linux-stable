@@ -1,0 +1,22 @@
+* Spansion NOR flash
+
+Optional properties:
+- spansion,latency-code : Only used when the "m25p,num-dummy-cycles" property is
+                          set. The Spansion latency code tells the NOR flash
+                          memory the number of dummy cycles to expect for each
+                          Fast Read command. The value to be used is provided by
+                          tables in the memory datasheet and depends on the SPI
+                          clock frequency and on the Single/Dual Data Rate mode.
+                          Then the value of "m25p,num-dummy-cycles" property
+                          should match the (Fast) Read command to be used for
+                          the chosen latency code.
+
+Example:
+
+	m25p80@0 {
+		compatible = "spansion,s25fl512s";
+		reg = <0>;
+		spi-max-frequency = <104000000>;
+		m25p,num-dummy-cycles = <8>;
+		spansion,latency-code = <2>;
+	};
