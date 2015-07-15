@@ -87,6 +87,16 @@ enum read_mode {
 	SPI_NOR_QUAD,
 };
 
+enum spi_protocol {
+	SPI_PROTO_1_1_1,	/* SPI */
+	SPI_PROTO_1_1_2,	/* Dual Output */
+	SPI_PROTO_1_1_4,	/* Quad Output */
+	SPI_PROTO_1_2_2,	/* Dual IO */
+	SPI_PROTO_1_4_4,	/* Quad IO */
+	SPI_PROTO_2_2_2,	/* Dual Command */
+	SPI_PROTO_4_4_4,	/* Quad Command */
+};
+
 /**
  * struct spi_nor_xfer_cfg - Structure for defining a Serial Flash transfer
  * @wren:		command for "Write Enable", or 0x00 for not required
@@ -181,6 +191,7 @@ struct spi_nor {
 			int write_enable);
 	const struct spi_device_id *(*read_id)(struct spi_nor *nor);
 	int (*wait_till_ready)(struct spi_nor *nor);
+	int (*set_protocol)(struct spi_nor *nor, enum spi_protocol proto);
 
 	int (*read)(struct spi_nor *nor, loff_t from,
 			size_t len, size_t *retlen, u_char *read_buf);

@@ -132,6 +132,22 @@ static inline int write_disable(struct spi_nor *nor)
 	return nor->write_reg(nor, SPINOR_OP_WRDI, NULL, 0, 0);
 }
 
+/*
+ * Let the spi-nor framework notify lower layers, especially the driver of the
+ * (Q)SPI controller, about the new protocol to be used. Indeed, once the
+ * spi-nor framework has sent manufacturer specific commands to a memory to
+ * enable its Quad SPI mode, it should immediately after tell the QSPI
+ * controller to use the very same Quad SPI protocol as expected by the memory.
+ */
+static inline int spi_nor_set_protocol(struct spi_nor *nor,
+				       enum spi_protocol proto)
+{
+	if (nor->set_protocol)
+		return nor->set_protocol(nor, proto);
+
+	return 0;
+}
+
 static inline struct spi_nor *mtd_to_spi_nor(struct mtd_info *mtd)
 {
 	return mtd->priv;
@@ -895,6 +911,11 @@ static int micron_quad_enable(struct spi_nor *nor)
 		dev_err(nor->dev, "error while writing EVCR register\n");
 		return ret;
 	}
+
+	/* switch protocol to Quad CMD 4-4-4 */
+	ret = spi_nor_set_protocol(nor, SPI_PROTO_4_4_4);
+	if (ret)
+		return ret;
 
 	ret = spi_nor_wait_till_ready(nor);
 	if (ret)
