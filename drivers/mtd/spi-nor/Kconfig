@@ -28,4 +28,11 @@ config SPI_FSL_QUADSPI
 	  This enables support for the Quad SPI controller in master mode.
 	  We only connect the NOR to this controller now.
 
+config SPI_ATMEL_QUADSPI
+	tristate "Atmel Quad SPI Controller"
+	depends on (ARCH_AT91 || COMPILE_TEST)
+	help
+	  This enables support for the Quad SPI controller in master mode.
+	  We only connect the NOR to this controller now.
+
 endif # MTD_SPI_NOR
