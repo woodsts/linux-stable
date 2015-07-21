@@ -222,8 +222,8 @@
 					};
 
 					i2c0_0 {
-						pins = <PIN_PB31__TWD0>,
-						       <PIN_PC0__TWCK0>;
+						pins = <PIN_PD21__TWD0>,
+						       <PIN_PD22__TWCK0>;
 					};
 
 					i2c1_0 {
@@ -335,13 +335,13 @@
 
 				pinctrl_i2c0_default: i2c0_default {
 					mux {
-						function = "D";
+						function = "B";
 						groups = "i2c0_0";
 					};
 
 					conf {
-						pins = <PIN_PB31__TWD0>,
-						       <PIN_PC0__TWCK0>;
+						pins = <PIN_PD21__TWD0>,
+						       <PIN_PD22__TWCK0>;
 						bias-disable;
 					};
 				};
