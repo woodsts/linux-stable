@@ -84,6 +84,7 @@ config VIDEO_ATMEL_ISI
 	depends on VIDEO_DEV && SOC_CAMERA
 	depends on ARCH_AT91 || COMPILE_TEST
 	depends on HAS_DMA
+	select PM_RUNTIME
 	select VIDEOBUF2_DMA_CONTIG
 	---help---
 	  This module makes the ATMEL Image Sensor Interface available
