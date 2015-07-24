@@ -56,6 +56,12 @@
 /* Used for Spansion flashes only. */
 #define SPINOR_OP_BRWR		0x17	/* Bank register write */
 
+/* Used for Micron flashes only. */
+#define SPINOR_OP_RD_EVCR      0x65    /* Read EVCR register */
+#define SPINOR_OP_WD_EVCR      0x61    /* Write EVCR register */
+#define SPINOR_OP_RD_VCR	0x85	/* Read VCR register */
+#define SPINOR_OP_WR_VCR	0x81	/* Write VCR register */
+
 /* Status Register bits. */
 #define SR_WIP			1	/* Write in progress */
 #define SR_WEL			2	/* Write enable latch */
@@ -66,6 +72,9 @@
 #define SR_SRWD			0x80	/* SR write protect */
 
 #define SR_QUAD_EN_MX		0x40	/* Macronix Quad I/O */
+
+/* Enhanced Volatile Configuration Register bits */
+#define EVCR_QUAD_EN_MICRON    0x80    /* Micron Quad I/O */
 
 /* Flag Status Register bits */
 #define FSR_READY		0x80
@@ -78,6 +87,16 @@ enum read_mode {
 	SPI_NOR_FAST,
 	SPI_NOR_DUAL,
 	SPI_NOR_QUAD,
+};
+
+enum spi_protocol {
+	SPI_PROTO_1_1_1,	/* SPI */
+	SPI_PROTO_1_1_2,	/* Dual Output */
+	SPI_PROTO_1_1_4,	/* Quad Output */
+	SPI_PROTO_1_2_2,	/* Dual IO */
+	SPI_PROTO_1_4_4,	/* Quad IO */
+	SPI_PROTO_2_2_2,	/* Dual Command */
+	SPI_PROTO_4_4_4,	/* Quad Command */
 };
 
 /**
@@ -174,6 +193,7 @@ struct spi_nor {
 			int write_enable);
 	const struct spi_device_id *(*read_id)(struct spi_nor *nor);
 	int (*wait_till_ready)(struct spi_nor *nor);
+	int (*set_protocol)(struct spi_nor *nor, enum spi_protocol proto);
 
 	int (*read)(struct spi_nor *nor, loff_t from,
 			size_t len, size_t *retlen, u_char *read_buf);
