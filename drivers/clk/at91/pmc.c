@@ -298,6 +298,20 @@ static const struct of_device_id pmc_clk_ids[] __initconst = {
 		.compatible = "atmel,at91sam9x5-clk-plldiv",
 		.data = of_at91sam9x5_clk_plldiv_setup,
 	},
+#if defined(CONFIG_HAVE_AT91_AUDIO_PLL)
+	{
+		.compatible = "atmel,sama5d2-clk-audio-pll-frac",
+		.data = of_sama5d2_clk_audio_pll_setup,
+	},
+	{
+		.compatible = "atmel,sama5d2-clk-audio-pll-pad",
+		.data = of_sama5d2_clk_audio_pll_pad_setup,
+	},
+	{
+		.compatible = "atmel,sama5d2-clk-audio-pll-pmc",
+		.data = of_sama5d2_clk_audio_pll_pmc_setup,
+	},
+#endif
 	/* Master clock */
 	{
 		.compatible = "atmel,at91rm9200-clk-master",
