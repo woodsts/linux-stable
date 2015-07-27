@@ -681,6 +681,12 @@
 						reg = <47>;
 						atmel,clk-output-range = <0 83000000>;
 					};
+
+					classd_clk: classd_clk {
+						#clock-cells = <0>;
+						reg = <59>;
+						atmel,clk-output-range = <0 83000000>;
+					};
 				};
 
 				periph64ck {
@@ -788,6 +794,12 @@
 						#clock-cells = <0>;
 						reg = <38>;
 						atmel,clk-output-range = <0 83000000>;
+					};
+
+					classd_gclk: classd_gclk {
+						#clock-cells = <0>;
+						reg = <59>;
+						atmel,clk-output-range = <0 100000000>;
 					};
 				};
 			};
