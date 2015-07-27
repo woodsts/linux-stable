@@ -635,4 +635,15 @@
 			linux,default-trigger = "heartbeat";
 		};
 	};
+
+	sound {
+		compatible = "atmel,asoc-classd";
+
+		atmel,model = "classd @ SAMA5D2-Xplained";
+		atmel,audio-platform = <&classd>;
+		atmel,audio-cpu-dai-name = "fc048000.classd";
+		atmel,audio-codec = <&classd>;
+
+		status = "okay";
+	};
 };
