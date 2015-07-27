@@ -74,6 +74,7 @@
 struct atmel_aes_caps {
 	bool	has_dualbuff;
 	bool	has_cfb64;
+	bool	has_aead;
 	u32		max_burst_size;
 };
 
@@ -1250,10 +1251,17 @@ static void atmel_aes_get_cap(struct atmel_aes_dev *dd)
 {
 	dd->caps.has_dualbuff = 0;
 	dd->caps.has_cfb64 = 0;
+	dd->caps.has_aead = 0;
 	dd->caps.max_burst_size = 1;
 
 	/* keep only major version number */
 	switch (dd->hw_version & 0xff0) {
+	case 0x500:
+		dd->caps.has_dualbuff = 1;
+		dd->caps.has_cfb64 = 1;
+		dd->caps.has_aead = 1;
+		dd->caps.max_burst_size = 4;
+		break;
 	case 0x200:
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_cfb64 = 1;
