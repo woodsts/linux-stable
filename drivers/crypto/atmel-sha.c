@@ -73,6 +73,7 @@ struct atmel_sha_caps {
 	bool	has_dualbuff;
 	bool	has_sha224;
 	bool	has_sha_384_512;
+	bool	has_hmac;
 };
 
 struct atmel_sha_dev;
@@ -1306,9 +1307,17 @@ static void atmel_sha_get_cap(struct atmel_sha_dev *dd)
 	dd->caps.has_dualbuff = 0;
 	dd->caps.has_sha224 = 0;
 	dd->caps.has_sha_384_512 = 0;
+	dd->caps.has_hmac = 0;
 
 	/* keep only major version number */
 	switch (dd->hw_version & 0xff0) {
+	case 0x510:
+		dd->caps.has_dma = 1;
+		dd->caps.has_dualbuff = 1;
+		dd->caps.has_sha224 = 1;
+		dd->caps.has_sha_384_512 = 1;
+		dd->caps.has_hmac = 1;
+		break;
 	case 0x420:
 		dd->caps.has_dma = 1;
 		dd->caps.has_dualbuff = 1;
