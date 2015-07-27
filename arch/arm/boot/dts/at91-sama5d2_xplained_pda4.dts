@@ -113,10 +113,23 @@
 			bus-width = <4>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_sdmmc1_default>;
-			status = "okay";
+			status = "okay"; /* conflict with qspi0 */
 		};
 
 		apb {
+			qspi0: qspi@f0020000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_qspi0_default>;
+				/*status = "okay";*/ /* conflict with sdmmc1 */
+
+				m25p80@0 {
+					compatible = "micron,n25q128a13";
+					reg = <0>;
+					spi-max-frequency = <83000000>;
+					m25p,num-dummy-cycles = <6>;
+				};
+			};
+
 			spi0: spi@f8000000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_spi0_default>;
@@ -166,6 +179,15 @@
 				};
 			};
 
+			shdwc@f8048010 {
+				atmel,shdwc-debouncer = <976>;
+
+				input@0 {
+					reg = <0>;
+					atmel,wakeup-type = "low";
+				};
+			};
+
 			watchdog@f8048040 {
 				status = "okay";
 			};
@@ -211,6 +233,13 @@
 
 			pinctrl@fc038000 {
 				group_defs {
+					classd_r {
+						pins = <PIN_PB1__CLASSD_R0>,
+						       <PIN_PB2__CLASSD_R1>,
+						       <PIN_PB3__CLASSD_R2>,
+						       <PIN_PB4__CLASSD_R3>;
+					};
+
 					flx0_0 {
 						pins = <PIN_PB28__FLEXCOM0_IO0>,
 						       <PIN_PB29__FLEXCOM0_IO1>;
@@ -251,6 +280,15 @@
 						       <PIN_PB21__GTX1>,
 						       <PIN_PB22__GMDC>,
 						       <PIN_PB23__GMDIO>;
+					};
+
+					qspi0_0 {
+						pins = <PIN_PA22__QSPI0_SCK>,
+						       <PIN_PA23__QSPI0_CS>,
+						       <PIN_PA24__QSPI0_IO0>,
+						       <PIN_PA25__QSPI0_IO1>,
+						       <PIN_PA26__QSPI0_IO2>,
+						       <PIN_PA27__QSPI0_IO3>;
 					};
 
 					sdmmc0_0 {
@@ -304,6 +342,21 @@
 					usba_0 {
 						pins = <PIN_PA31>,
 						       <PIN_PB9>;
+					};
+				};
+
+				pinctrl_classd_default: classd_default {
+					mux {
+						function = "F";
+						groups = "classd_r";
+					};
+
+					conf {
+						pins = <PIN_PB1__CLASSD_R0>,
+						       <PIN_PB2__CLASSD_R1>,
+						       <PIN_PB3__CLASSD_R2>,
+						       <PIN_PB4__CLASSD_R3>;
+						bias-pull-up;
 					};
 				};
 
@@ -401,6 +454,23 @@
 						       <PIN_PB21__GTX1>,
 						       <PIN_PB22__GMDC>,
 						       <PIN_PB23__GMDIO>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_qspi0_default: qspi0_default {
+					mux {
+						function = "F";
+						groups = "qspi0_0";
+					};
+
+					conf {
+						pins = <PIN_PA22__QSPI0_SCK>,
+						       <PIN_PA23__QSPI0_CS>,
+						       <PIN_PA24__QSPI0_IO0>,
+						       <PIN_PA25__QSPI0_IO1>,
+						       <PIN_PA26__QSPI0_IO2>,
+						       <PIN_PA27__QSPI0_IO3>;
 						bias-disable;
 					};
 				};
@@ -538,6 +608,14 @@
 					};
 				};
 			};
+
+			classd@fc048000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_classd_default>;
+				atmel,pwm-type = "diff";
+				atmel,non-overlap-time = <10>;
+				status = "okay";
+			};
 		};
 	};
 
@@ -570,5 +648,16 @@
 			gpios = <&pioA 32 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
 		};
+	};
+
+	sound {
+		compatible = "atmel,asoc-classd";
+
+		atmel,model = "classd @ SAMA5D2-Xplained";
+		atmel,audio-platform = <&classd>;
+		atmel,audio-cpu-dai-name = "fc048000.classd";
+		atmel,audio-codec = <&classd>;
+
+		status = "okay";
 	};
 };
