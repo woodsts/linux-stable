@@ -1,5 +1,8 @@
 if ARCH_AT91
 
+config HAVE_AT91_AUDIO_PLL
+	bool
+
 config HAVE_AT91_UTMI
 	bool
 
@@ -84,6 +87,7 @@ config SOC_SAMA5D2
 	select CACHE_L2X0
 	select CACHE_PL310
 	select HAVE_FB_ATMEL
+	select HAVE_AT91_AUDIO_PLL
 	select HAVE_AT91_UTMI
 	select HAVE_AT91_USB_CLK
 	select HAVE_AT91_H32MX
