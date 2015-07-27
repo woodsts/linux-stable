@@ -594,6 +594,14 @@
 					};
 				};
 			};
+
+			classd@fc048000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_classd_default>;
+				atmel,pwm-type = "diff";
+				atmel,non-overlap-time = <10>;
+				status = "okay";
+			};
 		};
 	};
 
