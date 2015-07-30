@@ -57,6 +57,12 @@
 #define AES_ODATAR(x)	(0x50 + ((x) * 0x04))
 #define AES_IVR(x)		(0x60 + ((x) * 0x04))
 
+#define AES_EMR			0xB0
+#define AES_EMR_APEN		(1 << 0)
+#define AES_EMR_APM		(1 << 1)
+#define AES_EMR_PLIPEN		(1 << 4)
+#define AES_EMR_PLIPD		(1 << 5)
+
 #define AES_HW_VERSION	0xFC
 
 #endif /* __ATMEL_AES_REGS_H__ */
