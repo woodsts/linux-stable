@@ -41,6 +41,7 @@
 #include <crypto/internal/hash.h>
 #include <linux/platform_data/crypto-atmel.h>
 #include "atmel-sha-regs.h"
+#include "atmel-sha.h"
 
 /* SHA flags */
 #define SHA_FLAGS_BUSY			BIT(0)
@@ -67,6 +68,8 @@
 #define SHA_BUFFER_LEN		PAGE_SIZE
 
 #define ATMEL_SHA_DMA_THRESHOLD		56
+
+#define SIZE_IN_WORDS(x)	((x) >> 2)
 
 struct atmel_sha_caps {
 	bool	has_dma;
@@ -1012,6 +1015,287 @@ static void atmel_sha_cra_exit(struct crypto_tfm *tfm)
 	crypto_free_shash(tctx->fallback);
 	tctx->fallback = NULL;
 }
+
+static struct atmel_sha_dev *atmel_hmac_find_dev(void)
+{
+	struct atmel_sha_dev *tmp, *dd = NULL;
+
+	spin_lock_bh(&atmel_sha.lock);
+
+	list_for_each_entry(tmp, &atmel_sha.dev_list, list) {
+		dd = tmp;
+		break;
+	}
+	spin_unlock_bh(&atmel_sha.lock);
+
+	return dd;
+}
+
+/*
+ * check and wait the flag set in isr until timeout
+ */
+static int atmel_hmac_check_isr(struct atmel_sha_dev *dd, int flag, u32 *reg)
+{
+	int timeout = 0x1000;
+	*reg = 0;
+
+	while ((!(*reg & flag)) && (--timeout)) {
+		cpu_relax();
+		*reg = atmel_sha_read(dd, SHA_ISR);
+	}
+	if (unlikely(!timeout)) {
+		dev_err(dd->dev, "timeout while reading sha status register\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static inline void atmel_hmac_write_input(struct atmel_sha_dev *dd,
+					u32 *data, size_t size)
+{
+	int i;
+
+	for (i = 0; i < SIZE_IN_WORDS(size); i++)
+		atmel_sha_write(dd, SHA_REG_DIN(i), data[i]);
+}
+
+/*
+ * When IDATAR0 mode in SMOD is set, we can only write IDATAR0
+ */
+static inline void atmel_hmac_write_input0(struct atmel_sha_dev *dd,
+					u32 *data, size_t size)
+{
+	int i;
+
+	for (i = 0; i < SIZE_IN_WORDS(size); i++)
+		atmel_sha_write(dd, SHA_REG_DIN(0), data[i]);
+}
+
+static inline void atmel_hmac_read_output(struct atmel_sha_dev *dd,
+					u32 *data, size_t size)
+{
+	int i;
+
+	for (i = 0; i < SIZE_IN_WORDS(size); i++)
+		data[i] = atmel_sha_read(dd, SHA_REG_DIGEST(i));
+}
+
+static int atmel_hmac_get_uiv(struct atmel_sha_dev *dd, u32 *input, u32 *uiv,
+				u32 valmr, u32 valcr,
+				size_t block_size, size_t digest_size)
+{
+	int err;
+	u32 reg = 0;
+
+	atmel_sha_write(dd, SHA_CR, valcr);
+	atmel_sha_write(dd, SHA_MR, valmr);
+
+	atmel_sha_write(dd, SHA_MSGSIZE, 0);
+	atmel_sha_write(dd, SHA_BYTESCNT, 0);
+
+	atmel_hmac_write_input(dd, input, block_size);
+	err = atmel_hmac_check_isr(dd, SHA_INT_DATARDY, &reg);
+	if (err)
+		return err;
+	atmel_hmac_read_output(dd, uiv, digest_size);
+
+	return err;
+}
+
+static void atmel_hmac_set_uiv(struct atmel_sha_dev *dd, u32 *uiv,
+				u32 valmr, u32 valcr, size_t uiv_size)
+{
+	atmel_sha_write(dd, SHA_CR, valcr);
+	atmel_sha_write(dd, SHA_MR, valmr);
+
+	atmel_hmac_write_input(dd, uiv, uiv_size);
+	valcr = 0;
+	atmel_sha_write(dd, SHA_CR, valcr);
+}
+
+int atmel_hmac_write_key(const u8 *key, size_t keylen, unsigned long hmac_type)
+{
+	struct atmel_sha_dev *dd;
+	unsigned long flags;
+	u32 valcr = 0, valmr = 0;
+	int err;
+
+	size_t i, block_size, digest_size;
+	char ipad[SHA512_BLOCK_SIZE];
+	char opad[SHA512_BLOCK_SIZE];
+	u8 ipad_digest[SHA512_DIGEST_SIZE];
+	u8 opad_digest[SHA512_DIGEST_SIZE];
+
+	switch (hmac_type) {
+	case SHA_MR_ALGO_HMAC_SHA1:
+		valmr |= SHA_MR_ALGO_SHA1;
+		block_size = SHA1_BLOCK_SIZE;
+		digest_size = SHA1_DIGEST_SIZE;
+		break;
+	case SHA_MR_ALGO_HMAC_SHA224:
+		valmr |= SHA_MR_ALGO_SHA224;
+		block_size = SHA224_BLOCK_SIZE;
+		digest_size = SHA224_DIGEST_SIZE;
+		break;
+	case SHA_MR_ALGO_HMAC_SHA256:
+		valmr |= SHA_MR_ALGO_SHA256;
+		block_size = SHA256_BLOCK_SIZE;
+		digest_size = SHA256_DIGEST_SIZE;
+		break;
+	case SHA_MR_ALGO_HMAC_SHA384:
+		valmr |= SHA_MR_ALGO_SHA384;
+		block_size = SHA384_BLOCK_SIZE;
+		digest_size = SHA384_DIGEST_SIZE;
+		break;
+	case SHA_MR_ALGO_HMAC_SHA512:
+		valmr |= SHA_MR_ALGO_SHA512;
+		block_size = SHA512_BLOCK_SIZE;
+		digest_size = SHA512_DIGEST_SIZE;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	dd = atmel_hmac_find_dev();
+	if (!dd)
+		return -ENODEV;
+
+	for (i = 0; i < keylen; ++i) {
+		ipad[i] = key[i] ^ 0x36;
+		opad[i] = key[i] ^ 0x5c;
+	}
+	for (i = keylen; i < SHA1_BLOCK_SIZE; ++i) {
+		ipad[i] = 0x36;
+		opad[i] = 0x5c;
+	}
+
+	spin_lock_irqsave(&dd->lock, flags);
+	dd->flags |= SHA_FLAGS_BUSY;
+	spin_unlock_irqrestore(&dd->lock, flags);
+
+	atmel_sha_hw_init(dd);
+
+	/* set ipad and get user initial hash value 1 */
+	valmr |= SHA_MR_MODE_AUTO;
+	valcr = SHA_CR_FIRST;
+
+	err = atmel_hmac_get_uiv(dd, (u32 *)ipad, (u32 *)ipad_digest,
+				valmr, valcr, block_size, digest_size);
+	if (err)
+		return err;
+
+	/* set opad and get user initial hash value 2 */
+	err = atmel_hmac_get_uiv(dd, (u32 *)opad, (u32 *)opad_digest,
+				valmr, valcr, block_size, digest_size);
+	if (err)
+		return err;
+
+	/* write user initial hash value 1 */
+	valmr = 0;
+	valcr = SHA_CR_WUIHV;
+	atmel_hmac_set_uiv(dd, (u32 *)ipad_digest, valmr, valcr, digest_size);
+
+	/* write user initial hash value 2 */
+	valcr = SHA_CR_WUIEHV;
+	atmel_hmac_set_uiv(dd, (u32 *)opad_digest, valmr, valcr, digest_size);
+
+	return 0;
+}
+EXPORT_SYMBOL(atmel_hmac_write_key);
+
+int atmel_hmac_write_esp(const u8 *esp_header, size_t head_len,
+			 const u8 *iv, size_t iv_len,
+			 size_t payload_len, u32 checkcnt,
+			 unsigned long hmac_type)
+{
+	size_t msg_size;
+	struct atmel_sha_dev *dd = NULL;
+	u32 valcr = 0, valmr = 0;
+
+	dd = atmel_hmac_find_dev();
+	if (dd == NULL)
+		return -ENODEV;
+
+	msg_size = head_len + iv_len + payload_len;
+
+	valmr |= SHA_MR_MODE_PDC;
+	valmr |= SHA_MR_DUALBUFF;
+	valmr |= hmac_type;
+	valmr |= SHA_MR_UIHV;
+	valmr |= SHA_MR_UIHV2;
+
+	if (checkcnt > 0) {
+		valmr |= SHA_MR_CHECK_MESSAGE;
+		valmr |= (SIZE_IN_WORDS(checkcnt) << SHA_MR_CHKCNT_OFFSET);
+	}
+
+	valcr = SHA_CR_FIRST;
+
+	atmel_sha_write(dd, SHA_MR, valmr);
+
+	atmel_sha_write(dd, SHA_MSGSIZE, msg_size);
+	atmel_sha_write(dd, SHA_BYTESCNT, msg_size);
+
+	atmel_sha_write(dd, SHA_CR, valcr);
+
+	atmel_hmac_write_input0(dd, (u32 *)esp_header, head_len);
+	atmel_hmac_write_input0(dd, (u32 *)iv, iv_len);
+
+	return 0;
+}
+EXPORT_SYMBOL(atmel_hmac_write_esp);
+
+int atmel_hmac_check_icv(u32 *hash, u32 cnt)
+{
+	struct atmel_sha_dev *dd;
+	unsigned long flags;
+	u32 reg = 0;
+	int rc = 0;
+
+	dd = atmel_hmac_find_dev();
+	if (dd == NULL) {
+		pr_err("can't find sha_dev\n");
+		return -ENODEV;
+	}
+
+	atmel_hmac_write_input0(dd, hash, cnt);
+	atmel_hmac_check_isr(dd, SHA_INT_CHECKF, &reg);
+
+	if (!(reg & SHA_ISR_CHKST))
+		rc = -EINVAL;
+
+	spin_lock_irqsave(&dd->lock, flags);
+	dd->flags &= ~SHA_FLAGS_BUSY;
+	clk_disable_unprepare(dd->iclk);
+	spin_unlock_irqrestore(&dd->lock, flags);
+
+	return rc;
+}
+EXPORT_SYMBOL(atmel_hmac_check_icv);
+
+int atmel_hmac_read_icv(u32 *hash, u32 cnt)
+{
+	struct atmel_sha_dev *dd;
+	unsigned long flags;
+	int rc;
+	u32 reg = 0;
+
+	dd = atmel_hmac_find_dev();
+	if (dd == NULL)
+		return -EINVAL;
+
+	rc = atmel_hmac_check_isr(dd, SHA_INT_DATARDY, &reg);
+	atmel_hmac_read_output(dd, hash, cnt);
+
+	spin_lock_irqsave(&dd->lock, flags);
+	dd->flags &= ~SHA_FLAGS_BUSY;
+	clk_disable_unprepare(dd->iclk);
+	spin_unlock_irqrestore(&dd->lock, flags);
+
+	return rc;
+}
+EXPORT_SYMBOL(atmel_hmac_read_icv);
 
 static struct ahash_alg sha_1_256_algs[] = {
 {
