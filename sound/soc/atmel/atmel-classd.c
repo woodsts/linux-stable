@@ -358,9 +358,6 @@ static int atmel_classd_codec_probe(struct snd_soc_codec *codec)
 				<< CLASSD_MR_NOVR_VAL_SHIFT);
 			break;
 		}
-	} else {
-		val |= (CLASSD_MR_NON_OVERLAP_DIS
-			<< CLASSD_MR_NON_OVERLAP_SHIFT);
 	}
 
 	snd_soc_update_bits(codec, CLASSD_MR, mask, val);
