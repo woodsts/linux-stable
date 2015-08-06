@@ -358,9 +358,6 @@ static int atmel_classd_codec_probe(struct snd_soc_codec *codec)
 				<< CLASSD_MR_NOVR_VAL_SHIFT);
 			break;
 		}
-	} else {
-		val |= (CLASSD_MR_NON_OVERLAP_DIS
-			<< CLASSD_MR_NON_OVERLAP_SHIFT);
 	}
 
 	snd_soc_update_bits(codec, CLASSD_MR, mask, val);
@@ -415,23 +412,32 @@ static int atmel_classd_codec_dai_digital_mute(struct snd_soc_dai *codec_dai,
 	return 0;
 }
 
+#define CLASSD_ACLK_RATE_11M2896_MPY_8 (112896 * 100 * 8)
+#define CLASSD_ACLK_RATE_12M288_MPY_8  (12228 * 1000 * 8)
+
 static struct {
 	int rate;
 	int sample_rate;
 	int dsp_clk;
+	unsigned long aclk_rate;
 } const sample_rates[] = {
-	{ 8000,  CLASSD_INTPMR_FRAME_8K,  CLASSD_INTPMR_DSP_CLK_FREQ_12M288 },
-	{ 16000, CLASSD_INTPMR_FRAME_16K, CLASSD_INTPMR_DSP_CLK_FREQ_12M288 },
-	{ 32000, CLASSD_INTPMR_FRAME_32K, CLASSD_INTPMR_DSP_CLK_FREQ_12M288 },
-	{ 48000, CLASSD_INTPMR_FRAME_48K, CLASSD_INTPMR_DSP_CLK_FREQ_12M288 },
-	{ 96000, CLASSD_INTPMR_FRAME_96K, CLASSD_INTPMR_DSP_CLK_FREQ_12M288 },
-	{ 22050, CLASSD_INTPMR_FRAME_22K, CLASSD_INTPMR_DSP_CLK_FREQ_11M2896 },
-	{ 44100, CLASSD_INTPMR_FRAME_44K, CLASSD_INTPMR_DSP_CLK_FREQ_11M2896 },
-	{ 88200, CLASSD_INTPMR_FRAME_88K, CLASSD_INTPMR_DSP_CLK_FREQ_11M2896 },
+	{ 8000,  CLASSD_INTPMR_FRAME_8K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_ACLK_RATE_12M288_MPY_8 },
+	{ 16000, CLASSD_INTPMR_FRAME_16K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_ACLK_RATE_12M288_MPY_8 },
+	{ 32000, CLASSD_INTPMR_FRAME_32K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_ACLK_RATE_12M288_MPY_8 },
+	{ 48000, CLASSD_INTPMR_FRAME_48K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_ACLK_RATE_12M288_MPY_8 },
+	{ 96000, CLASSD_INTPMR_FRAME_96K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_ACLK_RATE_12M288_MPY_8 },
+	{ 22050, CLASSD_INTPMR_FRAME_22K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_ACLK_RATE_11M2896_MPY_8 },
+	{ 44100, CLASSD_INTPMR_FRAME_44K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_ACLK_RATE_11M2896_MPY_8 },
+	{ 88200, CLASSD_INTPMR_FRAME_88K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_ACLK_RATE_11M2896_MPY_8 },
 };
-
-#define CLASSD_ACLK_RATE_11M2896_MPY_8 (112896 * 100 * 8)
-#define CLASSD_ACLK_RATE_12M288_MPY_8  (12228 * 1000 * 8)
 
 static int
 atmel_classd_codec_dai_hw_params(struct snd_pcm_substream *substream,
@@ -443,7 +449,6 @@ atmel_classd_codec_dai_hw_params(struct snd_pcm_substream *substream,
 	int fs;
 	int i, best, best_val, cur_val, ret;
 	u32 mask, val;
-	unsigned long aclk_rate;
 
 	fs = params_rate(params);
 
@@ -458,19 +463,14 @@ atmel_classd_codec_dai_hw_params(struct snd_pcm_substream *substream,
 		}
 	}
 
-	if (sample_rates[best].dsp_clk == CLASSD_INTPMR_DSP_CLK_FREQ_12M288)
-		aclk_rate = CLASSD_ACLK_RATE_12M288_MPY_8;
-	else
-		aclk_rate = CLASSD_ACLK_RATE_11M2896_MPY_8;
-
 	dev_dbg(codec->dev,
 		"Selected SAMPLE_RATE of %dHz, ACLK_RATE of %ldHz\n",
-		sample_rates[best].rate, aclk_rate);
+		sample_rates[best].rate, sample_rates[best].aclk_rate);
 
 	clk_disable_unprepare(dd->gclk);
 	clk_disable_unprepare(dd->aclk);
 
-	ret = clk_set_rate(dd->aclk, aclk_rate);
+	ret = clk_set_rate(dd->aclk, sample_rates[best].aclk_rate);
 	if (ret)
 		return ret;
 
