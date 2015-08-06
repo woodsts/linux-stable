@@ -347,6 +347,7 @@ config CRYPTO_DEV_ATMEL_AES
 	select CRYPTO_ECB
 	select CRYPTO_AES
 	select CRYPTO_ALGAPI
+	select CRYPTO_AUTHENC
 	select CRYPTO_BLKCIPHER
 	select AT_HDMAC
 	help
