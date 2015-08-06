@@ -1046,6 +1046,11 @@ static int isi_camera_set_bus_param(struct soc_camera_device *icd)
 	if (common_flags & V4L2_MBUS_PCLK_SAMPLE_FALLING)
 		cfg1 |= ISI_CFG1_PIXCLK_POL_ACTIVE_FALLING;
 
+	dev_dbg(icd->parent, "vsync active %s, hsync active %s, sampling on pix clock %s edge\n",
+		common_flags & V4L2_MBUS_VSYNC_ACTIVE_LOW ? "low" : "high",
+		common_flags & V4L2_MBUS_HSYNC_ACTIVE_LOW ? "low" : "high",
+		common_flags & V4L2_MBUS_PCLK_SAMPLE_FALLING ? "falling" : "rising");
+
 	if (isi->pdata.has_emb_sync)
 		cfg1 |= ISI_CFG1_EMB_SYNC;
 	if (isi->pdata.full_mode)
@@ -1120,9 +1125,10 @@ static int atmel_isi_probe_dt(struct atmel_isi *isi,
 	}
 
 	err = v4l2_of_parse_endpoint(np, &ep);
+	of_node_put(np);
 	if (err) {
 		dev_err(&pdev->dev, "Could not parse the endpoint\n");
-		goto err_probe_dt;
+		return err;
 	}
 
 	switch (ep.bus.parallel.bus_width) {
@@ -1136,14 +1142,20 @@ static int atmel_isi_probe_dt(struct atmel_isi *isi,
 	default:
 		dev_err(&pdev->dev, "Unsupported bus width: %d\n",
 				ep.bus.parallel.bus_width);
-		err = -EINVAL;
-		goto err_probe_dt;
+		return -EINVAL;
 	}
 
-err_probe_dt:
-	of_node_put(np);
+	if (ep.bus.parallel.flags & V4L2_MBUS_HSYNC_ACTIVE_LOW)
+		isi->pdata.hsync_act_low = true;
+	if (ep.bus.parallel.flags & V4L2_MBUS_VSYNC_ACTIVE_LOW)
+		isi->pdata.vsync_act_low = true;
+	if (ep.bus.parallel.flags & V4L2_MBUS_PCLK_SAMPLE_FALLING)
+		isi->pdata.pclk_act_falling = true;
 
-	return err;
+	if (ep.bus_type == V4L2_MBUS_BT656)
+		isi->pdata.has_emb_sync = true;
+
+	return 0;
 }
 
 static int atmel_isi_probe(struct platform_device *pdev)

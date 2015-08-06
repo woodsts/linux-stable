@@ -16,6 +16,8 @@
 #include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/of.h>
+#include <linux/i2c.h>
 
 #include <media/v4l2-clk.h>
 #include <media/v4l2-subdev.h>
@@ -23,13 +25,62 @@
 static DEFINE_MUTEX(clk_lock);
 static LIST_HEAD(clk_list);
 
+/**
+ *	strcmp_i2c_device_name- Compare the dt node matching the i2c device
+ *	@dev_id: the i2c device name, it combined by adapter number and i2c
+ *	address. It's like: 1-0030
+ *
+ *	@of_name: the full path of the i2c dt node to match. It should like:
+ *
+ * 		/ahb/apb/i2c@f8028000/camera@0x30
+ *
+ *	Returns zero if the i2c dt node match the i2c device name. Otherwise
+ *	return 1.
+ */
+static int strcmp_i2c_device_name(const char *dev_id, const char *of_name)
+{
+	struct device_node *remote;
+	char clk_name[V4L2_SUBDEV_NAME_SIZE];
+	struct i2c_client *client;
+
+	remote = of_find_node_by_path(of_name);
+	if (!remote) {
+		pr_info("error to find the dt node: %s!\n", of_name);
+		return 1;
+	}
+
+	client = of_find_i2c_device_by_node(remote);
+	if (!client) {
+		pr_info("error to find the i2c device!\n");
+		return 1;
+	}
+
+	snprintf(clk_name, sizeof(clk_name), "%d-%04x",
+		 client->adapter->nr, client->addr);
+	pr_debug("%s: converted of node to i2c clk name: %s\n", __func__, clk_name);
+
+	return strcmp(dev_id, clk_name);
+}
+
 static struct v4l2_clk *v4l2_clk_find(const char *dev_id)
 {
 	struct v4l2_clk *clk;
 
-	list_for_each_entry(clk, &clk_list, list)
-		if (!strcmp(dev_id, clk->dev_id))
+	list_for_each_entry(clk, &clk_list, list) {
+		pr_debug("%s: %i, dev_id = %s, clk->dev_id = %s\n", __func__, __LINE__,
+				dev_id, clk->dev_id);
+		if (!strcmp(dev_id, clk->dev_id)) {
 			return clk;
+		} else {
+			pr_debug("%s: %i\n", __func__, __LINE__);
+			/* if name is of-xxxx, then we need find the i2c name */
+			if (clk->dev_id[0] == 'o' &&
+			    clk->dev_id[1] == 'f' &&
+			    clk->dev_id[2] == '-')
+				if (!strcmp_i2c_device_name(dev_id, &clk->dev_id[3]))
+					return clk;
+		}
+	}
 
 	return ERR_PTR(-ENODEV);
 }
