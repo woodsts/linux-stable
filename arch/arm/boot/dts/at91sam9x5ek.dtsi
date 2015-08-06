@@ -231,16 +231,22 @@
 				isi_1: endpoint@1 {
 					remote-endpoint = <&ov5640_0>;
 					bus-width = <8>;
+					vsync-active = <1>;
+					hsync-active = <1>;
 				};
 
 				isi_2: endpoint@2 {
 					remote-endpoint = <&ov7740_0>;
 					bus-width = <8>;
+					vsync-active = <1>;
+					hsync-active = <1>;
 				};
 
 				isi_3: endpoint@3 {
 					remote-endpoint = <&ov9740_0>;
 					bus-width = <8>;
+					vsync-active = <1>;
+					hsync-active = <1>;
 				};
 			};
 		};
