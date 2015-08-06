@@ -836,7 +836,7 @@
 				dma-names = "tx";
 				clocks = <&sha_clk>;
 				clock-names = "sha_clk";
-				status = "disabled";
+				status = "okay";
 			};
 
 			aes@f002c000 {
@@ -852,7 +852,7 @@
 				dma-names = "tx", "rx";
 				clocks = <&aes_clk>;
 				clock-names = "aes_clk";
-				status = "disabled";
+				status = "okay";
 			};
 
 			tdes@fc044000 {
@@ -868,7 +868,7 @@
 				dma-names = "tx", "rx";
 				clocks = <&tdes_clk>;
 				clock-names = "tdes_clk";
-				status = "disabled";
+				status = "okay";
 			};
 
 			spi0: spi@f8000000 {
