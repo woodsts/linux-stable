@@ -770,20 +770,23 @@ static int ov2640_s_power(struct v4l2_subdev *sd, int on)
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	struct soc_camera_subdev_desc *ssdd = soc_camera_i2c_to_desc(client);
 	struct ov2640_priv *priv = to_ov2640(client);
-	int ret;
+	int ret = 0;
 
-	if (on) {
-		ret = clk_prepare_enable(priv->master_clk);
-		if (ret)
-			return ret;
-	} else {
-		clk_disable_unprepare(priv->master_clk);
+	if (priv->master_clk) {
+		if (on) {
+			ret = clk_prepare_enable(priv->master_clk);
+			if (ret)
+				return ret;
+		} else {
+			clk_disable_unprepare(priv->master_clk);
+		}
 	}
 
 	ret = soc_camera_set_power(&client->dev, ssdd, priv->clk, on);
 
 	if (ret && on)
-		clk_disable_unprepare(priv->master_clk);
+		if (priv->master_clk)
+			clk_disable_unprepare(priv->master_clk);
 
 	return ret;
 }
@@ -1163,6 +1166,7 @@ static int ov2640_g_mbus_config(struct v4l2_subdev *sd,
 
 	cfg->flags = V4L2_MBUS_PCLK_SAMPLE_RISING | V4L2_MBUS_MASTER |
 		V4L2_MBUS_VSYNC_ACTIVE_HIGH | V4L2_MBUS_HSYNC_ACTIVE_HIGH |
+		V4L2_MBUS_VSYNC_ACTIVE_LOW |
 		V4L2_MBUS_DATA_ACTIVE_HIGH;
 	cfg->type = V4L2_MBUS_PARALLEL;
 	cfg->flags = soc_camera_apply_board_flags(ssdd, cfg);
@@ -1285,8 +1289,8 @@ static int ov2640_probe(struct i2c_client *client,
 
 	priv->master_clk = devm_clk_get(&client->dev, "xvclk");
 	if (IS_ERR(priv->master_clk)) {
-		ret = PTR_ERR(priv->master_clk);
-		goto err_mclk;
+		dev_err(&client->dev, "Missing xvclk!\n");
+		priv->master_clk = NULL;
 	}
 
 	v4l2_i2c_subdev_init(&priv->subdev, client, &ov2640_subdev_ops);
