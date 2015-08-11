@@ -499,6 +499,29 @@ static int isc_camera_init_videobuf(struct vb2_queue *q,
 	return vb2_queue_init(q);
 }
 
+static bool is_supported(struct soc_camera_device *icd,
+		const struct soc_camera_format_xlate *xlate)
+{
+	bool ret = true;
+
+	switch (xlate->code) {
+	/* YUV, including grey */
+	case MEDIA_BUS_FMT_Y8_1X8:
+	case MEDIA_BUS_FMT_VYUY8_2X8:
+	case MEDIA_BUS_FMT_UYVY8_2X8:
+	case MEDIA_BUS_FMT_YVYU8_2X8:
+	case MEDIA_BUS_FMT_YUYV8_2X8:
+		break;
+	/* RGB, TODO */
+	default:
+		dev_err(icd->parent, "not supported format: %d\n",
+					xlate->code);
+		ret = false;
+	}
+
+	return ret;
+}
+
 static int isc_camera_set_fmt(struct soc_camera_device *icd,
 			      struct v4l2_format *f)
 {
@@ -529,6 +552,10 @@ static int isc_camera_set_fmt(struct soc_camera_device *icd,
 		return ret;
 
 	if (mf.code != xlate->code)
+		return -EINVAL;
+
+	/* check with atmel-isi support format */
+	if (!is_supported(icd, xlate))
 		return -EINVAL;
 
 	pix->width		= mf.width;
