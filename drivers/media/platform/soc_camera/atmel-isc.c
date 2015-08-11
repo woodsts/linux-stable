@@ -131,7 +131,7 @@ static int initialize_isc(struct atmel_isc *isc)
 	return 0;
 }
 
-static int configure_geometry(struct atmel_isc *isc, u32 width,
+static void configure_geometry(struct atmel_isc *isc, u32 width,
 			u32 height, u32 code)
 {
 	u32 rlp;
@@ -144,17 +144,14 @@ static int configure_geometry(struct atmel_isc *isc, u32 width,
 	case MEDIA_BUS_FMT_UYVY8_2X8:
 	case MEDIA_BUS_FMT_YVYU8_2X8:
 	case MEDIA_BUS_FMT_YUYV8_2X8:
+	default:
 		rlp = ISC_RLP_CFG_MODE_DAT8;
 		break;
 	/* RGB, TODO */
-	default:
-		return -EINVAL;
 	}
 
 	isc_writel(isc, ISC_RLP_CFG, rlp);
 	isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
-
-	return 0;
 }
 
 static void start_dma(struct atmel_isc *isc, struct frame_buffer *buffer);
@@ -386,16 +383,13 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 
 	initialize_isc(isc);
 
-	ret = configure_geometry(isc, icd->user_width, icd->user_height,
+	configure_geometry(isc, icd->user_width, icd->user_height,
 				icd->current_fmt->code);
 
 	/* update profile */
 	isc_writel(isc, ISC_CTRLEN, ISC_CTRLEN_UPPRO);
 	while((isc_readl(isc, ISC_CTRLSR) & ISC_CTRLSR_UPPRO) == ISC_CTRLSR_UPPRO)
 		cpu_relax();
-
-	if (ret < 0)
-		return ret;
 
 	spin_lock_irq(&isc->lock);
 
