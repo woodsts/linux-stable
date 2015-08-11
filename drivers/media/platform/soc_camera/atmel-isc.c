@@ -142,6 +142,8 @@ static void configure_geometry(struct atmel_isc *isc,
 	case MEDIA_BUS_FMT_UYVY8_2X8:
 	case MEDIA_BUS_FMT_YVYU8_2X8:
 	case MEDIA_BUS_FMT_YUYV8_2X8:
+	/* Bayer RGB */
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
 	default:
 		isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_DAT8);
 		isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
@@ -500,6 +502,8 @@ static bool is_supported(struct soc_camera_device *icd,
 	case MEDIA_BUS_FMT_UYVY8_2X8:
 	case MEDIA_BUS_FMT_YVYU8_2X8:
 	case MEDIA_BUS_FMT_YUYV8_2X8:
+	/* Bayer RGB */
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
 		break;
 	/* RGB, TODO */
 	default:
