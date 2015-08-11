@@ -134,8 +134,6 @@ static int initialize_isc(struct atmel_isc *isc)
 static void configure_geometry(struct atmel_isc *isc,
 				const struct soc_camera_format_xlate *xlate)
 {
-	u32 rlp;
-
 	/* According to sensor's output format to set cfg2 */
 	switch (xlate->code) {
 	/* YUV, including grey */
@@ -145,13 +143,11 @@ static void configure_geometry(struct atmel_isc *isc,
 	case MEDIA_BUS_FMT_YVYU8_2X8:
 	case MEDIA_BUS_FMT_YUYV8_2X8:
 	default:
-		rlp = ISC_RLP_CFG_MODE_DAT8;
+		isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_DAT8);
+		isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
 		break;
 	/* RGB, TODO */
 	}
-
-	isc_writel(isc, ISC_RLP_CFG, rlp);
-	isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
 }
 
 static void start_dma(struct atmel_isc *isc, struct frame_buffer *buffer);
