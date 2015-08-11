@@ -708,6 +708,16 @@ static int isc_camera_try_bus_param(struct soc_camera_device *icd,
 	return -EINVAL;
 }
 
+static const struct soc_mbus_pixelfmt isc_rgb565_formats[] = {
+	{
+		.fourcc			= V4L2_PIX_FMT_RGB565,
+		.name			= "RGB565",
+		.bits_per_sample	= 8,
+		.packing		= SOC_MBUS_PACKING_2X8_PADHI,
+		.order			= SOC_MBUS_ORDER_LE,
+		.layout			= SOC_MBUS_LAYOUT_PACKED,
+	},
+};
 
 static int isc_camera_get_formats(struct soc_camera_device *icd,
 				  unsigned int idx,
@@ -715,6 +725,7 @@ static int isc_camera_get_formats(struct soc_camera_device *icd,
 {
 	struct v4l2_subdev *sd = soc_camera_to_subdev(icd);
 	int formats = 0, ret;
+	int i, n;
 	/* sensor format */
 	u32 code;
 	/* soc camera host format */
@@ -745,13 +756,33 @@ static int isc_camera_get_formats(struct soc_camera_device *icd,
 	case MEDIA_BUS_FMT_VYUY8_2X8:
 	case MEDIA_BUS_FMT_YUYV8_2X8:
 	case MEDIA_BUS_FMT_YVYU8_2X8:
-	default:
 		if (!isc_camera_packing_supported(fmt))
 			return 0;
 		if (xlate)
 			dev_dbg(icd->parent,
 				"Providing format %s in pass-through mode\n",
 				fmt->name);
+		/* just pass-through */
+		break;
+
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
+		n = ARRAY_SIZE(isc_rgb565_formats);
+		formats += n;
+		for (i = 0; i < n; i++) {
+			if (xlate) {
+				xlate->host_fmt	= &isc_rgb565_formats[i];
+				xlate->code	= code;
+				//dev_dbg(icd->parent, "Providing format %s (%s) when sensor output RGB565\n",
+				//	xlate->host_fmt->name, mbus_fmt_string(xlate->code));
+				xlate++;
+			}
+		}
+		/* pass-through */
+		break;
+
+	default:
+		/* not support */
+		return 0;
 	}
 
 	/* Generic pass-through */
