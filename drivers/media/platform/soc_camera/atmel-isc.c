@@ -142,13 +142,24 @@ static void configure_geometry(struct atmel_isc *isc,
 	case MEDIA_BUS_FMT_UYVY8_2X8:
 	case MEDIA_BUS_FMT_YVYU8_2X8:
 	case MEDIA_BUS_FMT_YUYV8_2X8:
-	/* Bayer RGB */
-	case MEDIA_BUS_FMT_SBGGR8_1X8:
 	default:
+		isc_writel(isc, ISC_CFA_CTRL, 0);
 		isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_DAT8);
 		isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
 		break;
-	/* RGB, TODO */
+	/* Bayer RGB */
+	case MEDIA_BUS_FMT_SBGGR8_1X8:
+		if (xlate->host_fmt->fourcc == V4L2_PIX_FMT_RGB565) {
+			isc_writel(isc, ISC_CFA_CTRL, 1);
+			isc_writel(isc, ISC_CFA_CFG, 3 | 1 << 4);
+			isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_RGB565);
+			isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED16);
+		} else {
+			isc_writel(isc, ISC_CFA_CTRL, 0);
+			isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_DAT8);
+			isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
+		}
+		break;
 	}
 }
 

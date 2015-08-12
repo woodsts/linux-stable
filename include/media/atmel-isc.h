@@ -29,6 +29,9 @@
 #define ISC_INTMASK				0x0030
 #define ISC_INTSR				0x0034
 
+#define ISC_CFA_CTRL				0x0070
+#define ISC_CFA_CFG				0x0074
+
 #define ISC_RLP_CFG				0x03d0
 
 #define ISC_DCFG				0x03e0
