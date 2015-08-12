@@ -111,6 +111,30 @@ static u32 isc_readl(struct atmel_isc *isc, u32 reg)
 	return readl(isc->regs + reg);
 }
 
+static const u32 gammar_table[64] = {
+	0x00000E6,0x0E80040,0x129002D,0x1570025,0x17C001F,0x19C001B,0x1B70019,0x1D00016,
+	0x1E70014,0x1FC0013,0x20F0012,0x2210011,0x2330010,0x243000F,0x253000E,0x261000E,
+	0x270000D,0x27D000D,0x28A000D,0x297000C,0x2A3000C,0x2AF000C,0x2BB000B,0x2C6000B,
+	0x2D1000A,0x2DB000A,0x2E6000A,0x2F00009,0x2FA0009,0x3030009,0x30D0009,0x3160009,
+	0x31F0008,0x3280008,0x3300009,0x3390008,0x3410008,0x3490008,0x3510008,0x3590008,
+	0x3610008,0x3690007,0x3700008,0x3780007,0x37F0007,0x3860007,0x38D0007,0x3940007,
+	0x39B0007,0x3A20007,0x3A90006,0x3AF0007,0x3B60006,0x3BC0007,0x3C30006,0x3C90006,
+	0x3CF0007,0x3D60006,0x3DC0006,0x3E20006,0x3E80006,0x3EE0005,0x3F40005,0x3F90006,
+};
+
+static int setup_gammar_table(struct atmel_isc *isc, u32 isc_entry_base,
+			      const u32 *table, int table_len)
+{
+	u32 *p, i;
+	if (table_len > 64)
+		return -EINVAL;
+
+	for (i = 0, p = (u32*)table; i < table_len; i++, p++)
+		isc_writel(isc, isc_entry_base + i * sizeof(u32), *p);
+
+	return 0;
+}
+
 static int initialize_isc(struct atmel_isc *isc)
 {
 	u32 pfe_cfg0 = 0;
@@ -128,6 +152,12 @@ static int initialize_isc(struct atmel_isc *isc)
 	pfe_cfg0 |= ISC_PFE_BPS_8_BIT;
 
 	isc_writel(isc, ISC_PFE_CFG0, pfe_cfg0);
+
+	/* setup gammar table  */
+	setup_gammar_table(isc, ISC_GAM_BENTRY0, gammar_table, ARRAY_SIZE(gammar_table));
+	setup_gammar_table(isc, ISC_GAM_GENTRY0, gammar_table, ARRAY_SIZE(gammar_table));
+	setup_gammar_table(isc, ISC_GAM_RENTRY0, gammar_table, ARRAY_SIZE(gammar_table));
+
 	return 0;
 }
 
@@ -144,6 +174,7 @@ static void configure_geometry(struct atmel_isc *isc,
 	case MEDIA_BUS_FMT_YUYV8_2X8:
 	default:
 		isc_writel(isc, ISC_CFA_CTRL, 0);
+		isc_writel(isc, ISC_GAM_CTRL, 0);
 		isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_DAT8);
 		isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
 		break;
@@ -152,10 +183,13 @@ static void configure_geometry(struct atmel_isc *isc,
 		if (xlate->host_fmt->fourcc == V4L2_PIX_FMT_RGB565) {
 			isc_writel(isc, ISC_CFA_CTRL, 1);
 			isc_writel(isc, ISC_CFA_CFG, 3 | 1 << 4);
+			isc_writel(isc, ISC_GAM_CTRL, ISC_GAM_CTRL_ENABLE | ISC_GAM_CTRL_ENABLE_ALL_CHAN);
 			isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_RGB565);
 			isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED16);
 		} else {
+			/* output to Bayer RGB */
 			isc_writel(isc, ISC_CFA_CTRL, 0);
+			isc_writel(isc, ISC_GAM_CTRL, 0);
 			isc_writel(isc, ISC_RLP_CFG, ISC_RLP_CFG_MODE_DAT8);
 			isc_writel(isc, ISC_DCFG, ISC_DCFG_IMODE_PACKED8);
 		}
