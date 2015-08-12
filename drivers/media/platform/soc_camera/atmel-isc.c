@@ -131,13 +131,13 @@ static int initialize_isc(struct atmel_isc *isc)
 	return 0;
 }
 
-static void configure_geometry(struct atmel_isc *isc, u32 width,
-			u32 height, u32 code)
+static void configure_geometry(struct atmel_isc *isc,
+				const struct soc_camera_format_xlate *xlate)
 {
 	u32 rlp;
 
 	/* According to sensor's output format to set cfg2 */
-	switch (code) {
+	switch (xlate->code) {
 	/* YUV, including grey */
 	case MEDIA_BUS_FMT_Y8_1X8:
 	case MEDIA_BUS_FMT_VYUY8_2X8:
@@ -383,8 +383,7 @@ static int start_streaming(struct vb2_queue *vq, unsigned int count)
 
 	initialize_isc(isc);
 
-	configure_geometry(isc, icd->user_width, icd->user_height,
-				icd->current_fmt->code);
+	configure_geometry(isc, icd->current_fmt);
 
 	/* update profile */
 	isc_writel(isc, ISC_CTRLEN, ISC_CTRLEN_UPPRO);
