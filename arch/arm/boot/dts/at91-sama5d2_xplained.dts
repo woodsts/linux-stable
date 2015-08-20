@@ -318,12 +318,13 @@
 					};
 
 					key_gpio {
-						pins = <PIN_PB6>;
+						pins = <PIN_PB9>;
 					};
 
 					led_gpio {
 						pins = <PIN_PB0>,
-						       <PIN_PB5>;
+						       <PIN_PB5>,
+						       <PIN_PB6>;
 					};
 
 					macb0_0 {
@@ -405,8 +406,7 @@
 					};
 
 					usba_0 {
-						pins = <PIN_PA31>,
-						       <PIN_PB9>;
+						pins = <PIN_PA31>;
 					};
 				};
 
@@ -535,7 +535,7 @@
 					};
 
 					conf {
-						pins = <PIN_PB6>;
+						pins = <PIN_PB9>;
 						bias-pull-up;
 					};
 				};
@@ -548,7 +548,8 @@
 
 					conf {
 						pins = <PIN_PB0>,
-						       <PIN_PB5>;
+						       <PIN_PB5>,
+						       <PIN_PB6>;
 						bias-pull-up;
 					};
 				};
@@ -636,8 +637,8 @@
 						pins = <PIN_PA1__SDMMC0_CMD>,
 						       <PIN_PA0__SDMMC0_CK>,
 						       <PIN_PA10__SDMMC0_RSTN>,
-						       <PIN_PA11__SDMMC0_VDDSEL>;
-						       /*<PIN_PA13__SDMMC0_CD>;*/
+						       <PIN_PA11__SDMMC0_VDDSEL>,
+						       <PIN_PA13__SDMMC0_CD>;
 						bias-disable;
 					};
 				};
@@ -722,12 +723,6 @@
 						groups = "usba_0";
 					};
 
-					conf-vbus_input {
-						pins = <PIN_PB9>;
-						bias-disable;
-						output-low;
-					};
-
 					conf-vbus_irq {
 						pins = <PIN_PA31>;
 						bias-disable;
@@ -766,7 +761,7 @@
 
 		bp1 {
 			label = "PB_USER";
-			gpios = <&pioA 38 GPIO_ACTIVE_LOW>;
+			gpios = <&pioA 41 GPIO_ACTIVE_LOW>;
 			linux,code = <0x104>;
 		};
 	};
@@ -776,6 +771,11 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_led_gpio_default>;
 		status = "okay";
+
+		red {
+			label = "red";
+			gpios = <&pioA 38 GPIO_ACTIVE_LOW>;
+		};
 
 		green {
 			label = "green";
