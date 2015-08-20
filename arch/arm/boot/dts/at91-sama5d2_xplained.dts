@@ -418,7 +418,7 @@
 					};
 
 					conf {
-						pins = <PIN_PB6>;
+						pins = <PIN_PB9>;
 						bias-pull-up;
 					};
 				};
@@ -430,7 +430,8 @@
 					};
 
 					conf {
-						pins = <PIN_PB0>,
+						pins = <PIN_PB6>,
+						       <PIN_PB0>,
 						       <PIN_PB5>;
 						bias-pull-up;
 					};
@@ -613,7 +614,7 @@
 
 		bp1 {
 			label = "PB_USER";
-			gpios = <&pioA 38 GPIO_ACTIVE_LOW>;
+			gpios = <&pioA 41 GPIO_ACTIVE_LOW>;
 			linux,code = <0x104>;
 		};
 	};
@@ -623,6 +624,11 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_led_gpio_default>;
 		status = "okay";
+
+		red {
+			label = "red";
+			gpios = <&pioA 38 GPIO_ACTIVE_LOW>;
+		};
 
 		green {
 			label = "green";
