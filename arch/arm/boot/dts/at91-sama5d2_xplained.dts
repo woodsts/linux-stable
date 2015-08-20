@@ -260,12 +260,13 @@
 					};
 
 					key_gpio {
-						pins = <PIN_PB6>;
+						pins = <PIN_PB9>;
 					};
 
 					led_gpio {
 						pins = <PIN_PB0>,
-						       <PIN_PB5>;
+						       <PIN_PB5>,
+						       <PIN_PB6>;
 					};
 
 					macb0_0 {
@@ -429,9 +430,9 @@
 					};
 
 					conf {
-						pins = <PIN_PB6>,
-						       <PIN_PB0>,
-						       <PIN_PB5>;
+						pins = <PIN_PB0>,
+						       <PIN_PB5>,
+						       <PIN_PB6>;
 						bias-pull-up;
 					};
 				};
