@@ -29,6 +29,14 @@
 #define ISC_INTMASK				0x0030
 #define ISC_INTSR				0x0034
 
+#define ISC_CFA_CTRL				0x0070
+#define ISC_CFA_CFG				0x0074
+
+#define ISC_GAM_CTRL				0x0094
+#define ISC_GAM_BENTRY0				0x0098
+#define ISC_GAM_GENTRY0				(ISC_GAM_BENTRY0 + 4 * 64)
+#define ISC_GAM_RENTRY0				(ISC_GAM_GENTRY0 + 4 * 64)
+
 #define ISC_RLP_CFG				0x03d0
 
 #define ISC_DCFG				0x03e0
@@ -96,6 +104,15 @@
 #define ISC_CLKCFG_MASTER_SEL_HCLOCK		(0 << 24)
 #define ISC_CLKCFG_MASTER_SEL_GCK		(1 << 24)
 #define ISC_CLKCFG_MASTER_SEL_480M		(2 << 24)
+
+/* Bitfields in ISC_GAM_CTRL */
+#define ISC_GAM_CTRL_ENABLE			BIT(0)
+#define ISC_GAM_CTRL_B_ENABLE			BIT(1)
+#define ISC_GAM_CTRL_G_ENABLE			BIT(2)
+#define ISC_GAM_CTRL_R_ENABLE			BIT(3)
+#define ISC_GAM_CTRL_ENABLE_ALL_CHAN		(ISC_GAM_CTRL_B_ENABLE | \
+						 ISC_GAM_CTRL_G_ENABLE | \
+						 ISC_GAM_CTRL_R_ENABLE)
 
 /* Bitfields in ISC_RLP_CFG */
 #define ISC_RLP_CFG_MODE_DAT8			(0 << 0)
