@@ -1,7 +1,7 @@
 VERSION = 3
 PATCHLEVEL = 18
 SUBLEVEL = 0
-EXTRAVERSION = -linux4sam_5.0-alpha4
+EXTRAVERSION = -linux4sam_5.0-alpha5
 NAME = Diseased Newt
 
 # *DOCUMENTATION*
