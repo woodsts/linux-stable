@@ -339,8 +339,7 @@
 					};
 
 					usba_0 {
-						pins = <PIN_PA31>,
-						       <PIN_PB9>;
+						pins = <PIN_PA31>;
 					};
 				};
 
@@ -581,12 +580,6 @@
 					mux {
 						function = "GPIO";
 						groups = "usba_0";
-					};
-
-					conf-vbus_input {
-						pins = <PIN_PB9>;
-						bias-disable;
-						output-low;
 					};
 
 					conf-vbus_irq {
