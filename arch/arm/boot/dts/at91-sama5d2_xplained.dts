@@ -369,8 +369,8 @@
 						       <PIN_PA8__SDMMC0_DAT6>,
 						       <PIN_PA9__SDMMC0_DAT7>,
 						       <PIN_PA10__SDMMC0_RSTN>,
-						       <PIN_PA11__SDMMC0_VDDSEL>;
-						       /*<PIN_PA13__SDMMC0_CD>;*/
+						       <PIN_PA11__SDMMC0_VDDSEL>,
+						       <PIN_PA13__SDMMC0_CD>;
 					};
 
 					sdmmc1_0 {
