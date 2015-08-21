@@ -498,8 +498,8 @@
 						pins = <PIN_PA1__SDMMC0_CMD>,
 						       <PIN_PA0__SDMMC0_CK>,
 						       <PIN_PA10__SDMMC0_RSTN>,
-						       <PIN_PA11__SDMMC0_VDDSEL>;
-						       /*<PIN_PA13__SDMMC0_CD>;*/
+						       <PIN_PA11__SDMMC0_VDDSEL>,
+						       <PIN_PA13__SDMMC0_CD>;
 						bias-disable;
 					};
 				};
