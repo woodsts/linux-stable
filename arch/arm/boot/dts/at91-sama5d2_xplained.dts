@@ -228,6 +228,22 @@
 					reg = <0x54>;
 					pagesize = <16>;
 				};
+
+				ov2640: camera@0x30 {
+					compatible = "ovti,ov2640";
+					reg = <0x30>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_sensor_power &pinctrl_sensor_reset>;
+					resetb-gpios = <&pioA 43 GPIO_ACTIVE_LOW>;
+					pwdn-gpios = <&pioA 44 GPIO_ACTIVE_HIGH>;
+
+					port {
+						ov2640_0: endpoint {
+							remote-endpoint = <&isc_0>;
+							bus-width = <8>;
+						};
+					};
+				};
 			};
 
 			pinctrl@fc038000 {
