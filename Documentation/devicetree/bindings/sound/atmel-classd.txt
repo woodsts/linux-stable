@@ -13,15 +13,16 @@ Required properties:
 - dma-names
 	Must be "tx".
 - clock-names
-	tuple listing input clock names. Required elements: "pclk", "gclk" and "aclk"
+	tuple listing input clock names.
+	Required elements: "pclk", "gclk" and "aclk".
 - clocks
 	phandles to input clocks.
 
 Optional properties:
 - pinctrl-names, pinctrl-0
-	Please refer to pinctrl-bindings.txt
+	Please refer to pinctrl-bindings.txt.
 - atmel,pwm-type
-	PWM modulation type, "single" or "diff"
+	PWM modulation type, "single" or "diff".
 - atmel,non-overlap-time
 	Set non-overlapping time, the unit is nanosecond(ns).
 	There are four values,
@@ -56,7 +57,7 @@ Required properties:
 - atmel,audio-platform
 	Should be <&classd>.
 - atmel,audio-cpu-dai-name
-	The DAI name of the CPU DAI in ALSA SoC architecture.
+	The name of the CPU DAI in ALSA SoC architecture.
 	The format is <classd registers location>.classd.
 - atmel,audio-codec
 	Should be <&classd>.
