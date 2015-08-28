@@ -142,7 +142,7 @@ static struct snd_soc_dai_driver atmel_classd_cpu_dai = {
 		.channels_max = 2,
 		.rates = ATMEL_CLASSD_RATES,
 		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
-		.ops = &atmel_classd_cpu_dai_ops,
+	.ops = &atmel_classd_cpu_dai_ops,
 };
 
 static const struct snd_soc_component_driver atmel_classd_cpu_dai_component = {
@@ -201,7 +201,7 @@ static SOC_ENUM_SINGLE_DECL(classd_mono_enum,
 			mono_text);
 
 static const char * const mono_mode_text[] = {
-	 "mix", "sat", "left", "right"
+	"mix", "sat", "left", "right"
 };
 
 static SOC_ENUM_SINGLE_DECL(classd_mono_mode_enum,
@@ -209,7 +209,7 @@ static SOC_ENUM_SINGLE_DECL(classd_mono_mode_enum,
 			mono_mode_text);
 
 static const char * const deemp_text[] = {
-	 "disabled", "enabled"
+	"disabled", "enabled"
 };
 
 static SOC_ENUM_SINGLE_DECL(classd_deemp_enum,
@@ -362,7 +362,8 @@ static int atmel_classd_codec_probe(struct snd_soc_codec *codec)
 
 	snd_soc_update_bits(codec, CLASSD_MR, mask, val);
 
-	dev_info(codec->dev, "PWM modulation type is %s, non-overlapping is %s\n",
+	dev_info(codec->dev,
+		"PWM modulation type is %s, non-overlapping is %s\n",
 		pwm_type[pdata->pwm_type],
 		pdata->non_overlap_enable?"enabled":"disabled");
 
@@ -547,8 +548,10 @@ static const struct snd_soc_dai_ops atmel_classd_codec_dai_ops = {
 	.trigger	= atmel_classd_codec_dai_trigger,
 };
 
+#define ATMEL_CLASSD_CODEC_DAI_NAME  "atmel-classd-hifi"
+
 static struct snd_soc_dai_driver atmel_classd_codec_dai = {
-	.name = "atmel-classd-hifi",
+	.name = ATMEL_CLASSD_CODEC_DAI_NAME,
 	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
@@ -701,7 +704,7 @@ module_platform_driver(classd_driver);
 static struct snd_soc_dai_link atmel_asoc_classd_dailink = {
 	.name = "CLASSD",
 	.stream_name = "CLASSD PCM",
-	.codec_dai_name = "atmel-classd-hifi",
+	.codec_dai_name = ATMEL_CLASSD_CODEC_DAI_NAME,
 };
 
 static struct snd_soc_card atmel_asoc_classd_card = {
