@@ -130,6 +130,20 @@
 				};
 			};
 
+			isc: isc@f0008000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_isc_base &pinctrl_isc_data_8bit &pinctrl_isc_data_9_10 &pinctrl_isc_data_11_12>;
+				status = "okay";
+				port {
+					isc_0: endpoint@0 {
+						remote-endpoint = <&ov2640_0>;
+						bus-width = <8>;
+						vsync-active = <0>;
+					};
+				};
+
+			};
+
 			spi0: spi@f8000000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_spi0_default>;
@@ -164,7 +178,7 @@
 
 			flx0: flexcom@f8034000 {
 				atmel,flexcom-mode = "usart";
-				status = "okay";
+				status = "disabled";	/* conflict with ISC_D2 & ISC_D3 data pins */
 
 				uart5: serial@f8034200 {
 					compatible = "atmel,at91sam9260-usart";
@@ -195,7 +209,7 @@
 			uart3: serial@fc008000 {
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart3_default>;
-				status = "okay";
+				status = "disabled";	/* conflict with sensor's reset/pwdn pins */
 			};
 
 			flx4: flexcom@fc018000 {
@@ -229,6 +243,22 @@
 					reg = <0x54>;
 					pagesize = <16>;
 				};
+
+				ov2640: camera@0x30 {
+					compatible = "ovti,ov2640";
+					reg = <0x30>;
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_sensor_power &pinctrl_sensor_reset>;
+					resetb-gpios = <&pioA 43 GPIO_ACTIVE_LOW>;
+					pwdn-gpios = <&pioA 44 GPIO_ACTIVE_HIGH>;
+
+					port {
+						ov2640_0: endpoint {
+							remote-endpoint = <&isc_0>;
+							bus-width = <8>;
+						};
+					};
+				};
 			};
 
 			pinctrl@fc038000 {
@@ -258,6 +288,34 @@
 					i2c1_0 {
 						pins = <PIN_PD4__TWD1>,
 						       <PIN_PD5__TWCK1>;
+					};
+
+					isc_base_0 {
+						pins = <PIN_PC4__ISC_PCK>,
+						       <PIN_PC5__ISC_VSYNC>,
+						       <PIN_PC6__ISC_HSYNC>,
+						       <PIN_PC7__ISC_MCK>;
+					};
+
+					isc_data_8bit_0 {
+						pins = <PIN_PB25__ISC_D11>,
+						       <PIN_PB24__ISC_D10>,
+						       <PIN_PC3__ISC_D9>,
+						       <PIN_PC2__ISC_D8>,
+						       <PIN_PC1__ISC_D7>,
+						       <PIN_PC0__ISC_D6>,
+						       <PIN_PB31__ISC_D5>,
+						       <PIN_PB30__ISC_D4>;
+					};
+
+					isc_data_9_10_0 {
+						pins = <PIN_PB29__ISC_D3>,
+						       <PIN_PB28__ISC_D2>;
+					};
+
+					isc_data_11_12_0 {
+						pins = <PIN_PB27__ISC_D1>,
+						       <PIN_PB26__ISC_D0>;
 					};
 
 					key_gpio {
@@ -290,6 +348,14 @@
 						       <PIN_PA25__QSPI0_IO1>,
 						       <PIN_PA26__QSPI0_IO2>,
 						       <PIN_PA27__QSPI0_IO3>;
+					};
+
+					sensor_power_gpio {
+						pins = <PIN_PB12>;
+					};
+
+					sensor_reset_gpio {
+						pins = <PIN_PB11>;
 					};
 
 					sdmmc0_0 {
@@ -412,6 +478,57 @@
 					};
 				};
 
+				pinctrl_isc_base: isc_base {
+					mux {
+						function = "F";
+						groups = "isc_base_0";
+					};
+
+					conf {
+						pins = <PIN_PC4__ISC_PCK>,
+						       <PIN_PC5__ISC_VSYNC>,
+						       <PIN_PC6__ISC_HSYNC>,
+						       <PIN_PC7__ISC_MCK>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_isc_data_8bit: isc_data_8bit {
+					mux {
+						function = "F";
+						groups = "isc_data_8bit_0";
+					};
+
+					conf {
+						group = "isc_data_8bit_0";
+						bias-disable;
+					};
+				};
+
+				pinctrl_isc_data_9_10: isc_data_9_10 {
+					mux {
+						function = "F";
+						groups = "isc_data_9_10_0";
+					};
+
+					conf {
+						group = "isc_data_9_10_0";
+						bias-disable;
+					};
+				};
+
+				pinctrl_isc_data_11_12: isc_data_11_12 {
+					mux {
+						function = "F";
+						groups = "isc_data_11_12_0";
+					};
+
+					conf {
+						group = "isc_data_11_12_0";
+						bias-disable;
+					};
+				};
+
 				pinctrl_key_gpio_default: key_gpio_default {
 					mux {
 						function = "GPIO";
@@ -472,6 +589,29 @@
 						       <PIN_PA25__QSPI0_IO1>,
 						       <PIN_PA26__QSPI0_IO2>,
 						       <PIN_PA27__QSPI0_IO3>;
+					};
+				};
+
+				pinctrl_sensor_power: sensor_power {
+					mux {
+						function = "GPIO";
+						groups = "sensor_power_gpio";
+					};
+
+					conf {
+						pins = <PIN_PB12>;
+						bias-disable;
+					};
+				};
+
+				pinctrl_sensor_reset: sensor_reset {
+					mux {
+						function = "GPIO";
+						groups = "sensor_reset_gpio";
+					};
+
+					conf {
+						pins = <PIN_PB11>;
 						bias-disable;
 					};
 				};
