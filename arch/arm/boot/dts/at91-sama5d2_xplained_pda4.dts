@@ -536,7 +536,7 @@
 					};
 
 					conf {
-						pins = <PIN_PB0>;
+						pins = <PIN_PB9>;
 						bias-pull-up;
 					};
 				};
